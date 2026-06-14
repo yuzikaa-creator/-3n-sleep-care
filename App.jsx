@@ -4,15 +4,15 @@ const FONT = "'Sarabun', 'Inter', sans-serif";
 
 // ── Master Data ───────────────────────────────────────────────────────────────
 const INIT_HOSPITALS = [
-  { id:"h1", name:"รพ. บางปะกอก 8",              short:"BPK 8",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2 },
-  { id:"h2", name:"รพ. บางปะกอก 3",              short:"BPK 3",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2 },
-  { id:"h3", name:"รพ. บางปะกอก สมุทรปราการ",    short:"BPK สมปก.",   city:"สมุทรปราการ", type:"private_ins",   cap:2 },
-  { id:"h4", name:"รพ. ราษฎร์บูรณะ",             short:"ราษฎร์บูรณะ", city:"กรุงเทพฯ",    type:"private_ins",   cap:2 },
-  { id:"h5", name:"รพ. สมิติเวช ศรีนครินทร์",    short:"สมิติเวช",    city:"กรุงเทพฯ",    type:"private_noins", cap:2 },
-  { id:"h6", name:"รพ. โอเวอร์บรูค เชียงราย",    short:"โอเวอร์บรุ๊ค", city:"เชียงราย",   type:"private_noins", cap:1 },
-  { id:"h7", name:"รพ. ราชพิพัฒน์",              short:"ราชพิพัฒน์",  city:"กรุงเทพฯ",    type:"government",    cap:2 },
-  { id:"h8", name:"รพ. กรุงเทพ เชียงราย",         short:"กรุงเทพ ชร.", city:"เชียงราย",    type:"private_ins",   cap:2 },
-  { id:"h9", name:"รพ. ดีบุก ภูเก็ต",             short:"ดีบุก",       city:"ภูเก็ต",      type:"private_noins", cap:1 },
+  { id:"h1", name:"รพ. บางปะกอก 8",              short:"BPK 8",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800 },
+  { id:"h2", name:"รพ. บางปะกอก 3",              short:"BPK 3",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800 },
+  { id:"h3", name:"รพ. บางปะกอก สมุทรปราการ",    short:"BPK สมปก.",   city:"สมุทรปราการ", type:"private_ins",   cap:2, psgPrice:5800 },
+  { id:"h4", name:"รพ. ราษฎร์บูรณะ",             short:"ราษฎร์บูรณะ", city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800 },
+  { id:"h5", name:"รพ. สมิติเวช ศรีนครินทร์",    short:"สมิติเวช",    city:"กรุงเทพฯ",    type:"private_noins", cap:2, psgPrice:5800 },
+  { id:"h6", name:"รพ. โอเวอร์บรูค เชียงราย",    short:"โอเวอร์บรุ๊ค", city:"เชียงราย",   type:"private_noins", cap:1, psgPrice:5800 },
+  { id:"h7", name:"รพ. ราชพิพัฒน์",              short:"ราชพิพัฒน์",  city:"กรุงเทพฯ",    type:"government",    cap:2, psgPrice:5800 },
+  { id:"h8", name:"รพ. กรุงเทพ เชียงราย",         short:"กรุงเทพ ชร.", city:"เชียงราย",    type:"private_ins",   cap:2, psgPrice:5800 },
+  { id:"h9", name:"รพ. ดีบุก ภูเก็ต",             short:"ดีบุก",       city:"ภูเก็ต",      type:"private_noins", cap:1, psgPrice:5800 },
 ];
 
 const INIT_TECHS = [
@@ -2185,15 +2185,32 @@ function PasteView({ user,hospitals,setAppointments }) {
 
 // ── Manage Hospitals ──────────────────────────────────────────────────────────
 function ManageHospitals({ hospitals,setHospitals }) {
-  const [adding,setAdding]=useState(false);
-  const [form,setForm]=useState({ name:"",short:"",city:"",type:"private_ins",cap:2 });
-  const add=()=>{ if(!form.name.trim()) return; setHospitals(p=>[...p,{ id:"h"+Date.now(),...form,name:form.name.trim(),short:form.short.trim()||form.name.trim(),city:form.city.trim(),cap:Number(form.cap)||2 }]); setForm({ name:"",short:"",city:"",type:"private_ins",cap:2 }); setAdding(false); };
+  const [adding,setAdding] = useState(false);
+  const [editPriceId, setEditPriceId] = useState(null);
+  const [priceVal, setPriceVal] = useState(5800);
+  const [form,setForm] = useState({ name:"",short:"",city:"",type:"private_ins",cap:2,psgPrice:5800 });
+
+  const add = () => {
+    if(!form.name.trim()) return;
+    setHospitals(p=>[...p,{ id:"h"+Date.now(),...form,name:form.name.trim(),short:form.short.trim()||form.name.trim(),city:form.city.trim(),cap:Number(form.cap)||2,psgPrice:Number(form.psgPrice)||5800 }]);
+    setForm({ name:"",short:"",city:"",type:"private_ins",cap:2,psgPrice:5800 });
+    setAdding(false);
+  };
+  const savePrice = (id) => {
+    setHospitals(p=>p.map(h=>h.id===id?{...h,psgPrice:Number(priceVal)||5800}:h));
+    setEditPriceId(null);
+  };
+
   return (
     <div style={{ padding:20,...FL,gap:14,height:"100%",overflowY:"auto" }}>
       <div style={{ ...R,justifyContent:"space-between" }}>
-        <div style={{ fontSize:15,fontWeight:700,color:T.navy }}>โรงพยาบาลในระบบ ({hospitals.length})</div>
+        <div>
+          <div style={{ fontSize:15,fontWeight:700,color:T.navy }}>โรงพยาบาลในระบบ ({hospitals.length})</div>
+          <div style={{ fontSize:11,color:T.faint,marginTop:2 }}>ตั้งค่าราคาตรวจ PSG ต่อ รพ. ได้ด้านล่าง</div>
+        </div>
         <Btn variant="primary" small onClick={()=>setAdding(a=>!a)}><i className="ti ti-plus" style={{ fontSize:13 }}></i> เพิ่ม รพ.</Btn>
       </div>
+
       {adding&&(
         <div style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:14,padding:16,...FL,gap:9 }}>
           <div style={{ fontSize:12,fontWeight:700,color:T.ink }}>เพิ่มโรงพยาบาลใหม่</div>
@@ -2203,28 +2220,69 @@ function ManageHospitals({ hospitals,setHospitals }) {
           <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={{ padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
             {Object.entries(HOSP_TYPE_LABEL).map(([k,v])=><option key={k} value={k}>{v}</option>)}
           </select>
-          <div style={{ ...R,gap:8,alignItems:"center" }}>
-            <label style={{ fontSize:12,color:T.muted }}>Capacity/วัน:</label>
-            <select value={form.cap} onChange={e=>setForm(f=>({...f,cap:Number(e.target.value)}))} style={{ padding:"6px 10px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
-              <option value={1}>1 คน/วัน</option>
-              <option value={2}>2 คน/วัน</option>
-              <option value={3}>3 คน/วัน</option>
-            </select>
+          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+            <div>
+              <div style={{ fontSize:11,color:T.muted,marginBottom:4 }}>Capacity/วัน</div>
+              <select value={form.cap} onChange={e=>setForm(f=>({...f,cap:Number(e.target.value)}))} style={{ width:"100%",padding:"8px 10px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
+                <option value={1}>1 คน/วัน</option><option value={2}>2 คน/วัน</option><option value={3}>3 คน/วัน</option>
+              </select>
+            </div>
+            <div>
+              <div style={{ fontSize:11,color:T.muted,marginBottom:4 }}>ราคาตรวจ PSG (บาท)</div>
+              <input type="number" value={form.psgPrice} onChange={e=>setForm(f=>({...f,psgPrice:e.target.value}))} style={{ width:"100%",padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink,boxSizing:"border-box" }}/>
+            </div>
           </div>
           <div style={{ ...R,gap:8 }}><Btn variant="primary" small onClick={add}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn><Btn variant="outline" small onClick={()=>setAdding(false)}>ยกเลิก</Btn></div>
         </div>
       )}
-      <div style={{ ...FL,gap:6 }}>
-        {hospitals.map(h=>{ const c=hc(h.id,hospitals); return (
-          <div key={h.id} style={{ ...R,gap:12,padding:"12px 14px",background:T.card,border:`0.5px solid ${T.line}`,borderRadius:12 }}>
-            <div style={{ width:36,height:36,borderRadius:10,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><i className="ti ti-building-hospital" style={{ fontSize:17,color:c.text }}></i></div>
-            <div style={{ flex:1 }}>
-              <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
-              <div style={{ fontSize:11,color:T.faint }}>{h.city&&`${h.city} · `}{HOSP_TYPE_LABEL[h.type]} · cap {h.cap}/วัน</div>
+
+      {/* Hospital list */}
+      <div style={{ ...FL,gap:8 }}>
+        {hospitals.map(h=>{ const c=hc(h.id,hospitals); const isEdit=editPriceId===h.id; return (
+          <div key={h.id} style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:12,overflow:"hidden" }}>
+            <div style={{ ...R,gap:12,padding:"12px 14px" }}>
+              <div style={{ width:36,height:36,borderRadius:10,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><i className="ti ti-building-hospital" style={{ fontSize:17,color:c.text }}></i></div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                <div style={{ fontSize:11,color:T.faint }}>{h.city&&`${h.city} · `}{HOSP_TYPE_LABEL[h.type]} · cap {h.cap}/วัน</div>
+              </div>
+              {/* PSG price badge */}
+              <div style={{ textAlign:"center",padding:"6px 12px",background:"#fef9c3",borderRadius:10,border:"0.5px solid #fde68a" }}>
+                <div style={{ fontSize:14,fontWeight:800,color:"#92400e" }}>{(h.psgPrice||5800).toLocaleString()}</div>
+                <div style={{ fontSize:9,color:"#92400e",opacity:.7 }}>บาท/case</div>
+              </div>
+              {/* Edit price button */}
+              <button onClick={()=>{ setEditPriceId(isEdit?null:h.id); setPriceVal(h.psgPrice||5800); }}
+                style={{ width:30,height:30,border:`0.5px solid ${isEdit?"#1d4ed8":T.line}`,borderRadius:8,background:isEdit?T.blueL:T.surf,color:isEdit?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>
+                <i className="ti ti-currency-baht"></i>
+              </button>
+              <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))}
+                style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>
+                <i className="ti ti-trash"></i>
+              </button>
             </div>
-            <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))} style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}><i className="ti ti-trash"></i></button>
+            {/* Price editor */}
+            {isEdit && (
+              <div style={{ padding:"12px 14px",borderTop:"0.5px solid #fde68a",background:"#fffbeb",...R,gap:10,alignItems:"flex-end" }}>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:11,fontWeight:600,color:"#92400e",marginBottom:5 }}>ราคาตรวจ PSG ต่อ case (บาท)</div>
+                  <input type="number" value={priceVal} onChange={e=>setPriceVal(e.target.value)}
+                    style={{ width:"100%",padding:"10px 13px",fontSize:16,fontWeight:700,border:"1.5px solid #f59e0b",borderRadius:10,outline:"none",background:"white",color:"#92400e",fontFamily:FONT,boxSizing:"border-box" }}/>
+                </div>
+                <Btn variant="primary" small onClick={()=>savePrice(h.id)}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn>
+                <Btn variant="outline" small onClick={()=>setEditPriceId(null)}>ยกเลิก</Btn>
+              </div>
+            )}
           </div>
         );})}
+      </div>
+
+      {/* Summary: total PSG default revenue */}
+      <div style={{ padding:"12px 16px",background:"#fef9c3",borderRadius:12,border:"0.5px solid #fde68a",...R,gap:10 }}>
+        <i className="ti ti-info-circle" style={{ fontSize:16,color:"#92400e",flexShrink:0 }}></i>
+        <div style={{ fontSize:12,color:"#92400e" }}>
+          ราคาตรวจ PSG จะถูกใช้คำนวณรายได้รายเดือนใน Tab <strong>รายงาน</strong> — กดไอคอน 💰 เพื่อปรับราคาแต่ละ รพ.
+        </div>
       </div>
     </div>
   );
@@ -2603,273 +2661,310 @@ function DataManager({ appts, hospitals, techs, assignments, checkins, dayBlocks
 
 // ── Tech Schedule View ────────────────────────────────────────────────────────
 function TechScheduleView({ user, techs, appointments, hospitals, assignments, checkins, setCheckins }) {
-  const today   = new Date();
-  const [year,  setYear]   = useState(today.getFullYear());
-  const [month, setMonth]  = useState(today.getMonth());
-  // ถ้าเป็น tech login → fix เป็นตัวเอง, ถ้าเป็น admin → เลือกได้
-  const myTech  = techs.find(t => t.id === user.id);
-  const [selTechId, setSelTechId] = useState(myTech?.id || techs[0]?.id || "");
-  const selTech = techs.find(t => t.id === selTechId);
+  const today  = new Date();
+  const [year,  setYear]  = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth());
+  const [mode,  setMode]  = useState("team");
+  const myTech = techs.find(t=>t.id===user.id);
+  const [selId, setSelId] = useState(myTech?.id||techs[0]?.id||"");
 
-  const pfx = `${year}-${String(month+1).padStart(2,"0")}`;
-  const prev = () => month===0 ? (setMonth(11),setYear(y=>y-1)) : setMonth(m=>m-1);
-  const next = () => month===11? (setMonth(0), setYear(y=>y+1)) : setMonth(m=>m+1);
+  const pfx  = `${year}-${String(month+1).padStart(2,"0")}`;
+  const prev = ()=>month===0?(setMonth(11),setYear(y=>y-1)):setMonth(m=>m-1);
+  const next = ()=>month===11?(setMonth(0),setYear(y=>y+1)):setMonth(m=>m+1);
 
-  // วันที่มีเวรของ tech คนนี้เดือนนี้
-  const myDays = Object.entries(assignments)
-    .filter(([k,v]) => k.startsWith(pfx) && v.includes(selTechId))
-    .map(([k]) => k)
-    .sort();
+  const isTechRole = user.role==="tech";
+  const isAdmin    = user.role==="admin";
+  const DOW = ["อา","จ","อ","พ","พฤ","ศ","ส"];
+  const TMF = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
 
-  const toggleCheckin = (dateKey) => {
-    setCheckins(prev => {
-      const cur = prev[dateKey]||[];
-      const next = cur.includes(selTechId) ? cur.filter(x=>x!==selTechId) : [...cur,selTechId];
-      return {...prev,[dateKey]:next};
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+
+  // วันทั้งหมดที่มีเวรในเดือนนี้
+  const allDays = [...new Set(
+    Object.entries(assignments)
+      .filter(([k,v])=>k.startsWith(pfx)&&v.length>0)
+      .map(([k])=>k)
+  )].sort();
+
+  const totalShifts = Object.entries(assignments)
+    .filter(([k,v])=>k.startsWith(pfx))
+    .reduce((s,[,v])=>s+v.length,0);
+
+  const toggleCheckin = (dateKey, techId) => {
+    setCheckins(prev=>{
+      const cur=prev[dateKey]||[];
+      const nxt=cur.includes(techId)?cur.filter(x=>x!==techId):[...cur,techId];
+      return {...prev,[dateKey]:nxt};
     });
   };
 
-  // สถิติเดือน
-  const totalShifts  = myDays.length;
-  const confirmedShifts = myDays.filter(d=>(checkins[d]||[]).includes(selTechId)).length;
-  const totalCases   = myDays.reduce((sum,d)=>sum+(appointments.filter(a=>a.date===d&&a.status!=="cancelled").length),0);
+  // ─── Team View: ดูทุกคนพร้อมกัน ─────────────────────────────────────────────
+  const TeamView = () => (
+    <div style={{ flex:1, overflowY:"auto", padding:"14px 18px", display:"flex", flexDirection:"column", gap:10 }}>
+      {allDays.length===0 && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"60%",gap:14,color:T.faint }}>
+          <div style={{ width:64,height:64,borderRadius:18,background:T.surf,display:"flex",alignItems:"center",justifyContent:"center",border:`0.5px solid ${T.line}` }}>
+            <i className="ti ti-calendar-off" style={{ fontSize:30 }}></i>
+          </div>
+          <div style={{ fontSize:15,fontWeight:600,color:T.muted }}>ยังไม่มีเวรเดือนนี้</div>
+          <div style={{ fontSize:12,color:T.faint }}>Admin assign เวรใน Tab รายเดือน</div>
+        </div>
+      )}
+      {allDays.map(dateKey=>{
+        const d       = new Date(dateKey);
+        const dow     = DOW[d.getDay()];
+        const isSun   = d.getDay()===0;
+        const isTod   = dateKey===todayStr;
+        const isPast  = d < new Date(today.toDateString());
+        const dayTechs= (assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
+        const dayAppts= appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
+        const allOk   = dayTechs.every(t=>(checkins[dateKey]||[]).includes(t.id));
 
-  const TM  = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
-  const TMF = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+        // จัดกลุ่มตาม รพ.
+        const byHosp = {};
+        dayAppts.forEach(a=>{ if(!byHosp[a.hospId]) byHosp[a.hospId]=[]; byHosp[a.hospId].push(a); });
 
-  const ci = techs.findIndex(t=>t.id===selTechId);
-  const tc = TPOOL[ci%TPOOL.length];
+        return (
+          <div key={dateKey} style={{ background:T.card, border:isTod?`1.5px solid ${T.blue}`:allOk&&dayTechs.length>0?`1px solid #86efac`:`0.5px solid ${T.line}`, borderRadius:14, overflow:"hidden" }}>
+            {/* Date strip + techs */}
+            <div style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 16px", background:isTod?T.blueL:allOk&&dayTechs.length>0?"#f0fdf4":T.surf, borderBottom:`0.5px solid ${T.line}` }}>
+              {/* Date badge */}
+              <div style={{ width:48, textAlign:"center", flexShrink:0 }}>
+                <div style={{ fontSize:24, fontWeight:800, color:isTod?T.blue:isSun?"#dc2626":T.navy, lineHeight:1 }}>{d.getDate()}</div>
+                <div style={{ fontSize:10, fontWeight:700, color:isTod?T.blue:isSun?"#dc2626":T.muted }}>{dow}</div>
+              </div>
 
-  return (
-    <div style={{ display:"flex", height:"100%", overflow:"hidden", fontFamily:FONT }}>
+              {/* Techs */}
+              <div style={{ flex:1, display:"flex", gap:6, flexWrap:"wrap" }}>
+                {dayTechs.length===0 && <span style={{ fontSize:11,color:T.faint }}>ไม่มี Tech</span>}
+                {dayTechs.map(t=>{
+                  const ci=techs.findIndex(x=>x.id===t.id);
+                  const c=TPOOL[ci%TPOOL.length];
+                  const ok=(checkins[dateKey]||[]).includes(t.id);
+                  return (
+                    <div key={t.id}
+                      onClick={isAdmin?()=>toggleCheckin(dateKey,t.id):undefined}
+                      style={{ display:"flex",alignItems:"center",gap:6,padding:"5px 11px 5px 6px",borderRadius:20,background:ok?"#dcfce7":c.bg,border:`1px solid ${ok?"#86efac":c.dot}`,cursor:isAdmin?"pointer":"default",transition:"all .12s" }}>
+                      <div style={{ width:26,height:26,borderRadius:"50%",background:c.dot,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800,color:"white",flexShrink:0 }}>
+                        {tinit(t.name)}
+                      </div>
+                      <span style={{ fontSize:12,fontWeight:ok?700:500,color:ok?"#166534":c.text,whiteSpace:"nowrap" }}>{t.name}</span>
+                      {ok
+                        ? <i className="ti ti-check-circle" style={{ fontSize:13,color:"#16a34a",flexShrink:0 }}></i>
+                        : isAdmin && <i className="ti ti-clock" style={{ fontSize:12,color:c.dot,opacity:.5,flexShrink:0 }}></i>
+                      }
+                    </div>
+                  );
+                })}
+              </div>
 
-      {/* LEFT: schedule list */}
-      <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+              {/* Case count */}
+              <div style={{ flexShrink:0, textAlign:"right" }}>
+                <div style={{ fontSize:18,fontWeight:800,color:isTod?T.blue:T.ink,lineHeight:1 }}>{dayAppts.length}</div>
+                <div style={{ fontSize:9,color:T.faint }}>case</div>
+              </div>
+            </div>
 
-        {/* Header */}
-        <div style={{ padding:"16px 20px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", gap:14, flexShrink:0 }}>
-          {/* Tech selector — admin เลือกได้, tech เห็นแค่ตัวเอง */}
-          {user.role==="admin" ? (
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap", flex:1 }}>
-              {techs.map((t,i)=>{
-                const c=TPOOL[i%TPOOL.length]; const on=selTechId===t.id;
+            {/* Hospital breakdown */}
+            <div style={{ padding:"6px 16px 8px 76px", display:"flex", flexWrap:"wrap", gap:7 }}>
+              {Object.entries(byHosp).map(([hospId,happts])=>{
+                const h=hospitals.find(x=>x.id===hospId);
+                const c=hc(hospId,hospitals);
                 return (
-                  <div key={t.id} onClick={()=>setSelTechId(t.id)}
-                    style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 14px", borderRadius:20, cursor:"pointer", border: on?`2px solid ${c.dot}`:`0.5px solid ${T.line}`, background:on?c.bg:T.card, transition:"all .12s" }}>
-                    <TAvatar tech={t} techs={techs} size={24}/>
-                    <span style={{ fontSize:12, fontWeight:on?700:400, color:on?c.text:T.muted }}>{t.name}</span>
+                  <div key={hospId} style={{ display:"flex",alignItems:"center",gap:6,padding:"4px 10px",borderRadius:9,background:c.bg,border:`0.5px solid ${c.dot}30` }}>
+                    <span style={{ width:8,height:8,borderRadius:"50%",background:c.dot,flexShrink:0 }}></span>
+                    <span style={{ fontSize:11,fontWeight:600,color:c.text }}>{h?.name||hospId}</span>
+                    <span style={{ fontSize:11,fontWeight:800,color:c.text }}>{happts.length} ราย</span>
                   </div>
                 );
               })}
+              {dayAppts.length===0 && <span style={{ fontSize:11,color:T.faint,padding:"4px 0" }}>ยังไม่มีนัดหมาย</span>}
             </div>
-          ) : (
-            <div style={{ ...R, gap:12, flex:1 }}>
-              <TAvatar tech={selTech} techs={techs} size={42}/>
-              <div>
-                <div style={{ fontSize:17, fontWeight:800, color:T.navy }}>{selTech?.name}</div>
-                <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>Sleep Technician · 3N Sleep Care</div>
-              </div>
-            </div>
-          )}
-
-          {/* Month nav */}
-          <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
-            <button onClick={prev} style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.muted,cursor:"pointer",fontSize:15,...R,justifyContent:"center" }}>‹</button>
-            <span style={{ fontSize:14, fontWeight:700, color:T.navy, minWidth:120, textAlign:"center" }}>{TMF[month]} {year+543}</span>
-            <button onClick={next} style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.muted,cursor:"pointer",fontSize:15,...R,justifyContent:"center" }}>›</button>
           </div>
-        </div>
+        );
+      })}
+    </div>
+  );
 
-        {/* Empty state */}
-        {myDays.length===0 && (
-          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, color:T.faint }}>
-            <div style={{ width:64,height:64,borderRadius:18,background:T.surf,display:"flex",alignItems:"center",justifyContent:"center",border:`0.5px solid ${T.line}` }}>
-              <i className="ti ti-calendar-off" style={{ fontSize:28 }}></i>
-            </div>
-            <div style={{ fontSize:15, fontWeight:600, color:T.muted }}>ยังไม่มีเวรเดือนนี้</div>
-            <div style={{ fontSize:13, color:T.faint }}>Admin จะ assign เวรให้ใน tab รายเดือน</div>
-          </div>
-        )}
+  // ─── Person View: โฟกัสทีละคน ────────────────────────────────────────────────
+  const selTech = techs.find(t=>t.id===selId);
+  const myDays  = Object.entries(assignments).filter(([k,v])=>k.startsWith(pfx)&&v.includes(selId)).map(([k])=>k).sort();
+  const confirmedShifts = myDays.filter(d=>(checkins[d]||[]).includes(selId)).length;
+  const totalCases = myDays.reduce((s,d)=>s+appointments.filter(a=>a.date===d&&a.status!=="cancelled").length,0);
+  const selCi = techs.findIndex(t=>t.id===selId);
+  const selC  = TPOOL[selCi%TPOOL.length];
 
-        {/* Day cards */}
-        <div style={{ flex:1, overflowY:"auto", padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
-          {myDays.map(dateKey => {
-            const d       = new Date(dateKey);
-            const dow     = ["อา","จ","อ","พ","พฤ","ศ","ส"][d.getDay()];
-            const isSun   = d.getDay()===0;
-            const isToday = dateKey===`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
-            const isPast  = d < new Date(today.toDateString());
-            const ok      = (checkins[dateKey]||[]).includes(selTechId);
-            const dayAppts= appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
-            const hospsToday = [...new Map(dayAppts.map(a=>[a.hospId,hospitals.find(h=>h.id===a.hospId)])).entries()].map(([,h])=>h).filter(Boolean);
-
-            return (
-              <div key={dateKey} style={{ background:T.card, border: ok?`1.5px solid #86efac`:isToday?`1.5px solid ${T.blue}`:`0.5px solid ${T.line}`, borderRadius:16, overflow:"hidden", opacity:isPast&&!ok?.7:1 }}>
-                <div style={{ display:"flex" }}>
-
-                  {/* Date strip */}
-                  <div style={{ width:72, background:ok?"#dcfce7":isToday?T.blueL:tc.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"14px 0", flexShrink:0, borderRight:`0.5px solid ${T.line}` }}>
-                    <div style={{ fontSize:28, fontWeight:800, color:ok?"#166534":isToday?T.blue:tc.text, lineHeight:1 }}>{d.getDate()}</div>
-                    <div style={{ fontSize:11, fontWeight:600, color:ok?"#16a34a":isToday?T.blue:tc.text, opacity:.8, textTransform:"uppercase", marginTop:3 }}>{dow}</div>
-                    <div style={{ fontSize:10, color:ok?"#16a34a":isToday?T.blue:tc.text, opacity:.6, marginTop:1 }}>{TM[d.getMonth()]}</div>
-                    {ok && <i className="ti ti-check-circle" style={{ fontSize:16,color:"#16a34a",marginTop:6 }}></i>}
-                  </div>
-
-                  {/* Content */}
-                  <div style={{ flex:1, padding:"14px 16px" }}>
-                    {/* Hospitals today */}
-                    {hospsToday.length===0
-                      ? <div style={{ fontSize:13,color:T.faint,marginBottom:8 }}>ยังไม่มีนัดหมาย</div>
-                      : hospsToday.map(h=>{
-                          const hAppts = dayAppts.filter(a=>a.hospId===h.id);
-                          const c      = hc(h.id, hospitals);
-                          return (
-                            <div key={h.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", background:c.soft||c.bg, borderRadius:11, marginBottom:7, border:`0.5px solid ${c.dot}20` }}>
-                              <div style={{ width:36,height:36,borderRadius:10,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                                <i className="ti ti-building-hospital" style={{ fontSize:18,color:c.text }}></i>
-                              </div>
-                              <div style={{ flex:1 }}>
-                                <div style={{ fontSize:13,fontWeight:700,color:c.text }}>{h.name}</div>
-                                <div style={{ fontSize:11,color:c.text,opacity:.75,marginTop:1 }}>{h.city}</div>
-                              </div>
-                              {/* Case count badge */}
-                              <div style={{ textAlign:"center",padding:"6px 12px",background:c.bg,borderRadius:10,border:`0.5px solid ${c.dot}` }}>
-                                <div style={{ fontSize:20,fontWeight:800,color:c.text,lineHeight:1 }}>{hAppts.length}</div>
-                                <div style={{ fontSize:9,color:c.text,opacity:.75 }}>case</div>
-                              </div>
-                            </div>
-                          );
-                        })
-                    }
-
-                    {/* Patient list (collapsed) */}
-                    {dayAppts.length>0 && (
-                      <details style={{ marginTop:4 }}>
-                        <summary style={{ fontSize:11,color:T.muted,cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",gap:5,userSelect:"none" }}>
-                          <i className="ti ti-users" style={{ fontSize:12 }}></i>
-                          ดูรายชื่อผู้ป่วย ({dayAppts.length} ราย)
-                          <i className="ti ti-chevron-down" style={{ fontSize:10,marginLeft:"auto" }}></i>
-                        </summary>
-                        <div style={{ marginTop:8,display:"flex",flexDirection:"column",gap:5 }}>
-                          {dayAppts.map((a,i)=>{
-                            const c=hc(a.hospId,hospitals); const h=hospitals.find(x=>x.id===a.hospId);
-                            return (
-                              <div key={a.id} style={{ display:"flex",alignItems:"center",gap:9,padding:"7px 11px",background:T.surf,borderRadius:9,border:`0.5px solid ${T.line}` }}>
-                                <div style={{ width:20,height:20,borderRadius:"50%",background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:c.text,flexShrink:0 }}>{i+1}</div>
-                                <div style={{ flex:1,minWidth:0 }}>
-                                  <div style={{ fontSize:12,fontWeight:600,color:T.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{a.name}</div>
-                                  <div style={{ fontSize:10,color:T.faint }}>HN {a.hn} · {a.phone||"—"}</div>
-                                </div>
-                                <span style={{ fontSize:9,padding:"2px 7px",borderRadius:8,background:c.bg,color:c.text,fontWeight:500,flexShrink:0 }}>{h?.short}</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </details>
-                    )}
-
-                    {/* Confirmation status — Admin only can confirm */}
-                    <div style={{ marginTop:10 }}>
-                      {ok ? (
-                        <div style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 14px", borderRadius:10, background:"#dcfce7", border:"1px solid #86efac" }}>
-                          <i className="ti ti-check-circle" style={{ fontSize:16, color:"#166534" }}></i>
-                          <span style={{ fontSize:12, fontWeight:700, color:"#166534" }}>Admin ยืนยันการเข้าเวรแล้ว</span>
-                          {user.role==="admin" && (
-                            <button onClick={()=>toggleCheckin(dateKey)} style={{ marginLeft:"auto", fontSize:11, padding:"3px 10px", borderRadius:7, border:"1px solid #86efac", background:"white", color:"#dc2626", cursor:"pointer", fontFamily:FONT }}>ยกเลิก</button>
-                          )}
-                        </div>
-                      ) : user.role==="admin" ? (
-                        <button onClick={()=>toggleCheckin(dateKey)}
-                          style={{ padding:"9px 18px", fontSize:12, fontWeight:700, borderRadius:10, background:T.blueL, color:T.blue, border:`1.5px solid ${T.blueMid}`, cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", gap:7 }}>
-                          <i className="ti ti-check" style={{ fontSize:15 }}></i>
-                          ยืนยันการเข้าเวร (Admin)
-                        </button>
-                      ) : (
-                        <div style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 14px", borderRadius:10, background:"#fef9c3", border:"1px solid #fde68a" }}>
-                          <i className="ti ti-clock" style={{ fontSize:14, color:"#92400e" }}></i>
-                          <span style={{ fontSize:12, color:"#92400e" }}>รอ Admin ยืนยันการเข้าเวร</span>
-                        </div>
-                      )}
-                    </div>
+  const PersonView = () => (
+    <div style={{ display:"flex", flex:1, overflow:"hidden" }}>
+      {/* Left: tech picker */}
+      <div style={{ width:190, borderRight:`1px solid ${T.line}`, overflowY:"auto", flexShrink:0, background:T.surf, padding:"10px 8px", display:"flex", flexDirection:"column", gap:5 }}>
+        {techs.map((t,i)=>{
+          const c=TPOOL[i%TPOOL.length];
+          const on=selId===t.id;
+          const mA=Object.entries(assignments).filter(([k,v])=>k.startsWith(pfx)&&v.includes(t.id)).length;
+          const mC=Object.entries(checkins).filter(([k,v])=>k.startsWith(pfx)&&v.includes(t.id)).length;
+          return (
+            <div key={t.id} onClick={()=>setSelId(t.id)}
+              style={{ padding:"10px",borderRadius:11,cursor:"pointer",border:on?`2px solid ${c.dot}`:`0.5px solid ${T.line}`,background:on?c.bg:"white",transition:"all .1s" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+                <div style={{ width:32,height:32,borderRadius:"50%",background:on?c.dot:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:on?"white":"#64748b",flexShrink:0 }}>{tinit(t.name)}</div>
+                <div style={{ minWidth:0 }}>
+                  <div style={{ fontSize:12,fontWeight:on?700:500,color:on?c.text:T.ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{t.nick||t.name.split(" ")[0]}</div>
+                  <div style={{ fontSize:10,color:on?c.text:T.faint }}>
+                    {mC}/{mA} เวร {mA>0?`· ${Math.round(mC/mA*100)}%`:""}
                   </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* RIGHT: monthly summary */}
-      <div style={{ width:240, borderLeft:`1px solid ${T.line}`, background:T.card, display:"flex", flexDirection:"column", flexShrink:0, overflowY:"auto" }}>
-        <div style={{ padding:"20px 18px" }}>
-
-          {/* Tech avatar + name */}
-          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, paddingBottom:18, borderBottom:`0.5px solid ${T.line}`, marginBottom:18 }}>
-            <TAvatar tech={selTech} techs={techs} size={56}/>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:14, fontWeight:800, color:T.navy }}>{selTech?.name}</div>
-              <div style={{ fontSize:11, color:T.muted, marginTop:3 }}>Sleep Technician</div>
-            </div>
+      {/* Right: schedule detail */}
+      <div style={{ flex:1, overflowY:"auto", padding:"14px 16px" }}>
+        {/* Tech header */}
+        <div style={{ display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:selC.bg,borderRadius:13,border:`1px solid ${selC.dot}30`,marginBottom:14 }}>
+          <div style={{ width:46,height:46,borderRadius:"50%",background:selC.dot,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:"white",flexShrink:0 }}>{tinit(selTech?.name||"")}</div>
+          <div style={{ flex:1 }}>
+            <div style={{ fontSize:14,fontWeight:800,color:selC.text }}>{selTech?.name}</div>
+            <div style={{ fontSize:11,color:selC.text,opacity:.7,marginTop:1 }}>Sleep Technician</div>
           </div>
-
-          {/* Stats */}
-          <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:20 }}>
-            {[
-              ["ti-calendar","เวรทั้งหมด",totalShifts,"#1d4ed8","#dbeafe"],
-              ["ti-check-circle","ยืนยันแล้ว",confirmedShifts,"#059669","#d1fae5"],
-              ["ti-users","case รวม",totalCases,"#7c3aed","#ede9fe"],
-            ].map(([ic,lb,val,col,bg])=>(
-              <div key={lb} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:bg, borderRadius:12 }}>
-                <i className={`ti ${ic}`} style={{ fontSize:20,color:col,flexShrink:0 }}></i>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:11,color:col,opacity:.75,fontWeight:500 }}>{lb}</div>
-                  <div style={{ fontSize:22,fontWeight:800,color:col,lineHeight:1.1,marginTop:2 }}>{val}</div>
-                </div>
+          <div style={{ display:"flex",gap:8,flexShrink:0 }}>
+            {[[myDays.length,"เวร","#1d4ed8","#dbeafe"],[confirmedShifts,"ยืนยัน","#059669","#d1fae5"],[totalCases,"case","#7c3aed","#ede9fe"]].map(([v,lb,col,bg])=>(
+              <div key={lb} style={{ textAlign:"center",padding:"7px 11px",background:bg,borderRadius:10 }}>
+                <div style={{ fontSize:18,fontWeight:800,color:col,lineHeight:1 }}>{v}</div>
+                <div style={{ fontSize:9,color:col,opacity:.7,marginTop:2 }}>{lb}</div>
               </div>
             ))}
           </div>
-
-          {/* Progress */}
-          {totalShifts>0 && (
-            <div style={{ marginBottom:20 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:6 }}>
-                <span style={{ color:T.muted }}>ยืนยันเวร</span>
-                <span style={{ fontWeight:700,color:confirmedShifts===totalShifts?"#059669":T.ink }}>{Math.round(confirmedShifts/totalShifts*100)}%</span>
-              </div>
-              <div style={{ height:8,borderRadius:10,background:"#e2e8f0",overflow:"hidden" }}>
-                <div style={{ width:`${Math.round(confirmedShifts/totalShifts*100)}%`,height:"100%",background:confirmedShifts===totalShifts?"#059669":"#7c3aed",borderRadius:10,transition:"width .3s" }}></div>
-              </div>
-            </div>
-          )}
-
-          {/* รพ. ที่ไปเดือนนี้ */}
-          <div style={{ fontSize:11,color:T.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:10 }}>รพ. เดือนนี้</div>
-          {[...new Set(
-            myDays.flatMap(d => appointments.filter(a=>a.date===d&&a.status!=="cancelled").map(a=>a.hospId))
-          )].map(hospId=>{
-            const h=hospitals.find(x=>x.id===hospId); if(!h) return null;
-            const c=hc(hospId,hospitals);
-            const cnt=myDays.reduce((s,d)=>s+appointments.filter(a=>a.date===d&&a.hospId===hospId&&a.status!=="cancelled").length,0);
-            const shifts=myDays.filter(d=>assignments[d]?.includes(selTechId)&&appointments.some(a=>a.date===d&&a.hospId===hospId)).length;
-            return (
-              <div key={hospId} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:c.bg,borderRadius:11,marginBottom:8,border:`0.5px solid ${c.dot}30` }}>
-                <span style={{ width:10,height:10,borderRadius:"50%",background:c.dot,flexShrink:0 }}></span>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:12,fontWeight:700,color:c.text }}>{h.short}</div>
-                  <div style={{ fontSize:10,color:c.text,opacity:.7 }}>{shifts} เวร</div>
-                </div>
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ fontSize:16,fontWeight:800,color:c.text }}>{cnt}</div>
-                  <div style={{ fontSize:9,color:c.text,opacity:.6 }}>case</div>
-                </div>
-              </div>
-            );
-          })}
         </div>
+
+        {myDays.length===0 && (
+          <div style={{ textAlign:"center",padding:"32px 20px",color:T.faint }}>
+            <i className="ti ti-calendar-off" style={{ fontSize:30 }}></i>
+            <div style={{ fontSize:14,marginTop:10,fontWeight:600,color:T.muted }}>ยังไม่มีเวรเดือนนี้</div>
+          </div>
+        )}
+
+        {myDays.map(dateKey=>{
+          const d=new Date(dateKey);
+          const ok=(checkins[dateKey]||[]).includes(selId);
+          const dayAppts=appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
+          const hospsToday=[...new Map(dayAppts.map(a=>[a.hospId,hospitals.find(h=>h.id===a.hospId)])).entries()].map(([,h])=>h).filter(Boolean);
+          return (
+            <div key={dateKey} style={{ background:T.card,border:ok?`1.5px solid #86efac`:`0.5px solid ${T.line}`,borderRadius:13,marginBottom:9,overflow:"hidden" }}>
+              <div style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 14px",background:ok?"#f0fdf4":T.surf,borderBottom:`0.5px solid ${T.line}` }}>
+                <div style={{ width:42,height:42,borderRadius:10,background:ok?"#d1fae5":selC.bg,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                  <div style={{ fontSize:18,fontWeight:800,color:ok?"#166534":selC.text,lineHeight:1 }}>{d.getDate()}</div>
+                  <div style={{ fontSize:10,color:ok?"#16a34a":selC.text }}>{DOW[d.getDay()]}</div>
+                </div>
+                <div style={{ flex:1 }}>
+                  {hospsToday.map(h=>{
+                    const c=hc(h.id,hospitals);
+                    const cnt=dayAppts.filter(a=>a.hospId===h.id).length;
+                    return (
+                      <div key={h.id} style={{ display:"flex",alignItems:"center",gap:7,marginBottom:3 }}>
+                        <span style={{ width:8,height:8,borderRadius:"50%",background:c.dot,flexShrink:0 }}></span>
+                        <span style={{ fontSize:12,fontWeight:600,color:T.ink }}>{h.name}</span>
+                        <span style={{ fontSize:11,fontWeight:700,color:c.text,marginLeft:"auto" }}>{cnt} case</span>
+                      </div>
+                    );
+                  })}
+                  {hospsToday.length===0&&<span style={{ fontSize:11,color:T.faint }}>ยังไม่มีนัด</span>}
+                </div>
+                {isAdmin&&(ok
+                  ? <div style={{ display:"flex",alignItems:"center",gap:5,padding:"5px 10px",background:"#dcfce7",borderRadius:9,border:"1px solid #86efac",flexShrink:0 }}>
+                      <i className="ti ti-check-circle" style={{ fontSize:14,color:"#166534" }}></i>
+                      <span style={{ fontSize:11,fontWeight:700,color:"#166534" }}>ยืนยันแล้ว</span>
+                      <button onClick={()=>toggleCheckin(dateKey,selId)} style={{ marginLeft:4,fontSize:10,padding:"1px 7px",borderRadius:6,border:"1px solid #86efac",background:"white",color:"#dc2626",cursor:"pointer" }}>ยก</button>
+                    </div>
+                  : <button onClick={()=>toggleCheckin(dateKey,selId)}
+                      style={{ padding:"7px 13px",fontSize:11,fontWeight:700,borderRadius:9,background:T.blueL,color:T.blue,border:`1.5px solid ${T.blueMid}`,cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:5,flexShrink:0 }}>
+                      <i className="ti ti-check" style={{ fontSize:13 }}></i>ยืนยัน
+                    </button>
+                )}
+                {!isAdmin&&ok&&<i className="ti ti-check-circle" style={{ fontSize:22,color:"#059669",flexShrink:0 }}></i>}
+              </div>
+              {dayAppts.length>0&&(
+                <details>
+                  <summary style={{ padding:"7px 14px",fontSize:11,color:T.muted,cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",gap:5,userSelect:"none" }}>
+                    <i className="ti ti-users" style={{ fontSize:12 }}></i>รายชื่อผู้ป่วย ({dayAppts.length} ราย)
+                    <i className="ti ti-chevron-down" style={{ fontSize:10,marginLeft:"auto" }}></i>
+                  </summary>
+                  <div style={{ padding:"4px 14px 10px",display:"flex",flexDirection:"column",gap:5 }}>
+                    {dayAppts.map((a,i)=>{
+                      const c=hc(a.hospId,hospitals); const h=hospitals.find(x=>x.id===a.hospId);
+                      return (
+                        <div key={a.id} style={{ display:"flex",alignItems:"center",gap:8,padding:"6px 10px",background:T.surf,borderRadius:9,border:`0.5px solid ${T.line}` }}>
+                          <div style={{ width:18,height:18,borderRadius:"50%",background:c.bg,border:`0.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:c.text,flexShrink:0 }}>{i+1}</div>
+                          <div style={{ flex:1,minWidth:0 }}>
+                            <div style={{ fontSize:12,fontWeight:600,color:T.ink,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap" }}>{a.name}</div>
+                            <div style={{ fontSize:10,color:T.faint }}>HN {a.hn}</div>
+                          </div>
+                          <span style={{ fontSize:9,padding:"2px 7px",borderRadius:7,background:c.bg,color:c.text,flexShrink:0 }}>{h?.short}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </details>
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
+
+  // Show team view for admin, always personal for tech
+  const showTeam = isAdmin && mode==="team";
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", fontFamily:FONT }}>
+      {/* Header */}
+      <div style={{ padding:"12px 18px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", gap:10, flexShrink:0, flexWrap:"wrap" }}>
+        {/* Mode toggle (Admin only) */}
+        {isAdmin && (
+          <div style={{ display:"flex", borderRadius:10, overflow:"hidden", border:`1px solid ${T.line}`, flexShrink:0 }}>
+            {[["team","ti-users","ภาพรวมทีม"],["person","ti-user","รายบุคคล"]].map(([m,ic,lb])=>(
+              <button key={m} onClick={()=>setMode(m)}
+                style={{ padding:"8px 14px",fontSize:12,fontWeight:mode===m?700:400,background:mode===m?T.blue:"white",color:mode===m?"white":T.muted,border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:5,transition:"all .1s" }}>
+                <i className={`ti ${ic}`} style={{ fontSize:13 }}></i>{lb}
+              </button>
+            ))}
+          </div>
+        )}
+        {/* Tech name for tech role */}
+        {isTechRole && myTech && (
+          <div style={{ display:"flex",alignItems:"center",gap:9 }}>
+            <div style={{ width:32,height:32,borderRadius:"50%",background:selC.dot,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:"white" }}>{tinit(myTech.name)}</div>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy }}>{myTech.name}</div>
+          </div>
+        )}
+        {/* Month nav */}
+        <div style={{ display:"flex",alignItems:"center",gap:8,marginLeft:"auto" }}>
+          <button onClick={prev} style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.muted,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center" }}>‹</button>
+          <span style={{ fontSize:14,fontWeight:700,color:T.navy,minWidth:130,textAlign:"center" }}>{TMF[month]} {year+543}</span>
+          <button onClick={next} style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.muted,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center" }}>›</button>
+        </div>
+        {/* Summary chips */}
+        <div style={{ display:"flex",gap:6 }}>
+          <div style={{ padding:"4px 11px",borderRadius:9,background:"#dbeafe",display:"flex",alignItems:"center",gap:4 }}>
+            <span style={{ fontSize:15,fontWeight:800,color:"#1d4ed8" }}>{allDays.length}</span>
+            <span style={{ fontSize:10,color:"#1d4ed8",opacity:.75 }}>วันทำงาน</span>
+          </div>
+          <div style={{ padding:"4px 11px",borderRadius:9,background:"#ede9fe",display:"flex",alignItems:"center",gap:4 }}>
+            <span style={{ fontSize:15,fontWeight:800,color:"#7c3aed" }}>{totalShifts}</span>
+            <span style={{ fontSize:10,color:"#7c3aed",opacity:.75 }}>เวรรวม</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      {showTeam ? <TeamView/> : <PersonView/>}
+    </div>
+  );
 }
+
 
 // ── Sales View ────────────────────────────────────────────────────────────────
 function exportSalesExcel(sales, hospitals, mode, year, month, selHosp, salesName) {
@@ -3317,6 +3412,39 @@ function SearchView({ user, appointments, hospitals }) {
 }
 
 // ── Report View ───────────────────────────────────────────────────────────────
+function exportDoctorExcel(doctorStats, period) {
+  const header = ["แพทย์","ใบอนุญาต","จำนวน case","ประเภทนัด","รายชื่อผู้ป่วย"];
+  const rows = [];
+  doctorStats.forEach(ds=>{
+    if(ds.cases.length===0) return;
+    ds.cases.forEach((a,i)=>{
+      rows.push([
+        i===0?ds.doctor:"",
+        i===0?ds.license:"",
+        i===0?ds.cases.length:"",
+        a.apptType==="cpap_trial"?"ทดลอง CPAP":"Sleep Test",
+        a.name,
+      ]);
+    });
+  });
+  const lines=[header,...rows].map(r=>r.map(c=>{ const s=String(c??""); return s.includes(",")?`"${s}"`:s; }).join(","));
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`Doctor_Report_${period}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportPsgRevenueExcel(revenueRows, period) {
+  const header = ["โรงพยาบาล","จำนวน case","ราคาต่อ case (บาท)","รายได้รวม (บาท)"];
+  const lines=[header,...revenueRows].map(r=>r.map(c=>String(c??"")).join(","));
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`PSG_Revenue_${period}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function ReportView({ user, appointments, hospitals, techs }) {
   const now = new Date();
   const [year,  setYear]  = useState(now.getFullYear());
@@ -3345,6 +3473,38 @@ function ReportView({ user, appointments, hospitals, techs }) {
   const fullNight   = sleepTests.filter(a=>a.sleepTestType==="full_night");
   const splitNight  = sleepTests.filter(a=>a.sleepTestType==="split_night");
   const byJourney   = (key) => sleepTests.filter(a=>a.journeyStatus===key && a.status!=="cancelled");
+
+  // PSG Revenue (Sleep Test only, not cancelled)
+  const psgCases = base.filter(a=>a.apptType==="sleep_test"&&a.status!=="cancelled");
+  const psgRevenue = psgCases.reduce((s,a)=>{
+    const h=hospitals.find(x=>x.id===a.hospId);
+    return s+(h?.psgPrice||5800);
+  },0);
+
+  // Doctor stats — groupby doctorName in sleepReport
+  const doctorMap = {};
+  base.filter(a=>a.sleepReport?.doctorName&&a.status!=="cancelled").forEach(a=>{
+    const raw = a.sleepReport.doctorName;
+    // parse "Name, M.D. ว. XXXXX"
+    const parts = raw.split(" ว. ");
+    const name = parts[0].trim();
+    const lic  = parts[1]?.trim()||"";
+    const key  = name;
+    if(!doctorMap[key]) doctorMap[key]={ doctor:name, license:lic, cases:[] };
+    doctorMap[key].cases.push(a);
+  });
+  const doctorStats = Object.values(doctorMap).sort((a,b)=>b.cases.length-a.cases.length);
+
+  // PSG Revenue by hospital (for export)
+  const psgRevenueRows = hospitals.map(h=>{
+    const cnt=psgCases.filter(a=>a.hospId===h.id).length;
+    const price=h.psgPrice||5800;
+    return [h.name, cnt, price, cnt*price];
+  }).filter(r=>r[1]>0);
+
+  const periodLabel = mode==="month"
+    ? `${["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."][month]}_${year+543}`
+    : `ปี${year+543}`;
 
   // CPAP sales
   const sales = base.filter(a=>a.cpapPurchase?.price>0 && a.status!=="cancelled");
@@ -3419,10 +3579,11 @@ function ReportView({ user, appointments, hospitals, techs }) {
         </div>
 
         {/* ── Summary cards ── */}
-        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12 }}>
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12 }}>
           <StatCard icon="ti-calendar" label="นัดทั้งหมด" value={base.length} sub={`${cancelled.length} ยกเลิก`} col={T.blue}/>
           <StatCard icon="ti-activity" label="Sleep Test" value={sleepTests.filter(a=>a.status!=="cancelled").length} sub={`FN ${fullNight.length} / SN ${splitNight.length}`} col="#7c3aed"/>
           <StatCard icon="ti-device-heart-monitor" label="ทดลอง CPAP" value={cpapTrials.filter(a=>a.status!=="cancelled").length} sub="" col="#059669"/>
+          {user.role==="admin" && <StatCard icon="ti-currency-baht" label="รายได้ PSG" value={(psgRevenue/1000).toFixed(0)+"k"} sub={`${psgCases.length} case · ${(psgRevenue).toLocaleString()} ฿`} col="#b45309"/>}
           <StatCard icon="ti-x" label="ยกเลิก" value={cancelled.length} sub="" col={T.red}/>
         </div>
 
@@ -3594,6 +3755,106 @@ function ReportView({ user, appointments, hospitals, techs }) {
                 );
               })}
             </div>
+          </div>
+        )}
+
+        {/* ── PSG Revenue breakdown ── (Admin only) */}
+        {user.role==="admin" && psgCases.length>0 && (
+          <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:14,display:"flex",alignItems:"center",gap:8 }}>
+              <i className="ti ti-currency-baht" style={{ fontSize:16,color:"#b45309" }}></i>
+              รายได้ค่าตรวจ PSG
+              <button onClick={()=>exportPsgRevenueExcel(psgRevenueRows, periodLabel)}
+                style={{ marginLeft:"auto",padding:"6px 13px",fontSize:12,fontWeight:700,borderRadius:9,background:"#059669",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6 }}>
+                <i className="ti ti-file-spreadsheet" style={{ fontSize:13 }}></i>Export Excel
+              </button>
+            </div>
+            {/* Revenue summary */}
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16 }}>
+              <div style={{ padding:"14px",background:"#fef9c3",borderRadius:12,border:"0.5px solid #fde68a" }}>
+                <div style={{ fontSize:11,color:"#92400e",fontWeight:600 }}>รายได้ PSG รวม</div>
+                <div style={{ fontSize:28,fontWeight:800,color:"#92400e",marginTop:4,lineHeight:1 }}>{psgRevenue.toLocaleString()}</div>
+                <div style={{ fontSize:11,color:"#92400e",opacity:.7,marginTop:3 }}>บาท ({psgCases.length} case)</div>
+              </div>
+              <div style={{ padding:"14px",background:"#eff6ff",borderRadius:12,border:"0.5px solid #bfdbfe" }}>
+                <div style={{ fontSize:11,color:"#1e40af",fontWeight:600 }}>เฉลี่ยต่อ case</div>
+                <div style={{ fontSize:28,fontWeight:800,color:"#1e40af",marginTop:4,lineHeight:1 }}>
+                  {psgCases.length>0?(psgRevenue/psgCases.length).toLocaleString(undefined,{maximumFractionDigits:0}):"—"}
+                </div>
+                <div style={{ fontSize:11,color:"#1e40af",opacity:.7,marginTop:3 }}>บาท/case</div>
+              </div>
+            </div>
+            {/* Per hospital */}
+            <div style={{ display:"flex",flexDirection:"column",gap:7 }}>
+              {hospitals.map(h=>{
+                const cnt=psgCases.filter(a=>a.hospId===h.id).length;
+                if(!cnt) return null;
+                const price=h.psgPrice||5800;
+                const rev=cnt*price;
+                const c=hc(h.id,hospitals);
+                const pct=Math.round(rev/psgRevenue*100);
+                return (
+                  <div key={h.id} style={{ display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:T.surf,borderRadius:11,border:`0.5px solid ${T.line}` }}>
+                    <span style={{ width:10,height:10,borderRadius:"50%",background:c.dot,flexShrink:0 }}/>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                      <div style={{ fontSize:10,color:T.faint }}>{cnt} case × {price.toLocaleString()} บาท</div>
+                      <div style={{ marginTop:5,height:5,borderRadius:10,background:"#e2e8f0",overflow:"hidden" }}>
+                        <div style={{ width:`${pct}%`,height:"100%",background:"#b45309",borderRadius:10,transition:"width .4s" }}/>
+                      </div>
+                    </div>
+                    <div style={{ textAlign:"right",flexShrink:0 }}>
+                      <div style={{ fontSize:15,fontWeight:800,color:"#92400e" }}>{rev.toLocaleString()} ฿</div>
+                      <div style={{ fontSize:10,color:T.faint }}>{pct}%</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Doctor stats ── (Admin only) */}
+        {user.role==="admin" && (
+          <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:14,display:"flex",alignItems:"center",gap:8 }}>
+              <i className="ti ti-stethoscope" style={{ fontSize:16,color:"#7c3aed" }}></i>
+              สถิติแพทย์อ่านผล
+              {doctorStats.length>0 && (
+                <button onClick={()=>exportDoctorExcel(doctorStats, periodLabel)}
+                  style={{ marginLeft:"auto",padding:"6px 13px",fontSize:12,fontWeight:700,borderRadius:9,background:"#7c3aed",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6 }}>
+                  <i className="ti ti-file-spreadsheet" style={{ fontSize:13 }}></i>Export Excel
+                </button>
+              )}
+            </div>
+            {doctorStats.length===0 ? (
+              <div style={{ textAlign:"center",padding:"20px",color:T.faint,fontSize:13 }}>
+                ยังไม่มีข้อมูลแพทย์อ่านผลในช่วงนี้ — กรอก Sleep Report และเลือกชื่อแพทย์
+              </div>
+            ) : (
+              <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+                {doctorStats.map(ds=>(
+                  <div key={ds.doctor} style={{ display:"flex",alignItems:"center",gap:12,padding:"13px 16px",background:T.surf,borderRadius:12,border:`0.5px solid ${T.line}` }}>
+                    <div style={{ width:44,height:44,borderRadius:"50%",background:"#ede9fe",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                      <i className="ti ti-stethoscope" style={{ fontSize:20,color:"#7c3aed" }}></i>
+                    </div>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:13,fontWeight:700,color:T.navy }}>{ds.doctor}</div>
+                      <div style={{ fontSize:11,color:T.faint,marginTop:1 }}>ว. {ds.license}</div>
+                    </div>
+                    <div style={{ textAlign:"center",padding:"8px 16px",background:"#ede9fe",borderRadius:11 }}>
+                      <div style={{ fontSize:26,fontWeight:800,color:"#7c3aed",lineHeight:1 }}>{ds.cases.length}</div>
+                      <div style={{ fontSize:10,color:"#7c3aed",opacity:.75,marginTop:2 }}>case</div>
+                    </div>
+                  </div>
+                ))}
+                {/* Grand total */}
+                <div style={{ display:"flex",justifyContent:"space-between",padding:"10px 16px",background:"#f5f3ff",borderRadius:11,border:"0.5px solid #ddd6fe" }}>
+                  <span style={{ fontSize:13,fontWeight:700,color:"#5b21b6" }}>รวมทั้งหมด</span>
+                  <span style={{ fontSize:14,fontWeight:800,color:"#5b21b6" }}>{doctorStats.reduce((s,d)=>s+d.cases.length,0)} case</span>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
