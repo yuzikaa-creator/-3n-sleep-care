@@ -16,12 +16,12 @@ const INIT_HOSPITALS = [
 ];
 
 const INIT_TECHS = [
-  { id:"st1", name:"ฐิติชญาน์ วุฒิศรัณย์พร", nick:"ฐิติ"  },
-  { id:"st2", name:"ธิติพันธ์ หนองสระ",       nick:"ธิติ"  },
-  { id:"st3", name:"ชนภา สังข์ช่วย",          nick:"ชนภา" },
-  { id:"st4", name:"เบญจพร จิตต์พุทธคุณ",    nick:"เบญ"  },
-  { id:"st5", name:"มนัสนันท์ กอมาตย์",       nick:"มนัส" },
-  { id:"st6", name:"พจณิชา มูลทอง",           nick:"พจน์" },
+  { id:"st1", name:"ฐิติชญาน์ วุฒิศรัณย์พร", nick:"ฟิล์ม"   },
+  { id:"st2", name:"ธิติพันธ์ หนองสระ",       nick:"ตั้ม"    },
+  { id:"st3", name:"ชนภา สังข์ช่วย",          nick:"แอน"    },
+  { id:"st4", name:"เบญจพร จิตต์พุทธคุณ",    nick:"ข้าวฟ่าง"},
+  { id:"st5", name:"มนัสนันท์ กอมาตย์",       nick:"เอิร์น 1"},
+  { id:"st6", name:"พจณิชา มูลทอง",           nick:"เอิร์น 2"},
 ];
 
 const INIT_USERS = [
@@ -1099,225 +1099,208 @@ const RECOMMENDATIONS = [
 ];
 
 const BLANK_REPORT = {
-  testDate:"", testType:"HST", techName:"",
-  ahi:"", ahiSupine:"", ahiNonSupine:"",
-  odi:"", spo2Min:"", spo2Mean:"", timeBelow90:"",
-  ahiLevel:"", sleepEfficiency:"", remLatency:"",
-  position:"", totalSleepTime:"",
-  diagnosis:"", recommendation:[], cpapPressure:"", doctorName:"", doctorNote:"",
-  pdfFileName:"", pdfNote:"",
-  sharedWithHosps:[], // รพ. ที่เห็นรายงานนี้
+  ahiLevel:"", ahi:"", doctorName:"", notes:"",
+  pdfFileName:"", pdfDataUrl:"", sharedWithHosps:[],
 };
 
-function SleepReportModal({ appt, hosp, hosp: _h, hospitals=[], onClose, onSave }) {
-  const saved = appt.sleepReport || BLANK_REPORT;
-  const [r, setR] = useState({ ...BLANK_REPORT, sharedWithHosps:[], ...saved });
-  const set = (k,v) => setR(prev=>({...prev,[k]:v}));
-  const toggleRec  = (val) => setR(prev=>({ ...prev, recommendation:    prev.recommendation.includes(val)    ? prev.recommendation.filter(x=>x!==val)    : [...prev.recommendation, val]    }));
-  const toggleHosp = (id)  => setR(prev=>({ ...prev, sharedWithHosps: (prev.sharedWithHosps||[]).includes(id) ? (prev.sharedWithHosps||[]).filter(x=>x!==id) : [...(prev.sharedWithHosps||[]), id] }));
+// ── Sleep Report Modal — Admin fills AHI + PDF, Hospital sees AHI + opens PDF ─
+function SleepReportModal({ appt, hosp, hospitals=[], onClose, onSave }) {
+  const saved = appt.sleepReport || {};
+  const [ahiLevel,        setAhiLevel]        = useState(saved.ahiLevel        || "");
+  const [ahi,             setAhi]              = useState(saved.ahi             || "");
+  const [doctorName,      setDoctorName]       = useState(saved.doctorName      || "");
+  const [notes,           setNotes]            = useState(saved.notes           || "");
+  const [pdfFileName,     setPdfFileName]      = useState(saved.pdfFileName     || "");
+  const [pdfDataUrl,      setPdfDataUrl]       = useState(saved.pdfDataUrl      || "");
+  const [sharedWithHosps, setSharedWithHosps]  = useState(saved.sharedWithHosps|| []);
+  const [pdfLoading,      setPdfLoading]       = useState(false);
+  const [pdfError,        setPdfError]         = useState("");
 
-  const printReport = () => {
-    const w = window.open("","_blank","width=900,height=700");
-    w.document.write(buildPrintHTML(appt, hosp, r));
-    w.document.close();
-    w.focus();
-    setTimeout(()=>w.print(), 400);
+  const toggleHosp = id => setSharedWithHosps(p =>
+    p.includes(id) ? p.filter(x=>x!==id) : [...p, id]
+  );
+
+  const handlePdfUpload = e => {
+    const file = e.target.files?.[0];
+    if(!file) return;
+    if(file.type !== "application/pdf") { setPdfError("กรุณาเลือกไฟล์ .pdf เท่านั้น"); return; }
+    setPdfLoading(true); setPdfError("");
+    const reader = new FileReader();
+    reader.onload = ev => { setPdfDataUrl(ev.target.result); setPdfFileName(file.name); setPdfLoading(false); };
+    reader.onerror = () => { setPdfError("อ่านไฟล์ไม่สำเร็จ"); setPdfLoading(false); };
+    reader.readAsDataURL(file);
+    e.target.value = "";
   };
 
-  const saveAndClose = () => { onSave(r); onClose(); };
+  const openPdf = () => {
+    if(!pdfDataUrl) return;
+    const w = window.open("","_blank");
+    w.document.write(`<!DOCTYPE html><html><head><title>${pdfFileName}</title><style>body{margin:0;background:#333}</style></head><body><iframe src="${pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+    w.document.close();
+  };
+
+  const saveAndClose = () => {
+    onSave({ ahiLevel, ahi, doctorName, notes, pdfFileName, pdfDataUrl, sharedWithHosps });
+    onClose();
+  };
+
+  const lvl = AHI_LEVELS.find(l=>l.key===ahiLevel);
+  const IS2 = { width:"100%", padding:"10px 13px", fontSize:13, border:"1.5px solid #e2e8f0", borderRadius:10, outline:"none", background:"white", color:"#0f172a", fontFamily:FONT, boxSizing:"border-box" };
 
   return (
-    <div style={{ position:"fixed", inset:0, zIndex:200, background:"rgba(0,0,0,.5)", display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
-      onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}>
-      <div style={{ width:"100%", maxWidth:700, maxHeight:"90vh", background:"white", borderRadius:20, overflow:"hidden", display:"flex", flexDirection:"column", fontFamily:FONT }}>
+    <div onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}
+      style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.75)", display:"flex", alignItems:"center", justifyContent:"center", padding:12, fontFamily:FONT }}>
+      <div style={{ width:"100%", maxWidth:560, maxHeight:"92vh", background:"#ffffff", borderRadius:20, overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 32px 80px rgba(0,0,0,.45)" }}>
 
         {/* Header */}
-        <div style={{ padding:"18px 24px", background:`linear-gradient(135deg,#0c1445,#1d4ed8)`, display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-            <div style={{ width:42, height:42, borderRadius:12, background:"rgba(255,255,255,.15)", display:"flex", alignItems:"center", justifyContent:"center" }}>
-              <i className="ti ti-report-medical" style={{ fontSize:22, color:"white" }}></i>
-            </div>
-            <div>
-              <div style={{ fontSize:16, fontWeight:800, color:"white" }}>Sleep Test Report</div>
-              <div style={{ fontSize:12, color:"rgba(255,255,255,.65)", marginTop:2 }}>{appt.name} · HN {appt.hn} · {hosp?.name}</div>
-            </div>
+        <div style={{ padding:"16px 20px", background:"linear-gradient(135deg,#0c1445,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
+          <div>
+            <div style={{ fontSize:15, fontWeight:800, color:"white" }}>Sleep Test Report</div>
+            <div style={{ fontSize:11, color:"rgba(255,255,255,.65)", marginTop:2 }}>{appt.name} · HN {appt.hn} · {hosp?.name}</div>
           </div>
-          <div style={{ display:"flex", gap:8 }}>
-            <button onClick={printReport} style={{ padding:"8px 16px", fontSize:12, fontWeight:700, borderRadius:10, background:"rgba(255,255,255,.15)", color:"white", border:"1px solid rgba(255,255,255,.3)", cursor:"pointer", display:"flex", alignItems:"center", gap:6, fontFamily:FONT }}>
-              <i className="ti ti-printer" style={{ fontSize:14 }}></i> Print / PDF
-            </button>
-            <button onClick={onClose} style={{ width:34, height:34, borderRadius:9, background:"rgba(255,255,255,.1)", border:"none", color:"white", cursor:"pointer", fontSize:18, display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
-          </div>
+          <button onClick={onClose} style={{ width:30,height:30,borderRadius:8,background:"rgba(255,255,255,.15)",border:"none",color:"white",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center",lineHeight:1 }}>×</button>
         </div>
 
         {/* Body */}
-        <div style={{ flex:1, overflowY:"auto", padding:"20px 24px", display:"flex", flexDirection:"column", gap:20 }}>
+        <div style={{ flex:1, overflowY:"auto", padding:"18px 20px", display:"flex", flexDirection:"column", gap:18 }}>
 
-          {/* Section: ข้อมูลการตรวจ */}
-          <Section title="ข้อมูลการตรวจ" icon="ti-clipboard">
-            <Grid2>
-              <Field label="วันที่ตรวจ"><input type="date" value={r.testDate} onChange={e=>set("testDate",e.target.value)} style={IS}/></Field>
-              <Field label="ประเภทการตรวจ">
-                <select value={r.testType} onChange={e=>set("testType",e.target.value)} style={IS}>
-                  <option>HST</option><option>PSG (In-lab)</option><option>Attended PSG</option>
-                </select>
-              </Field>
-              <Field label="Sleep Technician"><input value={r.techName} onChange={e=>set("techName",e.target.value)} placeholder="ชื่อ Tech" style={IS}/></Field>
-              <Field label="แพทย์ผู้อ่านผล"><input value={r.doctorName} onChange={e=>set("doctorName",e.target.value)} placeholder="นพ./พญ." style={IS}/></Field>
-            </Grid2>
-          </Section>
-
-          {/* Section: ผลการตรวจหลัก */}
-          <Section title="ผลการตรวจ AHI & Oxygen" icon="ti-activity">
-            <Grid3>
-              <Field label="AHI (รวม)"><NumInput value={r.ahi} onChange={v=>set("ahi",v)} unit="events/hr"/></Field>
-              <Field label="AHI Supine"><NumInput value={r.ahiSupine} onChange={v=>set("ahiSupine",v)} unit="events/hr"/></Field>
-              <Field label="AHI Non-supine"><NumInput value={r.ahiNonSupine} onChange={v=>set("ahiNonSupine",v)} unit="events/hr"/></Field>
-              <Field label="ODI"><NumInput value={r.odi} onChange={v=>set("odi",v)} unit="events/hr"/></Field>
-              <Field label="SpO₂ Min"><NumInput value={r.spo2Min} onChange={v=>set("spo2Min",v)} unit="%"/></Field>
-              <Field label="SpO₂ Mean"><NumInput value={r.spo2Mean} onChange={v=>set("spo2Mean",v)} unit="%"/></Field>
-              <Field label="Time < 90% SpO₂"><NumInput value={r.timeBelow90} onChange={v=>set("timeBelow90",v)} unit="นาที"/></Field>
-              <Field label="Total Sleep Time"><NumInput value={r.totalSleepTime} onChange={v=>set("totalSleepTime",v)} unit="นาที"/></Field>
-              <Field label="Sleep Efficiency"><NumInput value={r.sleepEfficiency} onChange={v=>set("sleepEfficiency",v)} unit="%"/></Field>
-            </Grid3>
-          </Section>
-
-          {/* Section: AHI Level */}
-          <Section title="AHI Level — ระดับความรุนแรง" icon="ti-activity">
-            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:12 }}>
+          {/* AHI Level selector */}
+          <div>
+            <div style={{ fontSize:12, fontWeight:700, color:"#0f172a", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+              <i className="ti ti-activity" style={{ fontSize:14, color:T.blue }}></i>
+              AHI Level — ระดับความรุนแรง
+              {lvl && <span style={{ marginLeft:"auto", fontSize:11, padding:"2px 10px", borderRadius:10, background:lvl.color, color:"white", fontWeight:600 }}>เลือกแล้ว: {lvl.label}</span>}
+            </div>
+            <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
               {AHI_LEVELS.map(lv=>{
-                const on = r.ahiLevel===lv.key;
+                const on = ahiLevel===lv.key;
                 return (
-                  <div key={lv.key} onClick={()=>set("ahiLevel",lv.key)} style={{ padding:"12px 16px", borderRadius:12, cursor:"pointer", border: on?`2px solid ${lv.color}`:`1px solid #e2e8f0`, background: on?lv.bg:"#f8fafc", transition:"all .15s", display:"flex", alignItems:"center", gap:12 }}>
-                    <div style={{ width:14, height:14, borderRadius:"50%", background:on?lv.color:"#cbd5e1", flexShrink:0, transition:"all .15s" }}/>
+                  <div key={lv.key} onClick={()=>setAhiLevel(lv.key)}
+                    style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", borderRadius:11, cursor:"pointer",
+                      border: on ? `2px solid ${lv.color}` : "1.5px solid #e2e8f0",
+                      background: on ? lv.bg : "#f8fafc", transition:"all .1s" }}>
+                    <div style={{ width:16, height:16, borderRadius:"50%", background:on?lv.color:"#cbd5e1", flexShrink:0, border:`2px solid ${on?lv.color:"#e2e8f0"}`, transition:"all .1s" }}/>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:700, color:on?lv.color:"#64748b" }}>{lv.label}</div>
-                      <div style={{ fontSize:11, color:on?lv.color:"#94a3b8", marginTop:2 }}>{lv.desc}</div>
+                      <div style={{ fontSize:13, fontWeight:on?700:500, color:on?lv.color:"#334155" }}>{lv.label}</div>
+                      <div style={{ fontSize:11, color:on?lv.color:"#94a3b8", marginTop:1 }}>{lv.desc}</div>
                     </div>
-                    <span style={{ fontSize:11, padding:"3px 9px", borderRadius:10, background:on?lv.color:"#e2e8f0", color:on?"white":"#94a3b8", fontWeight:600, flexShrink:0 }}>{lv.range}</span>
+                    <span style={{ fontSize:11, padding:"2px 9px", borderRadius:8, background:on?lv.color:"#e2e8f0", color:on?"white":"#94a3b8", fontWeight:600, flexShrink:0 }}>{lv.range}</span>
                   </div>
                 );
               })}
             </div>
-            <Grid2>
-              <Field label="ท่านอนที่มีผล">
-                <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
-                  {POSITIONS.map(p=>(
-                    <div key={p} onClick={()=>set("position",p)} style={{ padding:"6px 13px", fontSize:12, borderRadius:20, cursor:"pointer", fontWeight:r.position===p?700:400, border:r.position===p?`1.5px solid ${T.blue}`:`1px solid #e2e8f0`, background:r.position===p?T.blueL:"#f8fafc", color:r.position===p?T.blue:T.muted }}>{p}</div>
-                  ))}
-                </div>
-              </Field>
-            </Grid2>
-          </Section>
+          </div>
 
-          {/* Section: แนบ PDF รายงาน */}
-          <Section title="แนบไฟล์ PDF รายงาน" icon="ti-file-type-pdf">
-            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
-              <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:9, padding:"18px", borderRadius:12, border:`2px dashed ${r.pdfFileName?"#059669":"#cbd5e1"}`, background:r.pdfFileName?"#f0fdf4":"#f8fafc", cursor:"pointer", transition:"all .15s" }}>
-                <i className={`ti ${r.pdfFileName?"ti-file-check":"ti-upload"}`} style={{ fontSize:22, color:r.pdfFileName?"#059669":"#94a3b8" }}></i>
-                <div style={{ textAlign:"center" }}>
-                  {r.pdfFileName
-                    ? <><div style={{ fontSize:13, fontWeight:700, color:"#059669" }}>{r.pdfFileName}</div><div style={{ fontSize:11, color:"#059669", marginTop:2 }}>แนบไฟล์แล้ว — กดเพื่อเปลี่ยน</div></>
-                    : <><div style={{ fontSize:13, fontWeight:600, color:"#64748b" }}>คลิกเพื่อเลือกไฟล์ PDF</div><div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>รองรับ .pdf เท่านั้น</div></>
-                  }
-                </div>
-                <input type="file" accept=".pdf" onChange={e=>{ const f=e.target.files?.[0]; if(f) set("pdfFileName",f.name); e.target.value=""; }} style={{ display:"none" }}/>
-              </label>
-              {r.pdfFileName&&(
-                <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 13px", background:"#f0fdf4", borderRadius:10, border:"1px solid #86efac" }}>
-                  <i className="ti ti-file-type-pdf" style={{ fontSize:18, color:"#059669", flexShrink:0 }}></i>
-                  <span style={{ flex:1, fontSize:13, color:"#166534", fontWeight:600 }}>{r.pdfFileName}</span>
-                  <button onClick={()=>set("pdfFileName","")} style={{ fontSize:12, padding:"3px 10px", borderRadius:7, border:"1px solid #86efac", background:"white", color:"#dc2626", cursor:"pointer" }}>ลบ</button>
-                </div>
-              )}
-              <Field label="หมายเหตุไฟล์ PDF">
-                <input value={r.pdfNote||""} onChange={e=>set("pdfNote",e.target.value)} placeholder="เช่น Full PSG Report ฉบับสมบูรณ์" style={IS}/>
-              </Field>
+          {/* AHI value + Doctor */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:600, color:"#64748b", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>ค่า AHI (events/hr)</div>
+              <input type="number" value={ahi} onChange={e=>setAhi(e.target.value)} placeholder="เช่น 38.8" style={{ ...IS2, fontSize:16, fontWeight:700, color:"#0f172a" }}
+                onFocus={e=>e.target.style.borderColor=T.blue} onBlur={e=>e.target.style.borderColor="#e2e8f0"}/>
             </div>
-          </Section>
-
-          {/* Section: การวินิจฉัย */}
-          <Section title="การวินิจฉัย" icon="ti-stethoscope">
-            <Field label="การวินิจฉัย (Diagnosis)" full>
-              <textarea value={r.diagnosis} onChange={e=>set("diagnosis",e.target.value)} rows={2} placeholder="Obstructive Sleep Apnea, Moderate severity..." style={{ ...IS, resize:"vertical", height:60 }}/>
-            </Field>
-          </Section>
-          <Section title="คำแนะนำ & การรักษา" icon="ti-heart-rate-monitor">
-            <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:12 }}>
-              {RECOMMENDATIONS.map(rec=>{
-                const on = r.recommendation.includes(rec);
-                return <div key={rec} onClick={()=>toggleRec(rec)} style={{ padding:"7px 14px", fontSize:12, borderRadius:20, cursor:"pointer", fontWeight:on?700:400, border:on?`2px solid #7c3aed`:`1px solid #e2e8f0`, background:on?"#ede9fe":"#f8fafc", color:on?"#5b21b6":T.muted, display:"flex", alignItems:"center", gap:6, transition:"all .1s" }}>
-                  {on && <i className="ti ti-check" style={{ fontSize:11 }}></i>}{rec}
-                </div>;
-              })}
+            <div>
+              <div style={{ fontSize:11, fontWeight:600, color:"#64748b", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>แพทย์ผู้อ่านผล</div>
+              <input value={doctorName} onChange={e=>setDoctorName(e.target.value)} placeholder="พญ./นพ. ..." style={IS2}
+                onFocus={e=>e.target.style.borderColor=T.blue} onBlur={e=>e.target.style.borderColor="#e2e8f0"}/>
             </div>
-            <Grid2>
-              <Field label="CPAP Pressure (ถ้ามี)"><NumInput value={r.cpapPressure} onChange={v=>set("cpapPressure",v)} unit="cmH₂O"/></Field>
-            </Grid2>
-            <Field label="หมายเหตุแพทย์" full>
-              <textarea value={r.doctorNote} onChange={e=>set("doctorNote",e.target.value)} rows={3} placeholder="บันทึกเพิ่มเติมจากแพทย์..." style={{ ...IS, resize:"vertical", height:70 }}/>
-            </Field>
-          </Section>
+          </div>
 
-          {/* Section: เลือก รพ. ที่เห็นรายงานนี้ */}
-          {hospitals.length>0 && (
-            <Section title="เลือก รพ. ที่เห็นรายงานนี้ได้" icon="ti-building-hospital">
-              <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
-                {/* ปุ่ม Select All / Clear */}
-                <div style={{ display:"flex", gap:8, marginBottom:4 }}>
-                  <button onClick={()=>setR(p=>({...p,sharedWithHosps:hospitals.map(h=>h.id)}))}
-                    style={{ fontSize:11,padding:"4px 11px",borderRadius:8,border:`0.5px solid ${T.line}`,background:T.card,color:T.blue,cursor:"pointer",fontFamily:FONT,fontWeight:500 }}>
-                    เลือกทั้งหมด
-                  </button>
-                  <button onClick={()=>setR(p=>({...p,sharedWithHosps:[]}))}
-                    style={{ fontSize:11,padding:"4px 11px",borderRadius:8,border:`0.5px solid ${T.line}`,background:T.card,color:T.muted,cursor:"pointer",fontFamily:FONT }}>
-                    ยกเลิกทั้งหมด
-                  </button>
-                  <span style={{ fontSize:11,color:T.faint,alignSelf:"center" }}>
-                    {(r.sharedWithHosps||[]).length}/{hospitals.length} รพ. ที่เลือก
-                  </span>
+          {/* Notes */}
+          <div>
+            <div style={{ fontSize:11, fontWeight:600, color:"#64748b", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>หมายเหตุสำหรับ รพ.</div>
+            <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
+              placeholder="เช่น CPAP 9 cmH₂O, แนะนำลดน้ำหนัก..."
+              style={{ ...IS2, resize:"vertical" }}
+              onFocus={e=>e.target.style.borderColor=T.blue} onBlur={e=>e.target.style.borderColor="#e2e8f0"}/>
+          </div>
+
+          {/* PDF Upload */}
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:"#0f172a", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+              <i className="ti ti-file-type-pdf" style={{ fontSize:16, color:"#dc2626" }}></i>
+              แนบไฟล์ PDF รายงาน
+              <span style={{ fontSize:10, color:"#94a3b8", fontWeight:400 }}>(รพ. จะเปิดและปริ้นท์จากไฟล์นี้)</span>
+            </div>
+            {pdfDataUrl ? (
+              <div style={{ padding:"14px 16px", background:"#f0fdf4", borderRadius:12, border:"1.5px solid #86efac", display:"flex", alignItems:"center", gap:12 }}>
+                <i className="ti ti-file-check" style={{ fontSize:28, color:"#059669", flexShrink:0 }}></i>
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:"#166534", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{pdfFileName}</div>
+                  <div style={{ fontSize:11, color:"#059669", marginTop:2 }}>แนบไฟล์แล้ว ✓  รพ. สามารถเปิดและปริ้นท์ได้</div>
                 </div>
-                {/* Hospital checklist */}
-                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7 }}>
-                  {hospitals.map(h=>{
-                    const on = (r.sharedWithHosps||[]).includes(h.id);
-                    const c  = hc(h.id, hospitals);
-                    return (
-                      <div key={h.id} onClick={()=>toggleHosp(h.id)}
-                        style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 13px", borderRadius:11, cursor:"pointer", border: on?`1.5px solid ${c.dot}`:`0.5px solid #e2e8f0`, background: on?c.bg:"#f8fafc", transition:"all .15s" }}>
-                        {/* Checkbox */}
-                        <div style={{ width:20, height:20, borderRadius:6, border: on?`2px solid ${c.dot}`:`1.5px solid #cbd5e1`, background: on?c.dot:"white", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all .15s" }}>
-                          {on && <i className="ti ti-check" style={{ fontSize:12, color:"white" }}></i>}
-                        </div>
-                        <div style={{ flex:1, minWidth:0 }}>
-                          <div style={{ fontSize:12, fontWeight:on?700:400, color:on?c.text:"#64748b", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{h.name}</div>
-                          <div style={{ fontSize:10, color:on?c.text:"#94a3b8", opacity:.8 }}>{h.city||h.type}</div>
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div style={{ display:"flex", gap:6, flexShrink:0 }}>
+                  <button onClick={openPdf} style={{ padding:"7px 13px", fontSize:11, fontWeight:700, borderRadius:8, background:"#059669", color:"white", border:"none", cursor:"pointer" }}>
+                    <i className="ti ti-external-link" style={{ marginRight:4, fontSize:11 }}></i>เปิดดู
+                  </button>
+                  <button onClick={()=>{ setPdfDataUrl(""); setPdfFileName(""); }} style={{ padding:"7px 11px", fontSize:11, borderRadius:8, border:"1px solid #86efac", background:"white", color:"#dc2626", cursor:"pointer" }}>ลบ</button>
                 </div>
               </div>
-            </Section>
+            ) : (
+              <label style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8, padding:"24px", borderRadius:12,
+                border: pdfLoading ? "2px dashed #93c5fd" : "2px dashed #cbd5e1",
+                background: pdfLoading ? "#eff6ff" : "#f8fafc", cursor:"pointer", transition:"all .15s" }}>
+                {pdfLoading
+                  ? <><i className="ti ti-loader-2" style={{ fontSize:32, color:T.blue }}></i><div style={{ fontSize:13, color:T.blue, fontWeight:600 }}>กำลังอ่านไฟล์...</div></>
+                  : <><i className="ti ti-upload" style={{ fontSize:32, color:"#94a3b8" }}></i>
+                     <div style={{ fontSize:13, fontWeight:600, color:"#475569" }}>คลิกเพื่อเลือกไฟล์ PDF</div>
+                     <div style={{ fontSize:11, color:"#94a3b8" }}>รองรับ .pdf เท่านั้น (ไฟล์จะเก็บในระบบ)</div></>
+                }
+                <input type="file" accept=".pdf,application/pdf" onChange={handlePdfUpload} style={{ display:"none" }}/>
+              </label>
+            )}
+            {pdfError && <div style={{ marginTop:6, fontSize:12, color:"#dc2626", display:"flex", alignItems:"center", gap:5 }}><i className="ti ti-alert-circle" style={{ fontSize:13 }}></i>{pdfError}</div>}
+          </div>
+
+          {/* Hospital visibility */}
+          {hospitals.length>0 && (
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, color:"#0f172a", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+                <i className="ti ti-building-hospital" style={{ fontSize:14, color:T.blue }}></i>
+                เลือก รพ. ที่เห็นรายงานนี้ได้
+                <button onClick={()=>setSharedWithHosps(hospitals.map(h=>h.id))} style={{ marginLeft:"auto", fontSize:10, padding:"2px 9px", borderRadius:7, border:`0.5px solid ${T.line}`, background:T.card, color:T.blue, cursor:"pointer" }}>ทั้งหมด</button>
+                <button onClick={()=>setSharedWithHosps([])} style={{ fontSize:10, padding:"2px 9px", borderRadius:7, border:`0.5px solid ${T.line}`, background:T.card, color:T.muted, cursor:"pointer" }}>ยกเลิก</button>
+              </div>
+              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:6 }}>
+                {hospitals.map(h=>{
+                  const on = sharedWithHosps.includes(h.id);
+                  const c = hc(h.id, hospitals);
+                  return (
+                    <div key={h.id} onClick={()=>toggleHosp(h.id)}
+                      style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 11px", borderRadius:9, cursor:"pointer",
+                        border: on ? `1.5px solid ${c.dot}` : "0.5px solid #e2e8f0",
+                        background: on ? c.bg : "#f8fafc", transition:"all .1s" }}>
+                      <div style={{ width:18,height:18,borderRadius:5,border:on?`2px solid ${c.dot}`:"1.5px solid #cbd5e1",background:on?c.dot:"white",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                        {on && <i className="ti ti-check" style={{ fontSize:10, color:"white" }}></i>}
+                      </div>
+                      <span style={{ fontSize:12, fontWeight:on?700:400, color:on?c.text:"#475569", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{h.name}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
 
         {/* Footer */}
-        <div style={{ padding:"14px 24px", borderTop:`1px solid #e2e8f0`, display:"flex", gap:10, background:"#f8fafc" }}>
-          <button onClick={saveAndClose} style={{ flex:1, padding:"12px", fontSize:14, fontWeight:700, borderRadius:11, background:T.blue, color:"white", border:"none", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
-            <i className="ti ti-device-floppy" style={{ fontSize:16 }}></i> บันทึก Report
+        <div style={{ padding:"12px 20px", borderTop:"1px solid #e2e8f0", display:"flex", gap:8, background:"#f8fafc", flexShrink:0 }}>
+          <button onClick={saveAndClose} disabled={!ahiLevel}
+            style={{ flex:1, padding:"11px", fontSize:13, fontWeight:700, borderRadius:10, background:ahiLevel?T.blue:"#e2e8f0", color:ahiLevel?"white":"#94a3b8", border:"none", cursor:ahiLevel?"pointer":"not-allowed", fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+            <i className="ti ti-device-floppy" style={{ fontSize:15 }}></i> บันทึก Report
           </button>
-          <button onClick={printReport} style={{ padding:"12px 20px", fontSize:13, fontWeight:700, borderRadius:11, background:"#059669", color:"white", border:"none", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", gap:7 }}>
-            <i className="ti ti-printer" style={{ fontSize:15 }}></i> Print PDF
-          </button>
-          <button onClick={onClose} style={{ padding:"12px 18px", fontSize:13, fontWeight:600, borderRadius:11, background:"transparent", color:T.muted, border:`1.5px solid #e2e8f0`, cursor:"pointer", fontFamily:FONT }}>ปิด</button>
+          {pdfDataUrl && (
+            <button onClick={openPdf}
+              style={{ padding:"11px 16px", fontSize:13, fontWeight:700, borderRadius:10, background:"#dc2626", color:"white", border:"none", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", gap:6 }}>
+              <i className="ti ti-printer" style={{ fontSize:14 }}></i> Print PDF
+            </button>
+          )}
+          <button onClick={onClose} style={{ padding:"11px 14px", fontSize:12, borderRadius:10, background:"transparent", color:T.muted, border:"1px solid #e2e8f0", cursor:"pointer", fontFamily:FONT }}>ปิด</button>
         </div>
       </div>
     </div>
   );
 }
 
-// sub-components for report form
+// sub-components (ยังใช้อยู่บางส่วน)
 const IS = { width:"100%", padding:"9px 12px", fontSize:13, border:"1.5px solid #e2e8f0", borderRadius:10, outline:"none", background:"white", color:"#0f172a", fontFamily:"inherit", boxSizing:"border-box" };
 function Section({ title, icon, children }) {
   return (
@@ -1340,105 +1323,6 @@ function NumInput({ value, onChange, unit }) {
       {unit && <span style={{ fontSize:11, color:T.faint, whiteSpace:"nowrap" }}>{unit}</span>}
     </div>
   );
-}
-
-function buildPrintHTML(appt, hosp, r) {
-  const fmtDate2 = s => { if(!s) return "—"; const d=new Date(s); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`; };
-  const today = new Date(); const todayTH = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()+543}`;
-  const ahi = parseFloat(r.ahi)||0;
-  const sev = r.ahiLevel || (ahi<5?"ปกติ":ahi<15?"Mild":ahi<30?"Moderate":"Severe");
-
-  return `<!DOCTYPE html><html><head><meta charset="UTF-8">
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600;700;800&display=swap');
-  *{margin:0;padding:0;box-sizing:border-box}
-  body{font-family:'Sarabun',sans-serif;font-size:13px;color:#0f172a;background:white;padding:0}
-  .page{width:210mm;min-height:297mm;padding:14mm 16mm;margin:0 auto}
-  .header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:12px;border-bottom:3px solid #1d4ed8;margin-bottom:16px}
-  .logo-block{display:flex;align-items:center;gap:12px}
-  .logo-box{width:48px;height:48px;background:#0c1445;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:20px;font-weight:900}
-  .title{font-size:22px;font-weight:800;color:#0c1445;letter-spacing:-0.02em}
-  .subtitle{font-size:12px;color:#64748b;margin-top:2px}
-  .badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700}
-  .patient-box{background:#f1f5f9;border-radius:12px;padding:14px 18px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px 20px;margin-bottom:16px}
-  .pf label{font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:.05em;font-weight:600}
-  .pf .val{font-size:14px;font-weight:700;color:#0f172a;margin-top:2px}
-  .section{margin-bottom:14px}
-  .section-title{font-size:13px;font-weight:700;color:#1d4ed8;padding:8px 14px;background:#eff6ff;border-left:4px solid #1d4ed8;border-radius:0 8px 8px 0;margin-bottom:10px}
-  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .stat{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 13px;text-align:center}
-  .stat .sv{font-size:22px;font-weight:800;color:#0c1445;line-height:1}
-  .stat .su{font-size:10px;color:#64748b;margin-top:3px}
-  .stat .sl{font-size:10px;color:#94a3b8;margin-top:1px}
-  .sev{text-align:center;padding:14px;border-radius:12px;margin-bottom:12px}
-  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-  .tag{padding:5px 12px;border-radius:20px;font-size:11px;font-weight:600;background:#ede9fe;color:#5b21b6}
-  .note-box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:11px 14px;font-size:13px;line-height:1.7;min-height:50px;color:#1e293b}
-  .footer{margin-top:20px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8}
-  .sig{text-align:right}
-  .sig .sig-line{width:160px;border-bottom:1px solid #cbd5e1;margin-bottom:4px;height:30px}
-  @media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.page{padding:10mm 14mm}}
-</style></head><body><div class="page">
-
-<div class="header">
-  <div class="logo-block">
-    <div class="logo-box">3N</div>
-    <div>
-      <div class="title">Sleep Test Report</div>
-      <div class="subtitle">3N Sleep Care · Sleep Healthcare & Respiratory Care · www.3nthailand.com</div>
-    </div>
-  </div>
-  <div style="text-align:right">
-    <div style="font-size:11px;color:#94a3b8">วันที่พิมพ์: ${todayTH}</div>
-    <div style="font-size:11px;color:#94a3b8;margin-top:3px">วันที่ตรวจ: ${fmtDate2(r.testDate)}</div>
-    <div style="margin-top:6px"><span class="badge" style="background:${sev.includes("Severe")?"#fee2e2":sev.includes("Moderate")?"#fef9c3":sev.includes("Mild")?"#fde68a":"#d1fae5"};color:${sev.includes("Severe")?"#991b1b":sev.includes("Moderate")?"#92400e":sev.includes("Mild")?"#92400e":"#065f46"}">${sev||"—"}</span></div>
-  </div>
-</div>
-
-<div class="patient-box">
-  <div class="pf"><label>ชื่อ-นามสกุล</label><div class="val">${appt.name}</div></div>
-  <div class="pf"><label>HN</label><div class="val">${appt.hn}</div></div>
-  <div class="pf"><label>เบอร์โทร</label><div class="val">${appt.phone||"—"}</div></div>
-  <div class="pf"><label>โรงพยาบาล</label><div class="val">${hosp?.name||"—"}</div></div>
-  <div class="pf"><label>ประเภทการตรวจ</label><div class="val">${r.testType||"HST"}</div></div>
-  <div class="pf"><label>Sleep Technician</label><div class="val">${r.techName||"—"}</div></div>
-</div>
-
-<div class="section">
-  <div class="section-title">ผลการตรวจ AHI & Oxygenation</div>
-  <div class="grid3">
-    ${[["AHI รวม",r.ahi,"events/hr","ค่าหลัก"],["AHI Supine",r.ahiSupine,"events/hr",""],["AHI Non-supine",r.ahiNonSupine,"events/hr",""],["ODI",r.odi,"events/hr",""],["SpO₂ Min",r.spo2Min,"%",""],["SpO₂ Mean",r.spo2Mean,"%",""],["Time < 90%",r.timeBelow90,"นาที",""],["Total Sleep",r.totalSleepTime,"นาที",""],["Sleep Efficiency",r.sleepEfficiency,"%",""]].map(([l,v,u,note])=>`
-    <div class="stat"><div class="sv">${v||"—"}</div><div class="su">${u}</div><div class="sl">${l}${note?" ("+note+")":""}</div></div>`).join("")}
-  </div>
-</div>
-
-<div class="section">
-  <div class="section-title">การวินิจฉัย</div>
-  <div style="margin-bottom:10px">${r.diagnosis?`<div class="note-box">${r.diagnosis}</div>`:`<div style="color:#94a3b8;font-style:italic">ยังไม่มีการวินิจฉัย</div>`}</div>
-  ${r.position?`<div style="font-size:12px;color:#64748b;margin-bottom:6px">ท่านอน: <strong>${r.position}</strong></div>`:""}
-</div>
-
-<div class="section">
-  <div class="section-title">คำแนะนำ & การรักษา</div>
-  ${r.recommendation?.length?`<div class="tags">${r.recommendation.map(rec=>`<span class="tag">${rec}</span>`).join("")}</div>`:"<div style='color:#94a3b8;font-style:italic'>ยังไม่มีคำแนะนำ</div>"}
-  ${r.cpapPressure?`<div style="margin-top:10px;font-size:13px">CPAP Pressure แนะนำ: <strong>${r.cpapPressure} cmH₂O</strong></div>`:""}
-  ${r.doctorNote?`<div style="margin-top:10px"><div class="note-box">${r.doctorNote}</div></div>`:""}
-</div>
-
-<div class="footer">
-  <div>
-    <div>3N Co., Ltd. · ระบบจัดการ Sleep Healthcare</div>
-    <div style="margin-top:2px">พิมพ์เมื่อ ${todayTH} · เอกสารนี้ใช้สำหรับประกอบการรักษาเท่านั้น</div>
-  </div>
-  <div class="sig">
-    <div class="sig-line"></div>
-    <div style="font-size:12px;color:#0f172a;font-weight:600">${r.doctorName||"แพทย์ผู้อ่านผล"}</div>
-    <div style="font-size:10px;color:#94a3b8;margin-top:2px">วันที่ ${todayTH}</div>
-  </div>
-</div>
-
-</div></body></html>`;
 }
 
 // ── Patient Journey ───────────────────────────────────────────────────────────
@@ -1747,15 +1631,76 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[] }) 
         </div>
       )}
 
-      {/* Sleep Report button — show when result_ready or consulted */}
-      {(appt.journeyStatus==="result_ready"||appt.journeyStatus==="consulted") && (appt.apptType||"sleep_test")==="sleep_test" && (
-        <div style={{ marginTop:8, display:"flex", gap:7, alignItems:"center" }}>
-          <button onClick={()=>onUpdate({ _openReport:true })}
-            style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 14px", fontSize:12, fontWeight:700, borderRadius:10, background:appt.sleepReport?"#059669":"#1d4ed8", color:"white", border:"none", cursor:"pointer", fontFamily:FONT }}>
-            <i className={`ti ${appt.sleepReport?"ti-report-medical":"ti-file-plus"}`} style={{ fontSize:14 }}></i>
-            {appt.sleepReport?"ดู Sleep Report":"กรอก Sleep Report"}
-          </button>
-          {appt.sleepReport && <span style={{ fontSize:11, color:"#059669", fontWeight:500 }}>✓ มีผลแล้ว</span>}
+      {/* Sleep Report — Admin: กรอก/แก้ไข | Hospital: เห็น AHI + เปิด PDF */}
+      {(appt.apptType||"sleep_test")==="sleep_test" && (appt.journeyStatus==="result_ready"||appt.journeyStatus==="consulted"||appt.journeyStatus==="tested"||appt.journeyStatus==="waiting_result") && (
+        <div style={{ marginTop:8 }}>
+          {/* Admin: กรอก / แก้ไข report */}
+          {isAdmin && (
+            <div style={{ display:"flex", gap:7, alignItems:"center" }}>
+              <button onClick={()=>onUpdate({ _openReport:true })}
+                style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", fontSize:12, fontWeight:700, borderRadius:10, background:appt.sleepReport?.ahiLevel?"#059669":"#1d4ed8", color:"white", border:"none", cursor:"pointer", fontFamily:FONT }}>
+                <i className={`ti ${appt.sleepReport?.ahiLevel?"ti-edit":"ti-file-plus"}`} style={{ fontSize:14 }}></i>
+                {appt.sleepReport?.ahiLevel ? "แก้ไข Sleep Report" : "กรอก Sleep Report"}
+              </button>
+              {appt.sleepReport?.ahiLevel && (
+                <span style={{ fontSize:11, color:"#059669", fontWeight:500, display:"flex", alignItems:"center", gap:4 }}>
+                  <i className="ti ti-check-circle" style={{ fontSize:13 }}></i>บันทึกแล้ว
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Hospital: เห็น AHI level badge + ปุ่ม Print PDF */}
+          {!isAdmin && appt.sleepReport?.ahiLevel && (() => {
+            const lv = AHI_LEVELS.find(l=>l.key===appt.sleepReport.ahiLevel);
+            const rep = appt.sleepReport;
+            const openPdf = () => {
+              if(!rep.pdfDataUrl) return;
+              const w=window.open("","_blank");
+              w.document.write(`<!DOCTYPE html><html><head><title>${rep.pdfFileName||"Report"}</title><style>body{margin:0;background:#333}</style></head><body><iframe src="${rep.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+              w.document.close();
+            };
+            return (
+              <div style={{ padding:"12px 14px", background: lv?lv.bg:"#f1f5f9", borderRadius:12, border:`1.5px solid ${lv?lv.color:"#e2e8f0"}` }}>
+                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: rep.notes||rep.pdfDataUrl?10:0 }}>
+                  <div style={{ width:36,height:36,borderRadius:"50%",background:lv?lv.color:"#64748b",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                    <i className="ti ti-activity" style={{ fontSize:18, color:"white" }}></i>
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13, fontWeight:800, color:lv?lv.color:"#334155" }}>
+                      {lv?.label||"ผลออกแล้ว"}
+                    </div>
+                    <div style={{ fontSize:11, color:lv?lv.color:"#64748b", marginTop:1 }}>
+                      {rep.ahi ? `AHI = ${rep.ahi} events/hr` : lv?.desc||""}
+                      {rep.doctorName ? ` · ${rep.doctorName}` : ""}
+                    </div>
+                  </div>
+                  {/* Print PDF button */}
+                  {rep.pdfDataUrl ? (
+                    <button onClick={openPdf}
+                      style={{ padding:"8px 14px", fontSize:12, fontWeight:700, borderRadius:9, background:"#dc2626", color:"white", border:"none", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+                      <i className="ti ti-printer" style={{ fontSize:14 }}></i> Print PDF
+                    </button>
+                  ) : (
+                    <span style={{ fontSize:10, color:"#94a3b8", padding:"6px 10px", borderRadius:8, border:"0.5px solid #e2e8f0", background:"white" }}>รอ PDF</span>
+                  )}
+                </div>
+                {rep.notes && (
+                  <div style={{ fontSize:12, color:lv?lv.color:"#475569", padding:"8px 10px", background:"rgba(255,255,255,.6)", borderRadius:8 }}>
+                    <i className="ti ti-notes" style={{ marginRight:5, fontSize:11 }}></i>{rep.notes}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Hospital: ยังไม่มีผล */}
+          {!isAdmin && !appt.sleepReport?.ahiLevel && (
+            <div style={{ padding:"9px 12px", background:"#f1f5f9", borderRadius:10, border:"0.5px solid #e2e8f0", display:"flex", alignItems:"center", gap:7 }}>
+              <i className="ti ti-clock" style={{ fontSize:14, color:T.muted }}></i>
+              <span style={{ fontSize:12, color:T.muted }}>รอผลการตรวจ — Admin กำลังดำเนินการ</span>
+            </div>
+          )}
         </div>
       )}
 
