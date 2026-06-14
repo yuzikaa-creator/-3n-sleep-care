@@ -25,23 +25,45 @@ const INIT_TECHS = [
 ];
 
 const INIT_USERS = [
-  { id:"admin", name:"3N Admin",         role:"admin",    hospId:null },
-  { id:"tech",  name:"Sleep Tech 3N",    role:"tech",     hospId:null },
-  { id:"h1",    name:"รพ. บางปะกอก 8",  role:"hospital", hospId:"h1" },
-  { id:"h4",    name:"รพ. ราษฎร์บูรณะ", role:"hospital", hospId:"h4" },
-  { id:"h7",    name:"รพ. ราชพิพัฒน์",  role:"hospital", hospId:"h7" },
+  { id:"admin",  name:"3N Admin",              role:"admin",    hospId:null },
+  { id:"tech",   name:"Sleep Tech 3N",          role:"tech",     hospId:null },
+  // โรงพยาบาล
+  { id:"h1",     name:"รพ. บางปะกอก 8",         role:"hospital", hospId:"h1" },
+  { id:"h4",     name:"รพ. ราษฎร์บูรณะ",        role:"hospital", hospId:"h4" },
+  { id:"h7",     name:"รพ. ราชพิพัฒน์",         role:"hospital", hospId:"h7" },
 ];
 
 const SAMPLE_APPTS = [
-  { id:"a1", hn:"8-57-012116", name:"น.ส.ไพรินทร์ พูลมี",   phone:"094-728-2968", date:"2026-09-13", hospId:"h1", note:"", apptType:"sleep_test",  journeyStatus:"waiting_result" },
-  { id:"a2", hn:"8-66-005480", name:"นายพิเชษฐ์ แสนสุข",    phone:"098-275-7973", date:"2026-09-18", hospId:"h1", note:"", apptType:"sleep_test",  journeyStatus:"scheduled" },
-  { id:"a3", hn:"8-65-028598", name:"น.ส.ณัฐณา พลจตุรัส",   phone:"081-556-9844", date:"2026-09-10", hospId:"h4", note:"", apptType:"sleep_test",  journeyStatus:"result_ready" },
-  { id:"a4", hn:"8-60-004411", name:"นายสมชาย วงศ์ดี",      phone:"086-123-4567", date:"2026-09-05", hospId:"h7", note:"", apptType:"sleep_test",  journeyStatus:"consulted" },
-  { id:"a5", hn:"8-63-009922", name:"นางมาลี รัตนชัย",      phone:"091-998-8776", date:"2026-09-12", hospId:"h1", note:"", apptType:"sleep_test",  journeyStatus:"tested" },
-  { id:"a6", hn:"8-62-007731", name:"นายณัฐพล จิรายุ",      phone:"088-554-4332", date:"2026-09-22", hospId:"h7", note:"", apptType:"cpap_trial",  journeyStatus:"scheduled" },
-  { id:"a7", hn:"8-61-003312", name:"นายวิชัย สุขสม",       phone:"089-111-2233", date:"2026-09-13", hospId:"h4", note:"", apptType:"sleep_test",  journeyStatus:"scheduled" },
-  { id:"a8", hn:"8-64-005540", name:"น.ส.สุภาพร แก้วใส",    phone:"092-445-6677", date:"2026-09-19", hospId:"h6", note:"", apptType:"cpap_trial",  journeyStatus:"trialed" },
+  // ── มิถุนายน 2026 (ข้อมูลทดสอบ 10 ราย) ──
+  { id:"j01", hn:"10000001", name:"น.ส.ดวงดี ดวงใจ",       phone:"081-100-0001", date:"2026-06-03", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"consulted",      status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j02", hn:"10000002", name:"นายสมชาย มีสุข",         phone:"081-100-0002", date:"2026-06-05", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"split_night", journeyStatus:"result_ready",   status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j03", hn:"10000003", name:"น.ส.สุดา ใจดี",           phone:"081-100-0003", date:"2026-06-05", hospId:"h2", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"waiting_result", status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j04", hn:"10000004", name:"นางวิไล รักดี",           phone:"081-100-0004", date:"2026-06-10", hospId:"h4", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"tested",         status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j05", hn:"10000005", name:"นายมานะ ขยันดี",          phone:"081-100-0005", date:"2026-06-10", hospId:"h4", note:"", apptType:"sleep_test",  sleepTestType:"split_night", journeyStatus:"scheduled",      status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j06", hn:"10000006", name:"น.ส.นภา แจ่มใส",          phone:"081-100-0006", date:"2026-06-12", hospId:"h7", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"result_ready",   status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j07", hn:"10000007", name:"นายประสิทธิ์ สุขสม",      phone:"081-100-0007", date:"2026-06-12", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"consulted",      status:"cancelled", cancelReason:"ผู้ป่วยขอเลื่อน", cancelledAt:"2026-06-10T00:00:00.000Z" },
+  { id:"j08", hn:"10000008", name:"นางสุภาพ เรียบร้อย",      phone:"081-100-0008", date:"2026-06-17", hospId:"h5", note:"", apptType:"cpap_trial",  sleepTestType:"",            journeyStatus:"trialed",        status:"active", cancelReason:"", cancelledAt:null, cpapTrials:[{id:"t1",model:"ResMed AirSense 11 AutoSet",trialDate:"2026-06-17",note:"Pressure Auto"}], cpapDecision:"purchased_after_trial", cpapPurchase:{model:"ResMed AirSense 11 AutoSet",purchaseDate:"2026-06-20",note:"",price:45000,commissionRate:2,salesPerson:"",saleDate:"2026-06-20"} },
+  { id:"j09", hn:"10000009", name:"นายสุรชัย ดีงาม",          phone:"081-100-0009", date:"2026-06-19", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"split_night", journeyStatus:"waiting_result", status:"active", cancelReason:"", cancelledAt:null },
+  { id:"j10", hn:"10000010", name:"น.ส.ปวีณา มงคล",          phone:"081-100-0010", date:"2026-06-24", hospId:"h7", note:"", apptType:"cpap_trial",  sleepTestType:"",            journeyStatus:"received_device",status:"active", cancelReason:"", cancelledAt:null, cpapDecision:"purchase_direct", cpapPurchase:{model:"ResMed AirSense 10 AutoSet",purchaseDate:"2026-06-24",note:"",price:38000,commissionRate:2,salesPerson:"",saleDate:"2026-06-24"} },
 ];
+
+// ข้อมูล assign Tech เดือนมิถุนายน (ทดสอบ)
+const SAMPLE_ASSIGNMENTS = {
+  "2026-06-03":  ["st1","st2"],
+  "2026-06-05":  ["st2","st3"],
+  "2026-06-10":  ["st1","st4"],
+  "2026-06-12":  ["st3","st5"],
+  "2026-06-17":  ["st1","st6"],
+  "2026-06-19":  ["st2","st4"],
+  "2026-06-24":  ["st5","st6"],
+};
+const SAMPLE_CHECKINS = {
+  "2026-06-03":  ["st1","st2"],
+  "2026-06-05":  ["st2"],
+  "2026-06-10":  ["st1","st4"],
+  "2026-06-12":  ["st3"],
+  "2026-06-17":  ["st1"],
+};
 
 const HOSP_TYPE_LABEL = { private_ins:"Private (มีประกัน)", private_noins:"Private (ไม่มีประกัน)", government:"รัฐบาล" };
 const CPOOL = [
@@ -388,7 +410,7 @@ function BlockDayBtn({ dateKey, onBlock }) {
   );
 }
 
-function MonthlySummary({ user, appointments, setAppointments, hospitals, techs, assignments, setAssignments, checkins, setCheckins, dayBlocks, setDayBlocks }) {
+function MonthlySummary({ user, appointments, setAppointments, hospitals, techs, assignments, setAssignments, checkins, setCheckins, dayBlocks, setDayBlocks, salesList=[] }) {
   const today = new Date();
   const [year,  setYear]  = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -555,6 +577,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                       onUpdate={updated=>setAppointments(prev=>prev.map(x=>x.id===a.id?{...x,...updated}:x))}
                       onDelete={()=>setAppointments(prev=>prev.filter(x=>x.id!==a.id))}
                       onBookCpap={src=>setAppointments(prev=>[...prev,{ id:"cpap"+Date.now(), hn:src.hn, name:src.name, phone:src.phone, hospId:src.hospId, date:src.date, note:`[ต่อเนื่องจาก Sleep Test]`, status:"active", apptType:"cpap_trial", journeyStatus:"scheduled", cancelReason:"", cancelledAt:null }])}
+                      salesList={salesList}
                     />
                   );
                 })}
@@ -573,7 +596,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 
                 {/* Assign tech row — hide if blocked */}
                 {!block && (user.role!=="hospital") && (assigned.length>0||appts.length>0) && (
-                  <AssignRow key={key} dateKey={key} techs={techs} assigned={assigned} checked={checked} canEdit={user.role==="admin"} canCheckin={user.role==="tech"||user.role==="admin"} onToggleAssign={id=>toggleAssign(key,id)} onToggleCheckin={id=>toggleCheckin(key,id)} />
+                  <AssignRow key={key} dateKey={key} techs={techs} assigned={assigned} checked={checked} canEdit={user.role==="admin"} canCheckin={user.role==="admin"} onToggleAssign={id=>toggleAssign(key,id)} onToggleCheckin={id=>toggleCheckin(key,id)} />
                 )}
               </div>
             );
@@ -583,6 +606,44 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 
       {/* RIGHT: stats panel */}
       <div style={{ width:272,...FL,flexShrink:0,borderLeft:`1px solid ${T.line}`,background:T.card,overflowY:"auto" }}>
+
+        {/* ── Deadline Alerts (Admin only) ── */}
+        {user.role==="admin" && (() => {
+          const alerts = appointments
+            .map(a=>({ ...a, dl:calcDeadline(a) }))
+            .filter(a=>a.dl && (a.dl.isUrgent||a.dl.isOverdue))
+            .sort((a,b)=>a.dl.remaining-b.dl.remaining);
+          if(!alerts.length) return null;
+          return (
+            <div style={{ padding:"14px 16px", borderBottom:`1px solid ${T.line}`, background:"#fff7ed" }}>
+              <div style={{ fontSize:11,fontWeight:700,color:"#c2410c",display:"flex",alignItems:"center",gap:6,marginBottom:10 }}>
+                <i className="ti ti-bell-ringing" style={{ fontSize:14 }}></i>
+                ใกล้ครบกำหนดออกผล ({alerts.length} ราย)
+              </div>
+              <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+                {alerts.slice(0,5).map(a=>{
+                  const h=hospitals.find(x=>x.id===a.hospId);
+                  const col=a.dl.isOverdue?"#dc2626":"#c2410c";
+                  const bg=a.dl.isOverdue?"#fee2e2":"#fef9c3";
+                  return (
+                    <div key={a.id} style={{ padding:"8px 10px",background:bg,borderRadius:9,border:`1px solid ${col}30` }}>
+                      <div style={{ fontSize:12,fontWeight:700,color:col }}>{a.name}</div>
+                      <div style={{ fontSize:10,color:col,opacity:.8,marginTop:2 }}>HN {a.hn} · {h?.short}</div>
+                      <div style={{ fontSize:10,fontWeight:700,color:col,marginTop:3,display:"flex",alignItems:"center",gap:4 }}>
+                        <i className="ti ti-clock" style={{ fontSize:11 }}></i>
+                        {a.dl.isOverdue
+                          ? `เกินกำหนด ${Math.abs(a.dl.remaining)} วัน!`
+                          : `เหลือ ${a.dl.remaining} วัน (${a.dl.days} วัน)`
+                        }
+                      </div>
+                    </div>
+                  );
+                })}
+                {alerts.length>5 && <div style={{ fontSize:10,color:"#c2410c",textAlign:"center" }}>และอีก {alerts.length-5} ราย...</div>}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* Month stats */}
         <div style={{ padding:"20px 18px 16px",borderBottom:`1px solid ${T.line}` }}>
@@ -637,20 +698,40 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             <div style={{ fontSize:12,color:T.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:".06em",marginBottom:14 }}>Sleep Tech เดือนนี้</div>
             {techs.map((t,i)=>{
               const c=TPOOL[i%TPOOL.length];
-              const myA=Object.entries(assignments).filter(([k,v])=>k.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)&&v.includes(t.id)).length;
-              const myC=Object.entries(checkins).filter(([k,v])=>k.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)&&v.includes(t.id)).length;
+              const pfx=`${year}-${String(month+1).padStart(2,"0")}`;
+              const myA=Object.entries(assignments).filter(([k,v])=>k.startsWith(pfx)&&v.includes(t.id)).length;
+              const myC=Object.entries(checkins).filter(([k,v])=>k.startsWith(pfx)&&v.includes(t.id)).length;
               const pct=myA>0?Math.round(myC/myA*100):0;
+              const myDays=Object.entries(assignments).filter(([k,v])=>k.startsWith(pfx)&&v.includes(t.id)).map(([k])=>k).sort();
               return (
-                <div key={t.id} style={{ marginBottom:16 }}>
-                  <div style={{ ...R,gap:10,marginBottom:7 }}>
-                    <TAvatar tech={t} techs={techs} size={34} />
+                <div key={t.id} style={{ marginBottom:12,padding:"12px 14px",background:T.surf,borderRadius:12,border:`0.5px solid ${T.line}` }}>
+                  <div style={{ ...R,gap:10,marginBottom:6 }}>
+                    <TAvatar tech={t} techs={techs} size={36} />
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13,fontWeight:700,color:T.ink }}>{t.nick}</div>
-                      <div style={{ fontSize:11,color:T.faint,marginTop:1 }}>{myC}/{myA} เวร</div>
+                      <div style={{ fontSize:13,fontWeight:700,color:T.ink }}>{t.name}</div>
+                      <div style={{ fontSize:11,color:T.faint,marginTop:1 }}>{myC}/{myA} เวร ยืนยันแล้ว</div>
                     </div>
                     <span style={{ fontSize:13,fontWeight:800,color:pct===100&&myA>0?T.green:pct>0?T.amber:T.faint }}>{myA>0?`${pct}%`:"—"}</span>
                   </div>
-                  {myA>0&&<div style={{ height:5,borderRadius:10,background:"#e2e8f0",overflow:"hidden" }}><div style={{ width:`${pct}%`,height:"100%",background:pct===100?T.green:T.purple,borderRadius:10,transition:"width .3s" }}></div></div>}
+                  {myA>0&&<div style={{ height:4,borderRadius:10,background:"#e2e8f0",overflow:"hidden",marginBottom:8 }}><div style={{ width:`${pct}%`,height:"100%",background:pct===100?T.green:T.purple,borderRadius:10,transition:"width .3s" }}></div></div>}
+                  {/* วันทำงาน + รพ. */}
+                  {myDays.length>0&&(
+                    <div style={{ display:"flex",flexWrap:"wrap",gap:4 }}>
+                      {myDays.map(k=>{
+                        const day=new Date(k).getDate();
+                        const dayAppts=appointments.filter(a=>a.date===k&&a.status!=="cancelled");
+                        const hospShorts=[...new Set(dayAppts.map(a=>hospitals.find(h=>h.id===a.hospId)?.short||"").filter(Boolean))];
+                        const ok=(checkins[k]||[]).includes(t.id);
+                        return (
+                          <div key={k} title={hospShorts.join(", ")} style={{ fontSize:10,padding:"3px 8px",borderRadius:8,background:ok?"#dcfce7":c.bg,color:ok?"#166534":c.text,border:`0.5px solid ${ok?"#86efac":c.dot}`,display:"flex",alignItems:"center",gap:4 }}>
+                            <span style={{ fontWeight:700 }}>{day}</span>
+                            {hospShorts.length>0&&<span style={{ opacity:.8 }}>{hospShorts[0]}{hospShorts.length>1&&` +${hospShorts.length-1}`}</span>}
+                            {ok&&<i className="ti ti-check" style={{ fontSize:9 }}></i>}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -664,15 +745,15 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 // ── Add Appointment Inline ────────────────────────────────────────────────────
 function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onAdd }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test" });
+  const [form, setForm] = useState({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test", sleepTestType:"full_night", paymentType:"" });
   const [err,  setErr]  = useState("");
 
   const save = () => {
     if(!form.name.trim()) { setErr("กรุณากรอกชื่อผู้ป่วย"); return; }
     if(!form.hn.trim())   { setErr("กรุณากรอก HN"); return; }
     if(!form.hospId)      { setErr("กรุณาเลือก รพ."); return; }
-    onAdd({ id:"m"+Date.now(), ...form, name:form.name.trim(), hn:form.hn.trim(), phone:form.phone.trim(), date:dateKey, status:"active", apptType:form.apptType||"sleep_test", journeyStatus:"scheduled", cancelReason:"", cancelledAt:null });
-    setForm({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test" });
+    onAdd({ id:"m"+Date.now(), ...form, name:form.name.trim(), hn:form.hn.trim(), phone:form.phone.trim(), date:dateKey, status:"active", apptType:form.apptType||"sleep_test", sleepTestType:form.apptType==="sleep_test"?(form.sleepTestType||"full_night"):"", paymentType:form.paymentType||"", journeyStatus:"scheduled", cancelReason:"", cancelledAt:null });
+    setForm({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test", sleepTestType:"full_night", paymentType:"" });
     setErr(""); setOpen(false);
   };
 
@@ -705,7 +786,7 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
             <input
               value={form.name}
               onChange={e=>setForm(f=>({...f,name:e.target.value}))}
-              placeholder="เช่น น.ส.สมหญิง ใจดี"
+              placeholder="เช่น น.ส.ดวงดี ดวงใจ"
               autoFocus
               style={{ width:"100%", padding:"10px 13px", fontSize:14, border:`1.5px solid ${T.line}`, borderRadius:10, outline:"none", background:"white", color:T.navy, fontFamily:FONT, boxSizing:"border-box" }}
               onFocus={e=>e.target.style.borderColor=T.blue}
@@ -718,7 +799,7 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
             <input
               value={form.hn}
               onChange={e=>setForm(f=>({...f,hn:e.target.value}))}
-              placeholder="8-57-012116"
+              placeholder="เช่น 12345678"
               style={{ width:"100%", padding:"10px 13px", fontSize:14, border:`1.5px solid ${T.line}`, borderRadius:10, outline:"none", background:"white", color:T.navy, fontFamily:FONT, boxSizing:"border-box" }}
               onFocus={e=>e.target.style.borderColor=T.blue}
               onBlur={e=>e.target.style.borderColor=T.line}
@@ -730,7 +811,7 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
             <input
               value={form.phone}
               onChange={e=>setForm(f=>({...f,phone:e.target.value}))}
-              placeholder="091-234-5678"
+              placeholder="เช่น 081-234-5678"
               style={{ width:"100%", padding:"10px 13px", fontSize:14, border:`1.5px solid ${T.line}`, borderRadius:10, outline:"none", background:"white", color:T.navy, fontFamily:FONT, boxSizing:"border-box" }}
               onFocus={e=>e.target.style.borderColor=T.blue}
               onBlur={e=>e.target.style.borderColor=T.line}
@@ -766,6 +847,46 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
               ))}
             </div>
           </div>
+          {/* Sleep Test Type — แสดงเฉพาะ Sleep Test */}
+          {form.apptType==="sleep_test" && (
+            <div style={{ gridColumn:"1/-1" }}>
+              <label style={{ fontSize:11, fontWeight:600, color:T.muted, display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".04em" }}>ประเภทการตรวจ</label>
+              <div style={{ display:"flex", gap:8 }}>
+                {[["full_night","Full Night","ti-moon","#1e40af","#dbeafe"],["split_night","Split Night","ti-moon-half","#7c3aed","#ede9fe"]].map(([val,lb,ic,col,bg])=>(
+                  <div key={val} onClick={()=>setForm(f=>({...f,sleepTestType:val}))}
+                    style={{ flex:1, padding:"9px 12px", borderRadius:10, cursor:"pointer", border: form.sleepTestType===val?`2px solid ${col}`:`1px solid ${T.line}`, background:form.sleepTestType===val?bg:"white", display:"flex", alignItems:"center", gap:8, transition:"all .15s" }}>
+                    <i className={`ti ${ic}`} style={{ fontSize:16, color:col }}></i>
+                    <div>
+                      <div style={{ fontSize:12, fontWeight:form.sleepTestType===val?700:400, color:form.sleepTestType===val?col:T.muted }}>{lb}</div>
+                      <div style={{ fontSize:10, color:col, opacity:.7 }}>{val==="full_night"?"ทั้งคืน (≥6 ชม.)":"ครึ่งคืน (Dx+Tx)"}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Payment type / สิทธิ์ */}
+          <div style={{ gridColumn:"1/-1" }}>
+            <label style={{ fontSize:11, fontWeight:600, color:T.muted, display:"block", marginBottom:6, textTransform:"uppercase", letterSpacing:".04em" }}>สิทธิ์การรักษา</label>
+            <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:6 }}>
+              {PAYMENT_TYPES.map(pt=>{
+                const on = form.paymentType===pt.key;
+                return (
+                  <div key={pt.key} onClick={()=>setForm(f=>({...f,paymentType:on?"":pt.key}))}
+                    style={{ padding:"7px 10px", borderRadius:9, cursor:"pointer", border:on?`1.5px solid ${pt.color}`:`0.5px solid ${T.line}`, background:on?pt.bg:"white", display:"flex", alignItems:"center", gap:6, transition:"all .12s" }}>
+                    {pt.fastResult && <i className="ti ti-bolt" style={{ fontSize:11, color:pt.color, flexShrink:0 }}></i>}
+                    <span style={{ fontSize:11, fontWeight:on?700:400, color:on?pt.color:T.muted, lineHeight:1.3 }}>{pt.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+            {form.paymentType && PAYMENT_TYPES.find(p=>p.key===form.paymentType)?.fastResult && (
+              <div style={{ marginTop:6, padding:"6px 11px", background:"#fef9c3", borderRadius:8, fontSize:11, color:"#92400e", display:"flex", alignItems:"center", gap:6 }}>
+                <i className="ti ti-bolt" style={{ fontSize:12 }}></i>
+                สิทธิ์นี้ผลออกภายใน 14 วัน
+              </div>
+            )}
+          </div>
           {/* Note */}
           <div style={{ gridColumn:"1/-1" }}>
             <label style={{ fontSize:11, fontWeight:600, color:T.muted, display:"block", marginBottom:4, textTransform:"uppercase", letterSpacing:".04em" }}>หมายเหตุ</label>
@@ -800,71 +921,200 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
 }
 
 // ── Excel Export ──────────────────────────────────────────────────────────────
-function exportToExcel(appts, hospitals, techs) {
-  // Build rows
+// ── Tech Pay Rates ─────────────────────────────────────────────────────────────
+const DEFAULT_RATE = { rate1:675, rate2:607.5, scoreRate:350 };
+// rate1 = ค่าติด 1 case/วัน, rate2 = ค่าติด 2+ case/วัน, scoreRate = ค่า score/อ่านผล
+
+const INIT_SALES = [
+  "สิทธินนท์ บุญแทน",
+  "กรรณิกา ศรีลาพัฒน์",
+  "ชญานิศ พอจิต",
+  "ปานิดา จันติบุตร",
+  "พรรณพัชร ถิ่นถา",
+  "ปภพ ปัญญาศรีวินิจ",
+];
+
+const CPAP_MODELS = [
+  "ResMed AirSense 10 AutoSet",
+  "ResMed AirSense 11 AutoSet",
+  "ResMed AirMini",
+  "ResMed AirCurve 10 VAuto (BiPAP)",
+  "ResMed AirCurve 10 S (BiPAP)",
+  "Hindmed Auto CPAP",
+  "Hindmed BiPAP",
+  "VentMed Auto CPAP",
+  "อื่นๆ",
+];
+
+// ── สิทธิ์การรักษา ────────────────────────────────────────────────────────────
+const PAYMENT_TYPES = [
+  { key:"social_security",  label:"สิทธิ์ประกันสังคม",    short:"ปสส.",   color:"#1e40af", bg:"#dbeafe",  fastResult:false },
+  { key:"health_insurance", label:"สิทธิ์ประกันสุขภาพ",   short:"ประกัน", color:"#065f46", bg:"#d1fae5",  fastResult:false },
+  { key:"direct_billing",   label:"สิทธิ์เบิกจ่ายตรง",    short:"เบิกตรง",color:"#7c3aed", bg:"#ede9fe",  fastResult:false },
+  { key:"vip",              label:"VIP",                   short:"VIP",    color:"#b45309", bg:"#fef9c3",  fastResult:true  },
+  { key:"self_pay",         label:"เงินสด (Self Pay)",     short:"เงินสด", color:"#059669", bg:"#d1fae5",  fastResult:true  },
+  { key:"state_enterprise", label:"รัฐวิสาหกิจ",            short:"รัฐวิสา",color:"#0369a1", bg:"#e0f2fe",  fastResult:false },
+];
+// VIP + Self Pay → ผลออกภายใน 14 วัน
+
+// ── ระยะเวลาผลออก & การแจ้งเตือน ────────────────────────────────────────────
+const RESULT_DAYS = (paymentType) => {
+  const pt = PAYMENT_TYPES.find(p=>p.key===paymentType);
+  return pt?.fastResult ? 14 : 30;
+};
+
+function calcDeadline(appt) {
+  // ใช้วันนัด + จำนวนวันตาม paymentType
+  if(!appt.date || appt.status==="cancelled") return null;
+  // เฉพาะ sleep_test ที่ยังไม่ออกผล
+  if(appt.apptType!=="sleep_test") return null;
+  if(["result_ready","consulted"].includes(appt.journeyStatus)) return null;
+  const testDate  = new Date(appt.date);
+  const days      = RESULT_DAYS(appt.paymentType);
+  const deadline  = new Date(testDate.getTime() + days*864e5);
+  const today     = new Date();
+  const remaining = Math.ceil((deadline - today)/864e5);
+  return { deadline, days, remaining, isUrgent: remaining<=5, isOverdue: remaining<0 };
+}
+
+// ── สถานะใบแจ้งหนี้ CPAP ─────────────────────────────────────────────────────
+const BILLING_STATUS = [
+  { key:"pending", label:"ยังไม่วางบิล", color:T.amber, bg:"#fef9c3" },
+  { key:"billed",  label:"วางบิลแล้ว",   color:"#1e40af", bg:"#dbeafe" },
+  { key:"paid",    label:"รับเงินแล้ว",   color:"#059669", bg:"#d1fae5" },
+];
+
+// ── Comprehensive Excel Export ─────────────────────────────────────────────────
+function exportToExcel(appts, hospitals, techs, assignments, checkins, techRates) {
   const JOURNEY_LABEL = {
     scheduled:"รอตรวจ", tested:"ตรวจแล้ว", waiting_result:"รอแพทย์อ่านผล",
     result_ready:"ผลออกแล้ว", consulted:"ฟังผลแล้ว",
     trialed:"ทดลองแล้ว", received_device:"รับเครื่องแล้ว",
   };
+  const AHI_LABEL = {
+    normal:"Normal (AHI < 5)", mild:"Mild (AHI 5–14)",
+    mild_comorbid:"Mild with HTN/CAD/Stroke", moderate:"Moderate (AHI 15–29)", severe:"Severe (AHI ≥ 30)",
+  };
+
+  const header = [
+    // ข้อมูลผู้ป่วย
+    "HN","ชื่อ-นามสกุล","เบอร์โทร","วันนัดหมาย","เดือน","ปี",
+    "โรงพยาบาล","จังหวัด","ประเภทนัด","Journey Status","สถานะนัด","เหตุผลยกเลิก",
+    // Sleep Test
+    "AHI รวม","AHI Level","SpO2 Min (%)","SpO2 Mean (%)","Time < 90% (นาที)",
+    "Total Sleep Time (นาที)","Sleep Efficiency (%)","Diagnosis","คำแนะนำ",
+    // CPAP Trial
+    "รุ่นทดลองที่ 1","วันทดลองที่ 1",
+    "รุ่นทดลองที่ 2","วันทดลองที่ 2",
+    "รุ่นทดลองที่ 3","วันทดลองที่ 3",
+    "ตัดสินใจ",
+    // ซื้อ
+    "รุ่นที่ซื้อ","วันที่ซื้อ","ซื้อโดยไม่ทดลอง",
+    // Tech & Pay
+    "Sleep Tech","ค่าติด (บาท)","ค่า Score (บาท)","รวม (บาท)",
+    "หมายเหตุ",
+  ];
+
   const rows = appts.map(a=>{
-    const h = hospitals.find(x=>x.id===a.hospId);
+    const h    = hospitals.find(x=>x.id===a.hospId);
+    const d    = new Date(a.date);
+    const rep  = a.sleepReport || {};
+    const trials = a.cpapTrials || [];
+
+    // หา tech ที่ assigned วันนั้น
+    const dayTechs = (assignments[a.date]||[]).map(tid=>techs.find(t=>t.id===tid)).filter(Boolean);
+    const techNames = dayTechs.map(t=>t.name).join(", ");
+
+    // คำนวณค่าตอบแทน tech
+    const dayApptCount = appts.filter(x=>x.date===a.date && x.hospId===a.hospId && x.status!=="cancelled").length;
+    let pay = 0;
+    if(dayTechs.length>0){
+      const r = (techRates||{})[dayTechs[0]?.id] || DEFAULT_RATE;
+      pay = dayApptCount>=2 ? r.rate2 : r.rate1;
+    }
+    const scorePay = rep.ahi ? (((techRates||{})[dayTechs[0]?.id] || DEFAULT_RATE).scoreRate) : 0;
+
+    // CPAP decision label
+    const decisionLabel = {
+      not_decided:"ยังไม่ตัดสินใจ", trial:"ทดลองเครื่อง",
+      purchased_after_trial:"ซื้อหลังทดลอง", purchase_direct:"ซื้อโดยไม่ทดลอง",
+    }[a.cpapDecision||"not_decided"]||"";
+
     return [
-      a.hn, a.name, a.phone,
-      a.date,
+      a.hn, a.name, a.phone||"",
+      a.date, d.getMonth()+1, d.getFullYear()+543,
       h?.name||"", h?.city||"",
       a.apptType==="cpap_trial"?"ทดลอง CPAP":"Sleep Test",
       JOURNEY_LABEL[a.journeyStatus||"scheduled"]||"",
       a.status==="cancelled"?"ยกเลิก":"ปกติ",
       a.cancelReason||"",
+      // Sleep Test
+      rep.ahi||"", AHI_LABEL[rep.ahiLevel]||"",
+      rep.spo2Min||"", rep.spo2Mean||"", rep.timeBelow90||"",
+      rep.totalSleepTime||"", rep.sleepEfficiency||"",
+      rep.diagnosis||"", (rep.recommendation||[]).join("; "),
+      // Trials
+      trials[0]?.model||"", trials[0]?.trialDate||"",
+      trials[1]?.model||"", trials[1]?.trialDate||"",
+      trials[2]?.model||"", trials[2]?.trialDate||"",
+      decisionLabel,
+      // Purchase
+      a.cpapPurchase?.model||"", a.cpapPurchase?.purchaseDate||"",
+      a.cpapDecision==="purchase_direct"?"ใช่":"",
+      // Tech & Pay
+      techNames,
+      dayApptCount>0 ? pay : "",
+      rep.ahi ? scorePay : "",
+      dayApptCount>0 ? (pay + (rep.ahi?scorePay:0)) : "",
       a.note||"",
     ];
   });
 
-  const header = ["HN","ชื่อ-นามสกุล","เบอร์โทร","วันนัดหมาย","โรงพยาบาล","จังหวัด","ประเภท","สถานะ Journey","สถานะนัด","เหตุผลยกเลิก","หมายเหตุ"];
-
-  // Build CSV with BOM for Thai
-  const lines = [header, ...rows].map(r => r.map(c=>{
-    const s = String(c||"");
-    return s.includes(",") || s.includes('"') ? `"${s.replace(/"/g,'""')}"` : s;
+  const lines = [header,...rows].map(row=>row.map(c=>{
+    const s=String(c??""  );
+    return s.includes(",")||s.includes('"') ? `"${s.replace(/"/g,'""')}"` : s;
   }).join(","));
-  const csv = "\uFEFF" + lines.join("\r\n"); // BOM for Excel Thai
-  const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+  const csv = "\uFEFF"+lines.join("\r\n");
+  const blob = new Blob([csv],{type:"text/csv;charset=utf-8;"});
   const url  = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href  = url;
-  link.download = `3n-appointments-${new Date().toISOString().slice(0,10)}.csv`;
+  link.download = `3n-data-${new Date().toISOString().slice(0,10)}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
 
 // ── Sleep Report Modal ────────────────────────────────────────────────────────
-const SEVERITY = ["ปกติ (AHI < 5)","Mild (AHI 5–14)","Moderate (AHI 15–29)","Severe (AHI ≥ 30)"];
+const AHI_LEVELS = [
+  { key:"normal",        label:"Normal",                        desc:"Less than 5 events per hour",                    color:"#059669", bg:"#d1fae5", range:"AHI < 5"   },
+  { key:"mild",          label:"Mild Sleep Apnea",              desc:"5 to 14 events per hour",                        color:"#d97706", bg:"#fef9c3", range:"AHI 5–14"  },
+  { key:"mild_comorbid", label:"Mild Sleep Apnea with HTN, CAD, Stroke", desc:"5 to 14 events per hour with comorbidities", color:"#ea580c", bg:"#ffedd5", range:"AHI 5–14"  },
+  { key:"moderate",      label:"Moderate Sleep Apnea",          desc:"15 to 29 events per hour",                       color:"#dc2626", bg:"#fee2e2", range:"AHI 15–29" },
+  { key:"severe",        label:"Severe Sleep Apnea",            desc:"30 or more events per hour",                     color:"#7c3aed", bg:"#ede9fe", range:"AHI ≥ 30"  },
+];
 const POSITIONS = ["Supine","Non-supine","ทุกท่า"];
 const RECOMMENDATIONS = [
-  "แนะนำ CPAP Therapy",
-  "แนะนำ BiPAP Therapy",
-  "แนะนำปรับพฤติกรรม",
-  "แนะนำลดน้ำหนัก",
-  "แนะนำผ่าตัด",
-  "ไม่จำเป็นต้องรักษา",
-  "ติดตามอาการ",
+  "แนะนำ CPAP Therapy","แนะนำ BiPAP Therapy","แนะนำปรับพฤติกรรม",
+  "แนะนำลดน้ำหนัก","แนะนำผ่าตัด","ไม่จำเป็นต้องรักษา","ติดตามอาการ",
 ];
 
 const BLANK_REPORT = {
   testDate:"", testType:"HST", techName:"",
   ahi:"", ahiSupine:"", ahiNonSupine:"",
   odi:"", spo2Min:"", spo2Mean:"", timeBelow90:"",
-  severity:"", sleepEfficiency:"", remLatency:"",
+  ahiLevel:"", sleepEfficiency:"", remLatency:"",
   position:"", totalSleepTime:"",
   diagnosis:"", recommendation:[], cpapPressure:"", doctorName:"", doctorNote:"",
+  pdfFileName:"", pdfNote:"",
+  sharedWithHosps:[], // รพ. ที่เห็นรายงานนี้
 };
 
-function SleepReportModal({ appt, hosp, onClose, onSave }) {
+function SleepReportModal({ appt, hosp, hosp: _h, hospitals=[], onClose, onSave }) {
   const saved = appt.sleepReport || BLANK_REPORT;
-  const [r, setR] = useState({ ...BLANK_REPORT, ...saved });
+  const [r, setR] = useState({ ...BLANK_REPORT, sharedWithHosps:[], ...saved });
   const set = (k,v) => setR(prev=>({...prev,[k]:v}));
-  const toggleRec = (val) => setR(prev=>({ ...prev, recommendation: prev.recommendation.includes(val) ? prev.recommendation.filter(x=>x!==val) : [...prev.recommendation, val] }));
+  const toggleRec  = (val) => setR(prev=>({ ...prev, recommendation:    prev.recommendation.includes(val)    ? prev.recommendation.filter(x=>x!==val)    : [...prev.recommendation, val]    }));
+  const toggleHosp = (id)  => setR(prev=>({ ...prev, sharedWithHosps: (prev.sharedWithHosps||[]).includes(id) ? (prev.sharedWithHosps||[]).filter(x=>x!==id) : [...(prev.sharedWithHosps||[]), id] }));
 
   const printReport = () => {
     const w = window.open("","_blank","width=900,height=700");
@@ -932,30 +1182,66 @@ function SleepReportModal({ appt, hosp, onClose, onSave }) {
             </Grid3>
           </Section>
 
-          {/* Section: การวินิจฉัย */}
-          <Section title="การวินิจฉัย" icon="ti-stethoscope">
+          {/* Section: AHI Level */}
+          <Section title="AHI Level — ระดับความรุนแรง" icon="ti-activity">
+            <div style={{ display:"flex", flexDirection:"column", gap:8, marginBottom:12 }}>
+              {AHI_LEVELS.map(lv=>{
+                const on = r.ahiLevel===lv.key;
+                return (
+                  <div key={lv.key} onClick={()=>set("ahiLevel",lv.key)} style={{ padding:"12px 16px", borderRadius:12, cursor:"pointer", border: on?`2px solid ${lv.color}`:`1px solid #e2e8f0`, background: on?lv.bg:"#f8fafc", transition:"all .15s", display:"flex", alignItems:"center", gap:12 }}>
+                    <div style={{ width:14, height:14, borderRadius:"50%", background:on?lv.color:"#cbd5e1", flexShrink:0, transition:"all .15s" }}/>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, fontWeight:700, color:on?lv.color:"#64748b" }}>{lv.label}</div>
+                      <div style={{ fontSize:11, color:on?lv.color:"#94a3b8", marginTop:2 }}>{lv.desc}</div>
+                    </div>
+                    <span style={{ fontSize:11, padding:"3px 9px", borderRadius:10, background:on?lv.color:"#e2e8f0", color:on?"white":"#94a3b8", fontWeight:600, flexShrink:0 }}>{lv.range}</span>
+                  </div>
+                );
+              })}
+            </div>
             <Grid2>
-              <Field label="ระดับความรุนแรง" full>
-                <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-                  {SEVERITY.map(s=>(
-                    <div key={s} onClick={()=>set("severity",s)} style={{ padding:"7px 13px", fontSize:12, borderRadius:20, cursor:"pointer", fontWeight:r.severity===s?700:400, border:r.severity===s?`2px solid #059669`:`1px solid #e2e8f0`, background:r.severity===s?"#d1fae5":"#f8fafc", color:r.severity===s?"#065f46":T.muted, transition:"all .1s" }}>{s}</div>
-                  ))}
-                </div>
-              </Field>
-              <Field label="การนอนท่า" full>
-                <div style={{ display:"flex", gap:8 }}>
+              <Field label="ท่านอนที่มีผล">
+                <div style={{ display:"flex", gap:7, flexWrap:"wrap" }}>
                   {POSITIONS.map(p=>(
-                    <div key={p} onClick={()=>set("position",p)} style={{ padding:"7px 13px", fontSize:12, borderRadius:20, cursor:"pointer", fontWeight:r.position===p?700:400, border:r.position===p?`2px solid ${T.blue}`:`1px solid #e2e8f0`, background:r.position===p?T.blueL:"#f8fafc", color:r.position===p?T.blue:T.muted }}>{p}</div>
+                    <div key={p} onClick={()=>set("position",p)} style={{ padding:"6px 13px", fontSize:12, borderRadius:20, cursor:"pointer", fontWeight:r.position===p?700:400, border:r.position===p?`1.5px solid ${T.blue}`:`1px solid #e2e8f0`, background:r.position===p?T.blueL:"#f8fafc", color:r.position===p?T.blue:T.muted }}>{p}</div>
                   ))}
                 </div>
-              </Field>
-              <Field label="การวินิจฉัย (Diagnosis)" full>
-                <textarea value={r.diagnosis} onChange={e=>set("diagnosis",e.target.value)} rows={2} placeholder="Obstructive Sleep Apnea, Moderate..." style={{ ...IS, resize:"vertical", height:60 }}/>
               </Field>
             </Grid2>
           </Section>
 
-          {/* Section: คำแนะนำ */}
+          {/* Section: แนบ PDF รายงาน */}
+          <Section title="แนบไฟล์ PDF รายงาน" icon="ti-file-type-pdf">
+            <div style={{ display:"flex", flexDirection:"column", gap:10 }}>
+              <label style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:9, padding:"18px", borderRadius:12, border:`2px dashed ${r.pdfFileName?"#059669":"#cbd5e1"}`, background:r.pdfFileName?"#f0fdf4":"#f8fafc", cursor:"pointer", transition:"all .15s" }}>
+                <i className={`ti ${r.pdfFileName?"ti-file-check":"ti-upload"}`} style={{ fontSize:22, color:r.pdfFileName?"#059669":"#94a3b8" }}></i>
+                <div style={{ textAlign:"center" }}>
+                  {r.pdfFileName
+                    ? <><div style={{ fontSize:13, fontWeight:700, color:"#059669" }}>{r.pdfFileName}</div><div style={{ fontSize:11, color:"#059669", marginTop:2 }}>แนบไฟล์แล้ว — กดเพื่อเปลี่ยน</div></>
+                    : <><div style={{ fontSize:13, fontWeight:600, color:"#64748b" }}>คลิกเพื่อเลือกไฟล์ PDF</div><div style={{ fontSize:11, color:"#94a3b8", marginTop:2 }}>รองรับ .pdf เท่านั้น</div></>
+                  }
+                </div>
+                <input type="file" accept=".pdf" onChange={e=>{ const f=e.target.files?.[0]; if(f) set("pdfFileName",f.name); e.target.value=""; }} style={{ display:"none" }}/>
+              </label>
+              {r.pdfFileName&&(
+                <div style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 13px", background:"#f0fdf4", borderRadius:10, border:"1px solid #86efac" }}>
+                  <i className="ti ti-file-type-pdf" style={{ fontSize:18, color:"#059669", flexShrink:0 }}></i>
+                  <span style={{ flex:1, fontSize:13, color:"#166534", fontWeight:600 }}>{r.pdfFileName}</span>
+                  <button onClick={()=>set("pdfFileName","")} style={{ fontSize:12, padding:"3px 10px", borderRadius:7, border:"1px solid #86efac", background:"white", color:"#dc2626", cursor:"pointer" }}>ลบ</button>
+                </div>
+              )}
+              <Field label="หมายเหตุไฟล์ PDF">
+                <input value={r.pdfNote||""} onChange={e=>set("pdfNote",e.target.value)} placeholder="เช่น Full PSG Report ฉบับสมบูรณ์" style={IS}/>
+              </Field>
+            </div>
+          </Section>
+
+          {/* Section: การวินิจฉัย */}
+          <Section title="การวินิจฉัย" icon="ti-stethoscope">
+            <Field label="การวินิจฉัย (Diagnosis)" full>
+              <textarea value={r.diagnosis} onChange={e=>set("diagnosis",e.target.value)} rows={2} placeholder="Obstructive Sleep Apnea, Moderate severity..." style={{ ...IS, resize:"vertical", height:60 }}/>
+            </Field>
+          </Section>
           <Section title="คำแนะนำ & การรักษา" icon="ti-heart-rate-monitor">
             <div style={{ display:"flex", gap:8, flexWrap:"wrap", marginBottom:12 }}>
               {RECOMMENDATIONS.map(rec=>{
@@ -972,6 +1258,48 @@ function SleepReportModal({ appt, hosp, onClose, onSave }) {
               <textarea value={r.doctorNote} onChange={e=>set("doctorNote",e.target.value)} rows={3} placeholder="บันทึกเพิ่มเติมจากแพทย์..." style={{ ...IS, resize:"vertical", height:70 }}/>
             </Field>
           </Section>
+
+          {/* Section: เลือก รพ. ที่เห็นรายงานนี้ */}
+          {hospitals.length>0 && (
+            <Section title="เลือก รพ. ที่เห็นรายงานนี้ได้" icon="ti-building-hospital">
+              <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+                {/* ปุ่ม Select All / Clear */}
+                <div style={{ display:"flex", gap:8, marginBottom:4 }}>
+                  <button onClick={()=>setR(p=>({...p,sharedWithHosps:hospitals.map(h=>h.id)}))}
+                    style={{ fontSize:11,padding:"4px 11px",borderRadius:8,border:`0.5px solid ${T.line}`,background:T.card,color:T.blue,cursor:"pointer",fontFamily:FONT,fontWeight:500 }}>
+                    เลือกทั้งหมด
+                  </button>
+                  <button onClick={()=>setR(p=>({...p,sharedWithHosps:[]}))}
+                    style={{ fontSize:11,padding:"4px 11px",borderRadius:8,border:`0.5px solid ${T.line}`,background:T.card,color:T.muted,cursor:"pointer",fontFamily:FONT }}>
+                    ยกเลิกทั้งหมด
+                  </button>
+                  <span style={{ fontSize:11,color:T.faint,alignSelf:"center" }}>
+                    {(r.sharedWithHosps||[]).length}/{hospitals.length} รพ. ที่เลือก
+                  </span>
+                </div>
+                {/* Hospital checklist */}
+                <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7 }}>
+                  {hospitals.map(h=>{
+                    const on = (r.sharedWithHosps||[]).includes(h.id);
+                    const c  = hc(h.id, hospitals);
+                    return (
+                      <div key={h.id} onClick={()=>toggleHosp(h.id)}
+                        style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 13px", borderRadius:11, cursor:"pointer", border: on?`1.5px solid ${c.dot}`:`0.5px solid #e2e8f0`, background: on?c.bg:"#f8fafc", transition:"all .15s" }}>
+                        {/* Checkbox */}
+                        <div style={{ width:20, height:20, borderRadius:6, border: on?`2px solid ${c.dot}`:`1.5px solid #cbd5e1`, background: on?c.dot:"white", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all .15s" }}>
+                          {on && <i className="ti ti-check" style={{ fontSize:12, color:"white" }}></i>}
+                        </div>
+                        <div style={{ flex:1, minWidth:0 }}>
+                          <div style={{ fontSize:12, fontWeight:on?700:400, color:on?c.text:"#64748b", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{h.name}</div>
+                          <div style={{ fontSize:10, color:on?c.text:"#94a3b8", opacity:.8 }}>{h.city||h.type}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </Section>
+          )}
         </div>
 
         {/* Footer */}
@@ -1018,7 +1346,7 @@ function buildPrintHTML(appt, hosp, r) {
   const fmtDate2 = s => { if(!s) return "—"; const d=new Date(s); return `${d.getDate()}/${d.getMonth()+1}/${d.getFullYear()+543}`; };
   const today = new Date(); const todayTH = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()+543}`;
   const ahi = parseFloat(r.ahi)||0;
-  const sev = r.severity || (ahi<5?"ปกติ":ahi<15?"Mild":ahi<30?"Moderate":"Severe");
+  const sev = r.ahiLevel || (ahi<5?"ปกติ":ahi<15?"Mild":ahi<30?"Moderate":"Severe");
 
   return `<!DOCTYPE html><html><head><meta charset="UTF-8">
 <style>
@@ -1146,14 +1474,33 @@ function currentStep(apptType, journeyStatus) {
   return steps.find(s=>s.key===journeyStatus) || steps[0];
 }
 
-function JourneyBadge({ apptType, journeyStatus }) {
+function JourneyBadge({ apptType, journeyStatus, sleepTestType, paymentType }) {
   const step = currentStep(apptType||"sleep_test", journeyStatus||"scheduled");
   const tc2  = APPT_TYPE_COLOR[apptType||"sleep_test"];
+  const pt   = PAYMENT_TYPES.find(p=>p.key===paymentType);
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:5 }}>
+    <div style={{ display:"flex", alignItems:"center", gap:5, flexWrap:"wrap" }}>
       <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:tc2.bg, color:tc2.color, fontWeight:700, flexShrink:0 }}>
         {APPT_TYPE_LABEL[apptType||"sleep_test"]}
       </span>
+      {apptType==="sleep_test" && sleepTestType && (
+        <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:sleepTestType==="split_night"?"#ede9fe":"#dbeafe", color:sleepTestType==="split_night"?"#5b21b6":"#1e40af", fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:3 }}>
+          <i className={`ti ${sleepTestType==="split_night"?"ti-moon-stars":"ti-moon"}`} style={{ fontSize:10 }}></i>
+          {sleepTestType==="split_night"?"Split Night":"Full Night"}
+        </span>
+      )}
+      {pt && (
+        <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:pt.bg, color:pt.color, fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:3 }}>
+          {pt.fastResult && <i className="ti ti-bolt" style={{ fontSize:10 }}></i>}
+          {pt.short}
+        </span>
+      )}
+      {pt?.fastResult && (
+        <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:"#fef9c3", color:"#92400e", fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:3 }}>
+          <i className="ti ti-clock" style={{ fontSize:10 }}></i>
+          ผลออก 14 วัน
+        </span>
+      )}
       <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:step.bg, color:step.color, fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:4 }}>
         <i className={`ti ${step.icon}`} style={{ fontSize:11 }}></i>{step.label}
       </span>
@@ -1161,8 +1508,185 @@ function JourneyBadge({ apptType, journeyStatus }) {
   );
 }
 
+// ── CPAP Trial Tracker ────────────────────────────────────────────────────────
+function CpapTrialTracker({ appt, onUpdate, isAdmin=false, salesList=[] }) {
+  const trials   = appt.cpapTrials   || [];
+  const decision = appt.cpapDecision || "not_decided";
+  const purchase = appt.cpapPurchase || {};
+
+  const addTrial = () => {
+    if(trials.length>=3) return;
+    const newTrials = [...trials, { id:"tr"+Date.now(), model:"", trialDate:appt.date, note:"" }];
+    onUpdate({ cpapTrials:newTrials });
+  };
+  const updateTrial = (idx, field, val) => {
+    const newTrials = trials.map((t,i)=>i===idx?{...t,[field]:val}:t);
+    onUpdate({ cpapTrials:newTrials });
+  };
+  const removeTrial = (idx) => onUpdate({ cpapTrials:trials.filter((_,i)=>i!==idx) });
+
+  const DECISIONS = [
+    { key:"not_decided",         label:"ยังไม่ตัดสินใจ",        color:T.muted,   bg:T.surf     },
+    { key:"trial",               label:"ทดลองเครื่องต่อ",       color:"#d97706", bg:"#fef9c3"  },
+    { key:"purchased_after_trial",label:"ซื้อหลังทดลอง",        color:"#059669", bg:"#d1fae5"  },
+    { key:"purchase_direct",     label:"ซื้อโดยไม่ทดลอง",      color:"#7c3aed", bg:"#ede9fe"  },
+  ];
+
+  return (
+    <div style={{ borderTop:`0.5px solid ${T.line}`, padding:"12px 14px 14px", background:"#fafaff" }}>
+      <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", marginBottom:10,...R,gap:6 }}>
+        <i className="ti ti-device-heart-monitor" style={{ fontSize:14 }}></i>
+        บันทึกการทดลอง CPAP
+      </div>
+
+      {/* Trial entries */}
+      {trials.map((tr,i)=>(
+        <div key={tr.id} style={{ padding:"10px 12px", background:"white", borderRadius:11, border:"0.5px solid #ddd6fe", marginBottom:8 }}>
+          <div style={{ ...R, gap:6, marginBottom:7 }}>
+            <span style={{ fontSize:11, fontWeight:700, color:"#7c3aed", minWidth:52 }}>รุ่นที่ {i+1}</span>
+            <select value={tr.model} onChange={e=>updateTrial(i,"model",e.target.value)}
+              style={{ flex:1, padding:"6px 10px", fontSize:12, border:"0.5px solid #ddd6fe", borderRadius:8, background:"white", color:T.ink }}>
+              <option value="">— เลือกรุ่น CPAP —</option>
+              {CPAP_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
+            </select>
+            <button onClick={()=>removeTrial(i)} style={{ width:26,height:26,border:"0.5px solid #fecaca",borderRadius:7,background:"#fef2f2",color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,flexShrink:0 }}>
+              <i className="ti ti-x"></i>
+            </button>
+          </div>
+          <div style={{ ...R, gap:8 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:10, color:T.muted, marginBottom:3 }}>วันที่ทดลอง</div>
+              <input type="date" value={tr.trialDate} onChange={e=>updateTrial(i,"trialDate",e.target.value)}
+                style={{ width:"100%", padding:"6px 10px", fontSize:12, border:"0.5px solid #ddd6fe", borderRadius:8, outline:"none", background:"white", color:T.ink, boxSizing:"border-box" }} />
+            </div>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:10, color:T.muted, marginBottom:3 }}>หมายเหตุ</div>
+              <input value={tr.note} onChange={e=>updateTrial(i,"note",e.target.value)} placeholder="เช่น Pressure 8 cmH2O"
+                style={{ width:"100%", padding:"6px 10px", fontSize:12, border:"0.5px solid #ddd6fe", borderRadius:8, outline:"none", background:"white", color:T.ink, boxSizing:"border-box" }} />
+            </div>
+          </div>
+        </div>
+      ))}
+
+      {/* Add trial button */}
+      {trials.length<3 && (
+        <button onClick={addTrial} style={{ width:"100%", padding:"8px", fontSize:12, fontWeight:600, borderRadius:9, border:"1.5px dashed #a78bfa", background:"transparent", color:"#7c3aed", cursor:"pointer", marginBottom:12, fontFamily:FONT }}>
+          <i className="ti ti-plus" style={{ marginRight:5 }}></i>
+          เพิ่มรุ่นทดลอง {trials.length>0?`(${trials.length}/3)`:""}
+        </button>
+      )}
+
+      {/* Decision */}
+      <div style={{ fontSize:11, fontWeight:700, color:T.ink, marginBottom:8 }}>ผลการตัดสินใจ</div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:7, marginBottom:12 }}>
+        {DECISIONS.map(d=>{
+          const on=decision===d.key;
+          return (
+            <div key={d.key} onClick={()=>onUpdate({ cpapDecision:d.key })}
+              style={{ padding:"9px 12px", borderRadius:10, cursor:"pointer", border:on?`2px solid ${d.color}`:`0.5px solid ${T.line}`, background:on?d.bg:T.card, transition:"all .12s",...R,gap:8 }}>
+              <div style={{ width:10,height:10,borderRadius:"50%",background:on?d.color:"#cbd5e1",flexShrink:0 }}/>
+              <span style={{ fontSize:12, fontWeight:on?700:400, color:on?d.color:T.muted }}>{d.label}</span>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Purchase detail */}
+      {(decision==="purchased_after_trial"||decision==="purchase_direct") && (
+        <div style={{ padding:"12px 13px", background:"#f0fdf4", borderRadius:11, border:"1px solid #86efac", ...FL, gap:9 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:"#059669", ...R, gap:6 }}>
+            <i className="ti ti-shopping-cart" style={{ fontSize:14 }}></i>ข้อมูลการซื้อเครื่อง
+          </div>
+          {/* Model */}
+          <select value={purchase.model||""} onChange={e=>onUpdate({ cpapPurchase:{...purchase, model:e.target.value} })}
+            style={{ padding:"8px 11px", fontSize:12, border:"1px solid #86efac", borderRadius:9, background:"white", color:T.ink }}>
+            <option value="">— เลือกรุ่นที่ซื้อ —</option>
+            {CPAP_MODELS.filter(m=>m!=="อื่นๆ").map(m=><option key={m} value={m}>{m}</option>)}
+          </select>
+          {/* Price + Commission */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8 }}>
+            <div>
+              <div style={{ fontSize:10, color:"#059669", marginBottom:3 }}>ราคาเครื่อง (บาท)</div>
+              <input type="number" value={purchase.price||""} onChange={e=>onUpdate({ cpapPurchase:{...purchase, price:Number(e.target.value)} })}
+                placeholder="เช่น 45000"
+                style={{ width:"100%",padding:"7px 10px",fontSize:13,fontWeight:700,border:"1px solid #86efac",borderRadius:8,outline:"none",background:"white",color:"#059669",boxSizing:"border-box" }} />
+            </div>
+            <div>
+              <div style={{ fontSize:10, color:"#059669", marginBottom:3 }}>ค่าคอม % (Default 2%)</div>
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <input type="number" value={purchase.commissionRate??2} onChange={e=>onUpdate({ cpapPurchase:{...purchase, commissionRate:Number(e.target.value)} })}
+                  style={{ width:60,padding:"7px 10px",fontSize:12,border:"1px solid #86efac",borderRadius:8,outline:"none",background:"white",color:T.ink }} />
+                <span style={{ fontSize:12, color:"#059669", fontWeight:700 }}>
+                  = {((purchase.price||0)*(purchase.commissionRate??2)/100).toLocaleString()} บาท
+                </span>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:10, color:"#059669", marginBottom:3 }}>วันที่ขาย</div>
+              <input type="date" value={purchase.purchaseDate||""} onChange={e=>onUpdate({ cpapPurchase:{...purchase, purchaseDate:e.target.value} })}
+                style={{ width:"100%",padding:"7px 10px",fontSize:12,border:"1px solid #86efac",borderRadius:8,outline:"none",background:"white",color:T.ink,boxSizing:"border-box" }} />
+            </div>
+            {/* ค่าคอม + Sales — Admin only */}
+            {isAdmin && <>
+            <div>
+              <div style={{ fontSize:10, color:"#059669", marginBottom:3 }}>ค่าคอม % (Admin)</div>
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <input type="number" value={purchase.commissionRate??2} onChange={e=>onUpdate({ cpapPurchase:{...purchase, commissionRate:Number(e.target.value)} })}
+                  style={{ width:60,padding:"7px 10px",fontSize:12,border:"1px solid #86efac",borderRadius:8,outline:"none",background:"white",color:T.ink }} />
+                <span style={{ fontSize:12, color:"#059669", fontWeight:700 }}>
+                  = {((purchase.price||0)*(purchase.commissionRate??2)/100).toLocaleString()} บาท
+                </span>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize:10, color:"#059669", marginBottom:3 }}>ชื่อ Sales (Admin)</div>
+              <select value={purchase.salesPerson||""} onChange={e=>onUpdate({ cpapPurchase:{...purchase, salesPerson:e.target.value} })}
+                style={{ width:"100%",padding:"7px 10px",fontSize:12,border:"1px solid #86efac",borderRadius:8,background:"white",color:T.ink,boxSizing:"border-box" }}>
+                <option value="">— เลือกชื่อ Sales —</option>
+                {(salesList.length>0?salesList:INIT_SALES).map(s=><option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            </>}
+          </div>
+          <div>
+            <div style={{ fontSize:10, color:"#059669", marginBottom:3 }}>หมายเหตุ</div>
+            <input value={purchase.note||""} onChange={e=>onUpdate({ cpapPurchase:{...purchase, note:e.target.value} })} placeholder="Serial No., ประกัน, หมายเหตุ..."
+              style={{ width:"100%",padding:"7px 10px",fontSize:12,border:"1px solid #86efac",borderRadius:8,outline:"none",background:"white",color:T.ink,boxSizing:"border-box" }} />
+          </div>
+          {/* Summary — ราคา+คอม (Admin) หรือแค่ราคา (รพ.) */}
+          {purchase.price>0 && (
+            <div style={{ padding:"9px 12px", background:"#dcfce7", borderRadius:9, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+              <span style={{ fontSize:11, color:"#166534" }}>ราคา {(purchase.price||0).toLocaleString()} บาท</span>
+              {isAdmin && (
+                <span style={{ fontSize:12, fontWeight:700, color:"#166534" }}>
+                  ค่าคอม {((purchase.price||0)*(purchase.commissionRate??2)/100).toLocaleString()} บาท
+                </span>
+              )}
+            </div>
+          )}
+          {/* Billing status */}
+          <div>
+            <div style={{ fontSize:10,color:"#059669",marginBottom:5,fontWeight:600 }}>สถานะใบแจ้งหนี้</div>
+            <div style={{ display:"flex",gap:6 }}>
+              {BILLING_STATUS.map(bs=>{
+                const on=(purchase.billingStatus||"pending")===bs.key;
+                return (
+                  <div key={bs.key} onClick={()=>onUpdate({ cpapPurchase:{...purchase,billingStatus:bs.key} })}
+                    style={{ flex:1,padding:"7px 10px",borderRadius:9,cursor:"pointer",border:on?`2px solid ${bs.color}`:`0.5px solid #86efac`,background:on?bs.bg:"white",textAlign:"center",transition:"all .12s" }}>
+                    <span style={{ fontSize:11,fontWeight:on?700:400,color:on?bs.color:"#64748b" }}>{bs.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Journey Progress Panel ────────────────────────────────────────────────────
-function JourneyPanel({ appt, canEdit, onUpdate }) {
+function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[] }) {
   const [open, setOpen] = useState(false);
   const steps = journeySteps(appt.apptType||"sleep_test");
   const curIdx = steps.findIndex(s=>s.key===(appt.journeyStatus||"scheduled"));
@@ -1243,12 +1767,16 @@ function JourneyPanel({ appt, canEdit, onUpdate }) {
             <div style={{ fontSize:12, fontWeight:700, color:"#5b21b6" }}>ฟังผลแล้ว — นัดทดลอง CPAP?</div>
             <div style={{ fontSize:11, color:"#7c3aed", marginTop:1 }}>สร้างนัดทดลองเครื่องให้ผู้ป่วยรายนี้</div>
           </div>
-          <button
-            onClick={()=>onUpdate({ _bookCpapTrial:true })}
+          <button onClick={()=>onUpdate({ _bookCpapTrial:true })}
             style={{ padding:"7px 13px", fontSize:11, fontWeight:700, borderRadius:9, background:"#7c3aed", color:"white", border:"none", cursor:"pointer", fontFamily:FONT, flexShrink:0 }}>
             + นัดทดลอง
           </button>
         </div>
+      )}
+
+      {/* CPAP Trial & Purchase Tracker */}
+      {appt.apptType==="cpap_trial" && canEdit && (
+        <CpapTrialTracker appt={appt} onUpdate={onUpdate} isAdmin={isAdmin} salesList={salesList} />
       )}
     </div>
   );
@@ -1257,10 +1785,10 @@ function JourneyPanel({ appt, canEdit, onUpdate }) {
 // ── Appointment Card (edit + reschedule + cancel) ─────────────────────────────
 const CANCEL_REASONS = ["ผู้ป่วยติดธุระ","ผู้ป่วยไม่สบาย","ผู้ป่วยขอเลื่อน","รพ. ขอเลื่อน","อุปกรณ์ไม่พร้อม","อื่นๆ"];
 
-function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap }) {
+function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[] }) {
   const [mode, setMode]               = useState(null);
   const [showReport, setShowReport]   = useState(false);
-  const [form, setForm]               = useState({ name:a.name, phone:a.phone, hn:a.hn, hospId:a.hospId, note:a.note||"" });
+  const [form, setForm]               = useState({ name:a.name, phone:a.phone, hn:a.hn, hospId:a.hospId, note:a.note||"", paymentType:a.paymentType||"" });
   const [actionTab, setActionTab]     = useState("reschedule");
   const [reschedDate, setReschedDate] = useState("");
   const [reschedNote, setReschedNote] = useState("");
@@ -1295,7 +1823,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
     <>
     {showReport && (
       <SleepReportModal
-        appt={a} hosp={h}
+        appt={a} hosp={h} hospitals={hospitals}
         onClose={()=>setShowReport(false)}
         onSave={report=>onUpdate({ sleepReport:report })}
       />
@@ -1312,7 +1840,22 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
           </div>
           <div style={{ fontSize:12, color:T.faint, marginBottom:5 }}>HN {a.hn} · {a.phone}</div>
           {/* Journey badge */}
-          {!isCancelled && <JourneyBadge apptType={apptType} journeyStatus={a.journeyStatus||"scheduled"} />}
+          {!isCancelled && <JourneyBadge apptType={apptType} journeyStatus={a.journeyStatus||"scheduled"} sleepTestType={a.sleepTestType} paymentType={a.paymentType} />}
+          {/* Deadline warning */}
+          {!isCancelled && (() => {
+            const dl = calcDeadline(a);
+            if(!dl) return null;
+            const col = dl.isOverdue?"#dc2626":dl.isUrgent?"#c2410c":null;
+            if(!col) return null;
+            return (
+              <div style={{ display:"flex",alignItems:"center",gap:4,marginTop:3 }}>
+                <span style={{ fontSize:10,padding:"2px 8px",borderRadius:8,background:dl.isOverdue?"#fee2e2":"#fef9c3",color:col,fontWeight:700,display:"flex",alignItems:"center",gap:3 }}>
+                  <i className="ti ti-bell" style={{ fontSize:10 }}></i>
+                  {dl.isOverdue?`เกินกำหนด ${Math.abs(dl.remaining)} วัน!`:`ผลออกใน ${dl.remaining} วัน`}
+                </span>
+              </div>
+            );
+          })()}
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
           <span style={{ fontSize:11,padding:"3px 10px",borderRadius:10,background:c.bg,color:c.text,fontWeight:600,whiteSpace:"nowrap" }}>{h?.short}</span>
@@ -1323,7 +1866,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
               ) : (
                 <>
                   {isAdmin && <button onClick={e=>{e.stopPropagation();onStartMove();}} style={{ width:26,height:26,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.card,color:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="ย้ายวัน"><i className="ti ti-arrows-move"></i></button>}
-                  {canEdit && <button onClick={e=>{e.stopPropagation();setMode(mode==="edit"?null:"edit");setForm({name:a.name,phone:a.phone,hn:a.hn,hospId:a.hospId,note:a.note||""});}} style={{ width:26,height:26,border:`0.5px solid ${T.line}`,borderRadius:7,background:mode==="edit"?T.blueL:T.card,color:mode==="edit"?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="แก้ไข"><i className="ti ti-edit"></i></button>}
+                  {canEdit && <button onClick={e=>{e.stopPropagation();setMode(mode==="edit"?null:"edit");setForm({name:a.name,phone:a.phone,hn:a.hn,hospId:a.hospId,note:a.note||"",paymentType:a.paymentType||""});}} style={{ width:26,height:26,border:`0.5px solid ${T.line}`,borderRadius:7,background:mode==="edit"?T.blueL:T.card,color:mode==="edit"?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="แก้ไข"><i className="ti ti-edit"></i></button>}
                   {canEdit && <button onClick={openAction} style={{ width:26,height:26,border:`0.5px solid #fecaca`,borderRadius:7,background:mode==="action"?T.redL:T.card,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="เลื่อน/ยกเลิกนัด"><i className="ti ti-calendar-x"></i></button>}
                 </>
               )}
@@ -1336,7 +1879,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
       {/* Journey progress — only if not cancelled */}
       {!isCancelled && (
         <div style={{ borderTop:`0.5px solid ${T.line}` }}>
-          <JourneyPanel appt={a} canEdit={canEdit} onUpdate={handleJourneyUpdate} />
+          <JourneyPanel appt={a} canEdit={canEdit} onUpdate={handleJourneyUpdate} isAdmin={isAdmin} salesList={salesList} />
         </div>
       )}
 
@@ -1372,6 +1915,21 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
                 </select>
               </div>
             )}
+            <div style={{ gridColumn:"1/-1" }}>
+              <div style={{ fontSize:10,color:T.muted,marginBottom:5 }}>สิทธิ์การรักษา</div>
+              <div style={{ display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:5 }}>
+                {PAYMENT_TYPES.map(pt=>{
+                  const on=form.paymentType===pt.key;
+                  return (
+                    <div key={pt.key} onClick={()=>setForm(f=>({...f,paymentType:on?"":pt.key}))}
+                      style={{ padding:"5px 8px",borderRadius:7,cursor:"pointer",border:on?`1.5px solid ${pt.color}`:`0.5px solid ${T.line}`,background:on?pt.bg:T.card,display:"flex",alignItems:"center",gap:4 }}>
+                      {pt.fastResult && <i className="ti ti-bolt" style={{ fontSize:10,color:pt.color }}></i>}
+                      <span style={{ fontSize:10,fontWeight:on?700:400,color:on?pt.color:T.muted }}>{pt.short}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div style={{ gridColumn:"1/-1" }}>
               <div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>หมายเหตุ</div>
               <input value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))} placeholder="หมายเหตุเพิ่มเติม..." style={{ width:"100%",padding:"6px 10px",fontSize:12,border:`0.5px solid ${T.line}`,borderRadius:8,outline:"none",background:T.card,color:T.ink,boxSizing:"border-box" }} />
@@ -1462,19 +2020,19 @@ function AssignRow({ dateKey,techs,assigned,checked,canEdit,canCheckin,onToggleA
         <span style={{ fontSize:10,color:T.faint,...R,gap:4 }}><i className="ti ti-stethoscope" style={{ fontSize:11 }}></i>Tech:</span>
         {assigned.length===0 && <span style={{ fontSize:10,color:T.faint }}>ยังไม่ assign</span>}
         {assigned.map(id=>{ const t=techs.find(x=>x.id===id); if(!t) return null; const ok=checked.includes(id); const ci=techs.findIndex(x=>x.id===id); const c=TPOOL[ci%TPOOL.length]; return (
-          <span key={id} onClick={canCheckin?()=>onToggleCheckin(id):undefined} style={{ fontSize:10,padding:"2px 8px",borderRadius:20,background:ok?"#dcfce7":c.bg,color:ok?"#166534":c.text,fontWeight:500,...R,gap:4,cursor:canCheckin?"pointer":"default",border:`0.5px solid ${ok?"#86efac":c.dot}`,transition:"all .12s" }}>
-            {ok&&<i className="ti ti-check" style={{ fontSize:9 }}></i>}{t.nick}
+          <span key={id} onClick={canCheckin?()=>onToggleCheckin(id):undefined} style={{ fontSize:11,padding:"3px 10px",borderRadius:20,background:ok?"#dcfce7":c.bg,color:ok?"#166534":c.text,fontWeight:500,...R,gap:4,cursor:canCheckin?"pointer":"default",border:`0.5px solid ${ok?"#86efac":c.dot}`,transition:"all .12s" }}>
+            {ok&&<i className="ti ti-check" style={{ fontSize:10 }}></i>}{t.name}
           </span>
         );})}
-        {canEdit && <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{ marginLeft:"auto",fontSize:10,padding:"2px 9px",borderRadius:8,border:`0.5px solid ${T.line}`,background:T.card,color:T.muted,cursor:"pointer" }}>{open?"เสร็จ":"+ Assign"}</button>}
+        {canEdit && <button onClick={e=>{e.stopPropagation();setOpen(o=>!o);}} style={{ marginLeft:"auto",fontSize:11,padding:"3px 10px",borderRadius:8,border:`0.5px solid ${T.line}`,background:T.card,color:T.muted,cursor:"pointer" }}>{open?"เสร็จ":"+ Assign"}</button>}
       </div>
       {open && canEdit && (
-        <div style={{ marginTop:8,padding:"10px 12px",background:"#f5f3ff",border:"0.5px solid #ddd6fe",borderRadius:10,...R,gap:6,flexWrap:"wrap" }}>
+        <div style={{ marginTop:8,padding:"12px 14px",background:"#f5f3ff",border:"0.5px solid #ddd6fe",borderRadius:10,display:"flex",flexDirection:"column",gap:6 }}>
           {techs.map((t,i)=>{ const c=TPOOL[i%TPOOL.length]; const on=assigned.includes(t.id); return (
-            <div key={t.id} onClick={()=>onToggleAssign(t.id)} style={{ ...R,gap:6,padding:"5px 10px",borderRadius:20,cursor:"pointer",background:on?c.bg:T.card,border:`0.5px solid ${on?c.dot:T.line}`,transition:"all .1s" }}>
-              <TAvatar tech={t} techs={techs} size={20} />
-              <span style={{ fontSize:11,color:on?c.text:T.muted,fontWeight:on?600:400 }}>{t.nick}</span>
-              {on&&<i className="ti ti-check" style={{ fontSize:10,color:c.dot }}></i>}
+            <div key={t.id} onClick={()=>onToggleAssign(t.id)} style={{ ...R,gap:10,padding:"9px 12px",borderRadius:10,cursor:"pointer",background:on?c.bg:T.card,border:`0.5px solid ${on?c.dot:T.line}`,transition:"all .1s" }}>
+              <TAvatar tech={t} techs={techs} size={28} />
+              <span style={{ fontSize:13,color:on?c.text:T.ink,fontWeight:on?700:400,flex:1 }}>{t.name}</span>
+              {on&&<i className="ti ti-check" style={{ fontSize:14,color:c.dot }}></i>}
             </div>
           );})}
         </div>
@@ -1483,17 +2041,100 @@ function AssignRow({ dateKey,techs,assigned,checked,canEdit,canCheckin,onToggleA
   );
 }
 
+// ── Line Message Parser (Regex — ไม่ต้องใช้ AI API) ──────────────────────────
+function parseLineText(text, defaultHospId) {
+  // ─── Normalize ───
+  const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
+
+  // ─── Split into blocks ───
+  // แยก block ด้วย: บรรทัดว่าง หรือ พบ HN ใหม่ขณะที่ block ปัจจุบันมีข้อมูลแล้ว
+  const isHNLine = l => /^\d{6,12}$/.test(l) || /^\d[-/]\d{2}[-/]\d+/.test(l) || /^(hn|HN)[:\s]/i.test(l);
+  const blocks = [];
+  let cur = [];
+  lines.forEach(l => {
+    if(cur.length && isHNLine(l)) { blocks.push([...cur]); cur=[]; }
+    cur.push(l);
+  });
+  if(cur.length) blocks.push(cur);
+
+  const today = new Date().toISOString().split("T")[0];
+  const results = [];
+
+  blocks.forEach((blines, bi) => {
+    let hn="", name="", phone="", date="";
+
+    blines.forEach(l => {
+      // ── HN ──
+      if(!hn && isHNLine(l)) {
+        hn = l.replace(/^(hn|HN)[:\s]*/i,"").replace(/\//g,"-").trim();
+        return;
+      }
+      // ── Phone ── (must check before name — prevents phone from matching as name)
+      if(!phone) {
+        // กรณีมี keyword
+        const phoneKw = l.match(/(?:โทร|tel|phone|เบอร์)[:\s]*([\d\-\+\s]{8,15})/i);
+        if(phoneKw) { phone = phoneKw[1].replace(/\s/g,"").trim(); return; }
+        // กรณีตัวเลขล้วน 9-10 หลัก (อาจมีขีด)
+        const barePhone = l.replace(/[-\s]/g,"");
+        if(/^(0\d{8,9})$/.test(barePhone)) { phone = l.replace(/\s/g,"").trim(); return; }
+      }
+      // ── Date ──
+      if(!date && /(?:จอง|วันที่|นัด|date|วัน)/i.test(l)) {
+        // รูปแบบ dd/mm/yy หรือ dd-mm-yy หรือ จองวันที่13/9/69
+        const dm = l.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+        if(dm) {
+          const d=parseInt(dm[1]), mo=parseInt(dm[2]);
+          let yr = dm[3] ? parseInt(dm[3]) : new Date().getFullYear()+543;
+          if(yr < 100) yr += 2500;           // 69 → 2569
+          if(yr > 2400) yr -= 543;            // 2569 → 2026
+          if(yr < 2000 || yr > 2100) yr = new Date().getFullYear(); // sanity
+          date = `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+        }
+        return;
+      }
+      // ── Name ──
+      // คำนำหน้าชัดเจน
+      if(!name && /^(น\.ส\.|นางสาว|นาย|นาง|ด\.ญ\.|เด็กหญิง|ด\.ช\.|เด็กชาย|mr\.|ms\.|mrs\.|miss)/i.test(l)) { name=l; return; }
+      // ไม่มี keyword และไม่ใช่ตัวเลข ความยาวสมเหตุสมผล
+      if(!name && !/^\d/.test(l) && l.length>=4 && l.length<=80 && !/^(ชื่อ|ช่อง|รพ|hospital|HN|โทร|เบอร์|tel|phone|date|วัน|จอง|นัด)/i.test(l)) {
+        name=l; return;
+      }
+    });
+
+    // บันทึก ถ้ามีอย่างน้อย HN หรือชื่อ
+    if(hn||name) {
+      results.push({
+        id: `p${Date.now()}_${bi}`,
+        hn:    hn   || "—",
+        name:  name || "ไม่ระบุชื่อ",
+        phone: phone|| "",
+        date:  date || today,
+        note: "",
+        hospId: defaultHospId||"",
+        status:"active", apptType:"sleep_test", sleepTestType:"full_night",
+        journeyStatus:"scheduled", cancelReason:"", cancelledAt:null,
+      });
+    }
+  });
+  return results;
+}
+
 // ── Paste View ────────────────────────────────────────────────────────────────
 function PasteView({ user,hospitals,setAppointments }) {
-  const [text,setText]=useState(""); const [parsed,setParsed]=useState([]); const [loading,setLoading]=useState(false); const [saved,setSaved]=useState(false); const [error,setError]=useState("");
-  const parse = async()=>{
-    if(!text.trim()) return; setLoading(true); setError(""); setParsed([]);
+  const [text,setText]=useState("");
+  const [parsed,setParsed]=useState([]);
+  const [loading,setLoading]=useState(false);
+  const [saved,setSaved]=useState(false);
+  const [error,setError]=useState("");
+
+  const parse = () => {
+    if(!text.trim()) return;
+    setLoading(true); setError(""); setParsed([]);
     try {
-      const res=await fetch("https://api.anthropic.com/v1/messages",{ method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({ model:"claude-sonnet-4-6",max_tokens:1000,messages:[{role:"user",content:`แปลงข้อความนัดหมายผู้ป่วยเป็น JSON array แต่ละรายการมี: hn, name, phone, date (YYYY-MM-DD, พ.ศ.→ค.ศ. ลบ543), note ("")\nตอบเฉพาะ JSON array ห้ามมี backtick\n\n${text}`}]}) });
-      const data=await res.json();
-      const arr=JSON.parse(data.content?.[0]?.text.replace(/```json|```/g,"").trim()||"[]");
-      setParsed(arr.map((a,i)=>({...a,id:`n${Date.now()}_${i}`,hospId:user.hospId||hospitals[0]?.id})));
-    } catch { setError("แปลงไม่สำเร็จ"); }
+      const results = parseLineText(text, user.hospId||hospitals[0]?.id);
+      if(results.length===0) { setError("ไม่พบข้อมูลนัดหมาย — ตรวจสอบรูปแบบข้อความตามตัวอย่างด้านบน"); setLoading(false); return; }
+      setParsed(results);
+    } catch(e) { setError("แปลงไม่สำเร็จ กรุณาลองใหม่"); }
     setLoading(false);
   };
   const save=()=>{ setAppointments(p=>[...p,...parsed]); setSaved(true); setTimeout(()=>{setSaved(false);setParsed([]);setText("");},2000); };
@@ -1514,28 +2155,28 @@ function PasteView({ user,hospitals,setAppointments }) {
             <div>
               <div style={{ fontSize:10, fontWeight:600, color:"#0369a1", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>ตัวอย่าง 1 รายการ</div>
               <div style={{ padding:"8px 10px", background:"white", borderRadius:8, border:"0.5px solid #bae6fd", fontFamily:"var(--font-mono)", fontSize:11, color:"#1e293b", lineHeight:1.9 }}>
-                8-57-012116<br/>
-                น.ส.ไพรินทร์ พูลมี<br/>
-                โทร0947282968<br/>
-                จองวันที่13/9/69
+                12345678<br/>
+                น.ส.ดวงดี ดวงใจ<br/>
+                โทร081-234-5678<br/>
+                จองวันที่1/10/69
               </div>
             </div>
             <div>
               <div style={{ fontSize:10, fontWeight:600, color:"#0369a1", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>หลายรายการ (เว้นบรรทัด)</div>
               <div style={{ padding:"8px 10px", background:"white", borderRadius:8, border:"0.5px solid #bae6fd", fontFamily:"var(--font-mono)", fontSize:11, color:"#1e293b", lineHeight:1.9 }}>
-                8-57-012116<br/>
-                น.ส.ไพรินทร์ พูลมี<br/>
-                โทร094-728-2968<br/>
-                จองวันที่13/9/69<br/>
+                12345678<br/>
+                น.ส.ดวงดี ดวงใจ<br/>
+                โทร081-234-5678<br/>
+                จองวันที่1/10/69<br/>
                 <span style={{ color:"#94a3b8" }}>{"(เว้นบรรทัด)"}</span><br/>
-                8-66-005480<br/>
-                นายพิเชษฐ์ แสนสุข<br/>
+                87654321<br/>
+                นายสมชาย มีสุข<br/>
                 ...
               </div>
             </div>
           </div>
           <div style={{ marginTop:8, display:"flex", flexWrap:"wrap", gap:6 }}>
-            {[["HN","8-57-012116 หรือ 8/57/012116"],["ชื่อ","น.ส. / นาย / นาง / ชื่อเต็ม"],["โทร","โทร / Tel / เบอร์"],["วันที่","จองวันที่ / นัด / วันที่"]].map(([k,v])=>(
+            {[["HN","12345678 หรือ 8/57/012116"],["ชื่อ","น.ส. / นาย / นาง / ชื่อเต็ม"],["โทร","โทร / Tel / เบอร์"],["วันที่","จองวันที่ / นัด / วันที่"]].map(([k,v])=>(
               <div key={k} style={{ fontSize:10, padding:"3px 9px", borderRadius:20, background:"#e0f2fe", color:"#0369a1", display:"flex", gap:5 }}>
                 <strong>{k}:</strong> {v}
               </div>
@@ -1546,10 +2187,10 @@ function PasteView({ user,hospitals,setAppointments }) {
         <textarea
           value={text}
           onChange={e=>setText(e.target.value)}
-          placeholder={"วางข้อความจาก Line ที่นี่...\n\nตัวอย่าง:\n8-57-012116\nน.ส.ไพรินทร์ พูลมี\nโทร0947282968\nจองวันที่13/9/69"}
+          placeholder={"วางข้อความจาก Line ที่นี่...\n\nตัวอย่าง:\n12345678\nน.ส.ดวงดี ดวงใจ\nโทร081-234-5678\nจองวันที่1/10/69"}
           style={{ width:"100%",height:130,padding:"11px 13px",fontSize:12,fontFamily:"var(--font-mono)",border:`1px solid ${T.line}`,borderRadius:10,background:"white",color:T.ink,resize:"vertical",outline:"none",lineHeight:1.9,boxSizing:"border-box" }}
         />
-        <div style={{ marginTop:11 }}><Btn variant="primary" onClick={parse} disabled={loading||!text.trim()}><i className={`ti ${loading?"ti-loader-2":"ti-sparkles"}`} style={{ fontSize:14 }}></i>{loading?"กำลังแปล...":"แปลงด้วย AI"}</Btn></div>
+        <div style={{ marginTop:11 }}><Btn variant="primary" onClick={parse} disabled={loading||!text.trim()}><i className={`ti ${loading?"ti-loader-2":"ti-file-search"}`} style={{ fontSize:14 }}></i>{loading?"กำลังแปล...":"แปลงข้อความ"}</Btn></div>
         {error&&<div style={{ marginTop:10,padding:"9px 13px",background:T.redL,border:"0.5px solid #fecaca",borderRadius:10,fontSize:12,color:"#991b1b",...R,gap:8 }}><i className="ti ti-alert-circle" style={{ fontSize:14 }}></i>{error}</div>}
       </div>
       {parsed.length>0&&(
@@ -1619,33 +2260,217 @@ function ManageHospitals({ hospitals,setHospitals }) {
   );
 }
 
-// ── Manage Techs ──────────────────────────────────────────────────────────────
-function ManageTechs({ techs,setTechs }) {
-  const [adding,setAdding]=useState(false);
-  const [form,setForm]=useState({ name:"",nick:"" });
-  const add=()=>{ if(!form.name.trim()) return; setTechs(p=>[...p,{ id:"st"+Date.now(),name:form.name.trim(),nick:form.nick.trim()||form.name.split(" ")[0] }]); setForm({ name:"",nick:"" }); setAdding(false); };
+// ── Manage Sales ─────────────────────────────────────────────────────────────
+function ManageSales({ salesList=[], setSalesList }) {
+  const [newName, setNewName] = useState("");
+  const [editIdx, setEditIdx] = useState(null);
+  const [editVal, setEditVal] = useState("");
+
+  const add = () => {
+    const n = newName.trim();
+    if(!n || salesList.includes(n)) return;
+    setSalesList(p=>[...p, n]);
+    setNewName("");
+  };
+  const remove = (idx) => { if(window.confirm(`ลบ "${salesList[idx]}" ออกจากรายชื่อ Sales?`)) setSalesList(p=>p.filter((_,i)=>i!==idx)); };
+  const saveEdit = (idx) => {
+    const n = editVal.trim();
+    if(!n) return;
+    setSalesList(p=>p.map((s,i)=>i===idx?n:s));
+    setEditIdx(null); setEditVal("");
+  };
+
+  return (
+    <div style={{ marginTop:8, padding:"18px 0 0" }}>
+      {/* Divider */}
+      <div style={{ borderTop:`1px solid ${T.line}`, paddingTop:18, marginBottom:14 }}>
+        <div style={{ ...R, justifyContent:"space-between", marginBottom:14 }}>
+          <div>
+            <div style={{ fontSize:15, fontWeight:700, color:T.navy }}>รายชื่อ Sales ({salesList.length} คน)</div>
+            <div style={{ fontSize:11, color:T.faint, marginTop:2 }}>ชื่อเหล่านี้จะแสดงใน Sale Report 3N และ Dropdown เลือก Sales</div>
+          </div>
+        </div>
+
+        {/* Add new */}
+        <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+          <input
+            value={newName}
+            onChange={e=>setNewName(e.target.value)}
+            onKeyDown={e=>e.key==="Enter"&&add()}
+            placeholder="ชื่อ-นามสกุล Sales คนใหม่"
+            style={{ flex:1, padding:"9px 13px", fontSize:13, border:`1.5px solid ${T.line}`, borderRadius:10, outline:"none", background:T.card, color:T.ink, fontFamily:FONT }}
+            onFocus={e=>e.target.style.borderColor="#059669"}
+            onBlur={e=>e.target.style.borderColor=T.line}
+          />
+          <button onClick={add} disabled={!newName.trim()}
+            style={{ padding:"9px 18px", fontSize:13, fontWeight:700, borderRadius:10, background:newName.trim()?"#059669":"#e2e8f0", color:newName.trim()?"white":"#94a3b8", border:"none", cursor:newName.trim()?"pointer":"not-allowed", fontFamily:FONT, display:"flex", alignItems:"center", gap:6 }}>
+            <i className="ti ti-plus" style={{ fontSize:14 }}></i> เพิ่ม
+          </button>
+        </div>
+
+        {/* Sales list */}
+        <div style={{ display:"flex", flexDirection:"column", gap:7 }}>
+          {salesList.map((name,i)=>(
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", background:T.card, border:`0.5px solid ${T.line}`, borderRadius:11 }}>
+              <div style={{ width:34, height:34, borderRadius:"50%", background:"#d1fae5", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, fontSize:13, fontWeight:700, color:"#059669" }}>
+                {name.trim().split(" ").map(w=>w[0]||"").join("").slice(0,2)}
+              </div>
+              {editIdx===i ? (
+                <>
+                  <input value={editVal} onChange={e=>setEditVal(e.target.value)} onKeyDown={e=>e.key==="Enter"&&saveEdit(i)}
+                    style={{ flex:1, padding:"6px 10px", fontSize:13, border:`1.5px solid #059669`, borderRadius:8, outline:"none", background:"white", color:T.ink, fontFamily:FONT }} autoFocus />
+                  <button onClick={()=>saveEdit(i)} style={{ padding:"5px 12px", fontSize:12, fontWeight:700, borderRadius:8, background:"#059669", color:"white", border:"none", cursor:"pointer" }}>บันทึก</button>
+                  <button onClick={()=>setEditIdx(null)} style={{ padding:"5px 10px", fontSize:12, borderRadius:8, border:`0.5px solid ${T.line}`, background:T.card, color:T.muted, cursor:"pointer" }}>ยกเลิก</button>
+                </>
+              ) : (
+                <>
+                  <span style={{ flex:1, fontSize:13, fontWeight:600, color:T.ink }}>{name}</span>
+                  <button onClick={()=>{ setEditIdx(i); setEditVal(name); }} style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                    <i className="ti ti-edit"></i>
+                  </button>
+                  <button onClick={()=>remove(i)} style={{ width:28,height:28,border:`0.5px solid #fecaca`,borderRadius:7,background:"#fef2f2",color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                    <i className="ti ti-trash"></i>
+                  </button>
+                </>
+              )}
+            </div>
+          ))}
+          {salesList.length===0 && (
+            <div style={{ padding:"20px", textAlign:"center", color:T.faint, fontSize:13, background:T.surf, borderRadius:11, border:`0.5px solid ${T.line}` }}>
+              ยังไม่มีรายชื่อ Sales — กรอกชื่อแล้วกด "เพิ่ม" ด้านบนค่ะ
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Manage Techs ─────────────────────────────────────────────────────────────
+function ManageTechs({ techs, setTechs, techRates, setTechRates, salesList=[], setSalesList }) {
+  const [adding, setAdding] = useState(false);
+  const [form, setForm]     = useState({ name:"", nick:"" });
+  const [editRateId, setEditRateId] = useState(null);
+  const [rateForm, setRateForm]     = useState({ rate1:675, rate2:607.5, scoreRate:350 });
+
+  const add = () => {
+    if(!form.name.trim()) return;
+    const id = "st"+Date.now();
+    setTechs(p=>[...p,{ id, name:form.name.trim(), nick:form.nick.trim()||form.name.split(" ")[0] }]);
+    setTechRates(p=>({...p,[id]:{ ...DEFAULT_RATE }}));
+    setForm({ name:"",nick:"" }); setAdding(false);
+  };
+  const saveRate = (id) => {
+    setTechRates(p=>({...p,[id]:{ rate1:Number(rateForm.rate1)||675, rate2:Number(rateForm.rate2)||607.5, scoreRate:Number(rateForm.scoreRate)||350 }}));
+    setEditRateId(null);
+  };
+  const openRate = (t) => {
+    const r=(techRates||{})[t.id]||DEFAULT_RATE;
+    setRateForm({ rate1:r.rate1, rate2:r.rate2, scoreRate:r.scoreRate });
+    setEditRateId(t.id);
+  };
+
   return (
     <div style={{ padding:20,...FL,gap:14,height:"100%",overflowY:"auto" }}>
       <div style={{ ...R,justifyContent:"space-between" }}>
         <div style={{ fontSize:15,fontWeight:700,color:T.navy }}>Sleep Technician ({techs.length} คน)</div>
         <Btn variant="purple" small onClick={()=>setAdding(a=>!a)}><i className="ti ti-plus" style={{ fontSize:13 }}></i> เพิ่ม Tech</Btn>
       </div>
+
       {adding&&(
         <div style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:14,padding:16,...FL,gap:9 }}>
+          <div style={{ fontSize:12,fontWeight:700,color:T.ink }}>เพิ่ม Sleep Technician</div>
           <input value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))} placeholder="ชื่อ-นามสกุล" style={{ padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink }} />
           <input value={form.nick} onChange={e=>setForm(f=>({...f,nick:e.target.value}))} placeholder="ชื่อเล่น (ไม่บังคับ)" style={{ padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink }} />
           <div style={{ ...R,gap:8 }}><Btn variant="purple" small onClick={add}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn><Btn variant="outline" small onClick={()=>setAdding(false)}>ยกเลิก</Btn></div>
         </div>
       )}
-      <div style={{ ...FL,gap:8 }}>
-        {techs.map((t,i)=>{ const c=TPOOL[i%TPOOL.length]; return (
-          <div key={t.id} style={{ ...R,gap:12,padding:"12px 14px",background:T.card,border:`0.5px solid ${T.line}`,borderRadius:12 }}>
-            <div style={{ width:42,height:42,borderRadius:"50%",background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:c.text,flexShrink:0,border:`1.5px solid ${c.dot}` }}>{tinit(t.name)}</div>
-            <div style={{ flex:1 }}><div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{t.name}</div><div style={{ fontSize:11,color:T.faint }}>ชื่อเล่น: {t.nick}</div></div>
-            <button onClick={()=>setTechs(p=>p.filter(x=>x.id!==t.id))} style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}><i className="ti ti-trash"></i></button>
-          </div>
-        );})}
+
+      {/* Rate table header */}
+      <div style={{ padding:"8px 14px",background:"#f5f3ff",borderRadius:10,border:"0.5px solid #ddd6fe",...R,gap:0 }}>
+        <div style={{ flex:1,fontSize:11,fontWeight:700,color:"#5b21b6" }}>ชื่อ Tech</div>
+        <div style={{ width:80,fontSize:10,color:"#7c3aed",textAlign:"center" }}>ติด 1 case</div>
+        <div style={{ width:90,fontSize:10,color:"#7c3aed",textAlign:"center" }}>ติด 2+ case</div>
+        <div style={{ width:80,fontSize:10,color:"#7c3aed",textAlign:"center" }}>Score/อ่านผล</div>
+        <div style={{ width:36 }}></div>
       </div>
+
+      <div style={{ ...FL,gap:8 }}>
+        {techs.map((t,i)=>{
+          const c = TPOOL[i%TPOOL.length];
+          const r = (techRates||{})[t.id] || DEFAULT_RATE;
+          const isEdit = editRateId===t.id;
+          return (
+            <div key={t.id} style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:12,overflow:"hidden" }}>
+              {/* Main row */}
+              <div style={{ ...R,gap:12,padding:"12px 14px" }}>
+                <div style={{ width:42,height:42,borderRadius:"50%",background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:c.text,flexShrink:0,border:`1.5px solid ${c.dot}` }}>{tinit(t.name)}</div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13,fontWeight:700,color:T.ink }}>{t.name}</div>
+                  <div style={{ fontSize:11,color:T.faint,marginTop:1 }}>ชื่อเล่น: {t.nick}</div>
+                </div>
+                {/* Rate pills */}
+                <div style={{ ...R,gap:6 }}>
+                  {[["1 case",r.rate1],["2+",r.rate2],["Score",r.scoreRate]].map(([lb,val])=>(
+                    <div key={lb} style={{ textAlign:"center",padding:"5px 9px",background:"#f5f3ff",borderRadius:9,border:"0.5px solid #ddd6fe" }}>
+                      <div style={{ fontSize:10,color:"#7c3aed",fontWeight:500 }}>{lb}</div>
+                      <div style={{ fontSize:12,fontWeight:700,color:"#5b21b6" }}>{Number(val).toLocaleString()}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ ...R,gap:4 }}>
+                  <button onClick={()=>isEdit?setEditRateId(null):openRate(t)} style={{ width:28,height:28,border:`0.5px solid #ddd6fe`,borderRadius:7,background:isEdit?"#ede9fe":T.surf,color:isEdit?"#7c3aed":T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                    <i className="ti ti-currency-baht"></i>
+                  </button>
+                  <button onClick={()=>setTechs(p=>p.filter(x=>x.id!==t.id))} style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                    <i className="ti ti-trash"></i>
+                  </button>
+                </div>
+              </div>
+
+              {/* Rate editor */}
+              {isEdit && (
+                <div style={{ padding:"12px 14px",borderTop:"0.5px solid #ddd6fe",background:"#faf5ff",...FL,gap:10 }}>
+                  <div style={{ fontSize:12,fontWeight:700,color:"#5b21b6",marginBottom:2 }}>
+                    <i className="ti ti-currency-baht" style={{ marginRight:5 }}></i>
+                    ตั้งค่าค่าตอบแทน — {t.name}
+                  </div>
+                  <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10 }}>
+                    {[
+                      ["rate1","ค่าติด 1 case/วัน (บาท)","675"],
+                      ["rate2","ค่าติด 2+ case/วัน/case (บาท)","607.5"],
+                      ["scoreRate","ค่า Score/อ่านผล (บาท)","350"],
+                    ].map(([k,label,ph])=>(
+                      <div key={k}>
+                        <div style={{ fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:4 }}>{label}</div>
+                        <input type="number" value={rateForm[k]} onChange={e=>setRateForm(f=>({...f,[k]:e.target.value}))}
+                          placeholder={ph} style={{ width:"100%",padding:"8px 11px",fontSize:14,fontWeight:700,border:"1.5px solid #ddd6fe",borderRadius:9,outline:"none",background:"white",color:"#5b21b6",boxSizing:"border-box",textAlign:"center" }} />
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ ...R,gap:8,marginTop:2 }}>
+                    <Btn variant="purple" small onClick={()=>saveRate(t.id)}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn>
+                    <Btn variant="outline" small onClick={()=>setEditRateId(null)}>ยกเลิก</Btn>
+                    <button onClick={()=>{ setRateForm({ rate1:DEFAULT_RATE.rate1, rate2:DEFAULT_RATE.rate2, scoreRate:DEFAULT_RATE.scoreRate }); }}
+                      style={{ fontSize:11,padding:"4px 10px",borderRadius:7,border:"0.5px solid #ddd6fe",background:"white",color:"#7c3aed",cursor:"pointer",marginLeft:"auto" }}>ค่า Default</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Summary note */}
+      <div style={{ padding:"12px 14px",background:"#eff6ff",borderRadius:12,border:"0.5px solid #bfdbfe",...R,gap:10 }}>
+        <i className="ti ti-info-circle" style={{ fontSize:16,color:T.blue,flexShrink:0 }}></i>
+        <div style={{ fontSize:12,color:"#1e40af" }}>
+          ค่าตอบแทนจะคำนวณตาม case ต่อวันต่อ รพ. — Export Excel จะแสดงค่าตอบแทนรายผู้ป่วยอัตโนมัติ
+        </div>
+      </div>
+
+      {/* ── จัดการ Sales ── */}
+      <ManageSales salesList={salesList} setSalesList={setSalesList} />
     </div>
   );
 }
@@ -1661,7 +2486,7 @@ function loadSavedData() {
   } catch { return null; }
 }
 
-function DataManager({ appts, hospitals, techs, assignments, checkins, dayBlocks, onImport }) {
+function DataManager({ appts, hospitals, techs, assignments, checkins, dayBlocks, techRates, onImport }) {
   const [open, setOpen]       = useState(false);
   const [importErr, setImportErr] = useState("");
   const [imported, setImported]   = useState(false);
@@ -1747,7 +2572,7 @@ function DataManager({ appts, hospitals, techs, assignments, checkins, dayBlocks
               เปิดได้ใน Excel / Google Sheets ทันที
             </div>
             <button
-              onClick={()=>{ exportToExcel(appts, hospitals, techs); }}
+              onClick={()=>{ exportToExcel(appts, hospitals, techs, assignments, checkins, techRates); }}
               style={{ padding:"10px 16px", fontSize:13, fontWeight:700, borderRadius:10, background:T.green, color:"white", border:"none", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
               <i className="ti ti-file-spreadsheet" style={{ fontSize:15 }}></i> Download .csv (Excel)
             </button>
@@ -1806,6 +2631,804 @@ function DataManager({ appts, hospitals, techs, assignments, checkins, dayBlocks
   );
 }
 
+// ── Tech Schedule View ────────────────────────────────────────────────────────
+function TechScheduleView({ user, techs, appointments, hospitals, assignments, checkins, setCheckins }) {
+  const today   = new Date();
+  const [year,  setYear]   = useState(today.getFullYear());
+  const [month, setMonth]  = useState(today.getMonth());
+  // ถ้าเป็น tech login → fix เป็นตัวเอง, ถ้าเป็น admin → เลือกได้
+  const myTech  = techs.find(t => t.id === user.id);
+  const [selTechId, setSelTechId] = useState(myTech?.id || techs[0]?.id || "");
+  const selTech = techs.find(t => t.id === selTechId);
+
+  const pfx = `${year}-${String(month+1).padStart(2,"0")}`;
+  const prev = () => month===0 ? (setMonth(11),setYear(y=>y-1)) : setMonth(m=>m-1);
+  const next = () => month===11? (setMonth(0), setYear(y=>y+1)) : setMonth(m=>m+1);
+
+  // วันที่มีเวรของ tech คนนี้เดือนนี้
+  const myDays = Object.entries(assignments)
+    .filter(([k,v]) => k.startsWith(pfx) && v.includes(selTechId))
+    .map(([k]) => k)
+    .sort();
+
+  const toggleCheckin = (dateKey) => {
+    setCheckins(prev => {
+      const cur = prev[dateKey]||[];
+      const next = cur.includes(selTechId) ? cur.filter(x=>x!==selTechId) : [...cur,selTechId];
+      return {...prev,[dateKey]:next};
+    });
+  };
+
+  // สถิติเดือน
+  const totalShifts  = myDays.length;
+  const confirmedShifts = myDays.filter(d=>(checkins[d]||[]).includes(selTechId)).length;
+  const totalCases   = myDays.reduce((sum,d)=>sum+(appointments.filter(a=>a.date===d&&a.status!=="cancelled").length),0);
+
+  const TM  = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const TMF = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+
+  const ci = techs.findIndex(t=>t.id===selTechId);
+  const tc = TPOOL[ci%TPOOL.length];
+
+  return (
+    <div style={{ display:"flex", height:"100%", overflow:"hidden", fontFamily:FONT }}>
+
+      {/* LEFT: schedule list */}
+      <div style={{ flex:1, display:"flex", flexDirection:"column", overflow:"hidden" }}>
+
+        {/* Header */}
+        <div style={{ padding:"16px 20px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", gap:14, flexShrink:0 }}>
+          {/* Tech selector — admin เลือกได้, tech เห็นแค่ตัวเอง */}
+          {user.role==="admin" ? (
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", flex:1 }}>
+              {techs.map((t,i)=>{
+                const c=TPOOL[i%TPOOL.length]; const on=selTechId===t.id;
+                return (
+                  <div key={t.id} onClick={()=>setSelTechId(t.id)}
+                    style={{ display:"flex", alignItems:"center", gap:8, padding:"7px 14px", borderRadius:20, cursor:"pointer", border: on?`2px solid ${c.dot}`:`0.5px solid ${T.line}`, background:on?c.bg:T.card, transition:"all .12s" }}>
+                    <TAvatar tech={t} techs={techs} size={24}/>
+                    <span style={{ fontSize:12, fontWeight:on?700:400, color:on?c.text:T.muted }}>{t.name}</span>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <div style={{ ...R, gap:12, flex:1 }}>
+              <TAvatar tech={selTech} techs={techs} size={42}/>
+              <div>
+                <div style={{ fontSize:17, fontWeight:800, color:T.navy }}>{selTech?.name}</div>
+                <div style={{ fontSize:12, color:T.muted, marginTop:2 }}>Sleep Technician · 3N Sleep Care</div>
+              </div>
+            </div>
+          )}
+
+          {/* Month nav */}
+          <div style={{ display:"flex", alignItems:"center", gap:8, flexShrink:0 }}>
+            <button onClick={prev} style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.muted,cursor:"pointer",fontSize:15,...R,justifyContent:"center" }}>‹</button>
+            <span style={{ fontSize:14, fontWeight:700, color:T.navy, minWidth:120, textAlign:"center" }}>{TMF[month]} {year+543}</span>
+            <button onClick={next} style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.muted,cursor:"pointer",fontSize:15,...R,justifyContent:"center" }}>›</button>
+          </div>
+        </div>
+
+        {/* Empty state */}
+        {myDays.length===0 && (
+          <div style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", gap:12, color:T.faint }}>
+            <div style={{ width:64,height:64,borderRadius:18,background:T.surf,display:"flex",alignItems:"center",justifyContent:"center",border:`0.5px solid ${T.line}` }}>
+              <i className="ti ti-calendar-off" style={{ fontSize:28 }}></i>
+            </div>
+            <div style={{ fontSize:15, fontWeight:600, color:T.muted }}>ยังไม่มีเวรเดือนนี้</div>
+            <div style={{ fontSize:13, color:T.faint }}>Admin จะ assign เวรให้ใน tab รายเดือน</div>
+          </div>
+        )}
+
+        {/* Day cards */}
+        <div style={{ flex:1, overflowY:"auto", padding:"16px 20px", display:"flex", flexDirection:"column", gap:10 }}>
+          {myDays.map(dateKey => {
+            const d       = new Date(dateKey);
+            const dow     = ["อา","จ","อ","พ","พฤ","ศ","ส"][d.getDay()];
+            const isSun   = d.getDay()===0;
+            const isToday = dateKey===`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,"0")}-${String(today.getDate()).padStart(2,"0")}`;
+            const isPast  = d < new Date(today.toDateString());
+            const ok      = (checkins[dateKey]||[]).includes(selTechId);
+            const dayAppts= appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
+            const hospsToday = [...new Map(dayAppts.map(a=>[a.hospId,hospitals.find(h=>h.id===a.hospId)])).entries()].map(([,h])=>h).filter(Boolean);
+
+            return (
+              <div key={dateKey} style={{ background:T.card, border: ok?`1.5px solid #86efac`:isToday?`1.5px solid ${T.blue}`:`0.5px solid ${T.line}`, borderRadius:16, overflow:"hidden", opacity:isPast&&!ok?.7:1 }}>
+                <div style={{ display:"flex" }}>
+
+                  {/* Date strip */}
+                  <div style={{ width:72, background:ok?"#dcfce7":isToday?T.blueL:tc.bg, display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", padding:"14px 0", flexShrink:0, borderRight:`0.5px solid ${T.line}` }}>
+                    <div style={{ fontSize:28, fontWeight:800, color:ok?"#166534":isToday?T.blue:tc.text, lineHeight:1 }}>{d.getDate()}</div>
+                    <div style={{ fontSize:11, fontWeight:600, color:ok?"#16a34a":isToday?T.blue:tc.text, opacity:.8, textTransform:"uppercase", marginTop:3 }}>{dow}</div>
+                    <div style={{ fontSize:10, color:ok?"#16a34a":isToday?T.blue:tc.text, opacity:.6, marginTop:1 }}>{TM[d.getMonth()]}</div>
+                    {ok && <i className="ti ti-check-circle" style={{ fontSize:16,color:"#16a34a",marginTop:6 }}></i>}
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex:1, padding:"14px 16px" }}>
+                    {/* Hospitals today */}
+                    {hospsToday.length===0
+                      ? <div style={{ fontSize:13,color:T.faint,marginBottom:8 }}>ยังไม่มีนัดหมาย</div>
+                      : hospsToday.map(h=>{
+                          const hAppts = dayAppts.filter(a=>a.hospId===h.id);
+                          const c      = hc(h.id, hospitals);
+                          return (
+                            <div key={h.id} style={{ display:"flex", alignItems:"center", gap:10, padding:"9px 12px", background:c.soft||c.bg, borderRadius:11, marginBottom:7, border:`0.5px solid ${c.dot}20` }}>
+                              <div style={{ width:36,height:36,borderRadius:10,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                                <i className="ti ti-building-hospital" style={{ fontSize:18,color:c.text }}></i>
+                              </div>
+                              <div style={{ flex:1 }}>
+                                <div style={{ fontSize:13,fontWeight:700,color:c.text }}>{h.name}</div>
+                                <div style={{ fontSize:11,color:c.text,opacity:.75,marginTop:1 }}>{h.city}</div>
+                              </div>
+                              {/* Case count badge */}
+                              <div style={{ textAlign:"center",padding:"6px 12px",background:c.bg,borderRadius:10,border:`0.5px solid ${c.dot}` }}>
+                                <div style={{ fontSize:20,fontWeight:800,color:c.text,lineHeight:1 }}>{hAppts.length}</div>
+                                <div style={{ fontSize:9,color:c.text,opacity:.75 }}>case</div>
+                              </div>
+                            </div>
+                          );
+                        })
+                    }
+
+                    {/* Patient list (collapsed) */}
+                    {dayAppts.length>0 && (
+                      <details style={{ marginTop:4 }}>
+                        <summary style={{ fontSize:11,color:T.muted,cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",gap:5,userSelect:"none" }}>
+                          <i className="ti ti-users" style={{ fontSize:12 }}></i>
+                          ดูรายชื่อผู้ป่วย ({dayAppts.length} ราย)
+                          <i className="ti ti-chevron-down" style={{ fontSize:10,marginLeft:"auto" }}></i>
+                        </summary>
+                        <div style={{ marginTop:8,display:"flex",flexDirection:"column",gap:5 }}>
+                          {dayAppts.map((a,i)=>{
+                            const c=hc(a.hospId,hospitals); const h=hospitals.find(x=>x.id===a.hospId);
+                            return (
+                              <div key={a.id} style={{ display:"flex",alignItems:"center",gap:9,padding:"7px 11px",background:T.surf,borderRadius:9,border:`0.5px solid ${T.line}` }}>
+                                <div style={{ width:20,height:20,borderRadius:"50%",background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:c.text,flexShrink:0 }}>{i+1}</div>
+                                <div style={{ flex:1,minWidth:0 }}>
+                                  <div style={{ fontSize:12,fontWeight:600,color:T.ink,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis" }}>{a.name}</div>
+                                  <div style={{ fontSize:10,color:T.faint }}>HN {a.hn} · {a.phone||"—"}</div>
+                                </div>
+                                <span style={{ fontSize:9,padding:"2px 7px",borderRadius:8,background:c.bg,color:c.text,fontWeight:500,flexShrink:0 }}>{h?.short}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    )}
+
+                    {/* Confirmation status — Admin only can confirm */}
+                    <div style={{ marginTop:10 }}>
+                      {ok ? (
+                        <div style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 14px", borderRadius:10, background:"#dcfce7", border:"1px solid #86efac" }}>
+                          <i className="ti ti-check-circle" style={{ fontSize:16, color:"#166534" }}></i>
+                          <span style={{ fontSize:12, fontWeight:700, color:"#166534" }}>Admin ยืนยันการเข้าเวรแล้ว</span>
+                          {user.role==="admin" && (
+                            <button onClick={()=>toggleCheckin(dateKey)} style={{ marginLeft:"auto", fontSize:11, padding:"3px 10px", borderRadius:7, border:"1px solid #86efac", background:"white", color:"#dc2626", cursor:"pointer", fontFamily:FONT }}>ยกเลิก</button>
+                          )}
+                        </div>
+                      ) : user.role==="admin" ? (
+                        <button onClick={()=>toggleCheckin(dateKey)}
+                          style={{ padding:"9px 18px", fontSize:12, fontWeight:700, borderRadius:10, background:T.blueL, color:T.blue, border:`1.5px solid ${T.blueMid}`, cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", gap:7 }}>
+                          <i className="ti ti-check" style={{ fontSize:15 }}></i>
+                          ยืนยันการเข้าเวร (Admin)
+                        </button>
+                      ) : (
+                        <div style={{ display:"flex", alignItems:"center", gap:8, padding:"9px 14px", borderRadius:10, background:"#fef9c3", border:"1px solid #fde68a" }}>
+                          <i className="ti ti-clock" style={{ fontSize:14, color:"#92400e" }}></i>
+                          <span style={{ fontSize:12, color:"#92400e" }}>รอ Admin ยืนยันการเข้าเวร</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* RIGHT: monthly summary */}
+      <div style={{ width:240, borderLeft:`1px solid ${T.line}`, background:T.card, display:"flex", flexDirection:"column", flexShrink:0, overflowY:"auto" }}>
+        <div style={{ padding:"20px 18px" }}>
+
+          {/* Tech avatar + name */}
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, paddingBottom:18, borderBottom:`0.5px solid ${T.line}`, marginBottom:18 }}>
+            <TAvatar tech={selTech} techs={techs} size={56}/>
+            <div style={{ textAlign:"center" }}>
+              <div style={{ fontSize:14, fontWeight:800, color:T.navy }}>{selTech?.name}</div>
+              <div style={{ fontSize:11, color:T.muted, marginTop:3 }}>Sleep Technician</div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div style={{ display:"flex", flexDirection:"column", gap:10, marginBottom:20 }}>
+            {[
+              ["ti-calendar","เวรทั้งหมด",totalShifts,"#1d4ed8","#dbeafe"],
+              ["ti-check-circle","ยืนยันแล้ว",confirmedShifts,"#059669","#d1fae5"],
+              ["ti-users","case รวม",totalCases,"#7c3aed","#ede9fe"],
+            ].map(([ic,lb,val,col,bg])=>(
+              <div key={lb} style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 14px", background:bg, borderRadius:12 }}>
+                <i className={`ti ${ic}`} style={{ fontSize:20,color:col,flexShrink:0 }}></i>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:11,color:col,opacity:.75,fontWeight:500 }}>{lb}</div>
+                  <div style={{ fontSize:22,fontWeight:800,color:col,lineHeight:1.1,marginTop:2 }}>{val}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Progress */}
+          {totalShifts>0 && (
+            <div style={{ marginBottom:20 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", fontSize:12, marginBottom:6 }}>
+                <span style={{ color:T.muted }}>ยืนยันเวร</span>
+                <span style={{ fontWeight:700,color:confirmedShifts===totalShifts?"#059669":T.ink }}>{Math.round(confirmedShifts/totalShifts*100)}%</span>
+              </div>
+              <div style={{ height:8,borderRadius:10,background:"#e2e8f0",overflow:"hidden" }}>
+                <div style={{ width:`${Math.round(confirmedShifts/totalShifts*100)}%`,height:"100%",background:confirmedShifts===totalShifts?"#059669":"#7c3aed",borderRadius:10,transition:"width .3s" }}></div>
+              </div>
+            </div>
+          )}
+
+          {/* รพ. ที่ไปเดือนนี้ */}
+          <div style={{ fontSize:11,color:T.faint,fontWeight:700,textTransform:"uppercase",letterSpacing:".05em",marginBottom:10 }}>รพ. เดือนนี้</div>
+          {[...new Set(
+            myDays.flatMap(d => appointments.filter(a=>a.date===d&&a.status!=="cancelled").map(a=>a.hospId))
+          )].map(hospId=>{
+            const h=hospitals.find(x=>x.id===hospId); if(!h) return null;
+            const c=hc(hospId,hospitals);
+            const cnt=myDays.reduce((s,d)=>s+appointments.filter(a=>a.date===d&&a.hospId===hospId&&a.status!=="cancelled").length,0);
+            const shifts=myDays.filter(d=>assignments[d]?.includes(selTechId)&&appointments.some(a=>a.date===d&&a.hospId===hospId)).length;
+            return (
+              <div key={hospId} style={{ display:"flex",alignItems:"center",gap:10,padding:"10px 12px",background:c.bg,borderRadius:11,marginBottom:8,border:`0.5px solid ${c.dot}30` }}>
+                <span style={{ width:10,height:10,borderRadius:"50%",background:c.dot,flexShrink:0 }}></span>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:12,fontWeight:700,color:c.text }}>{h.short}</div>
+                  <div style={{ fontSize:10,color:c.text,opacity:.7 }}>{shifts} เวร</div>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontSize:16,fontWeight:800,color:c.text }}>{cnt}</div>
+                  <div style={{ fontSize:9,color:c.text,opacity:.6 }}>case</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sales View ────────────────────────────────────────────────────────────────
+function exportSalesExcel(sales, hospitals, mode, year, month, selHosp, salesName) {
+  const TM = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+  const header = ["ชื่อผู้ป่วย","HN","โรงพยาบาล","วันที่ซื้อ","รุ่น CPAP","ราคา (บาท)","ค่าคอม %","ค่าคอม (บาท)","สถานะบิล","Sales"];
+  const rows = sales.map(a=>{
+    const h=hospitals.find(x=>x.id===a.hospId);
+    const p=a.cpapPurchase;
+    const com=Math.round((p?.price||0)*(p?.commissionRate??2)/100);
+    const billLabel=BILLING_STATUS.find(b=>b.key===(p?.billingStatus||"pending"))?.label||"ยังไม่วางบิล";
+    return [a.name, a.hn, h?.name||"", p?.purchaseDate||a.date, p?.model||"", p?.price||0, p?.commissionRate??2, com, billLabel, p?.salesPerson||""];
+  });
+  const lines=[header,...rows].map(r=>r.map(c=>{ const s=String(c??""); return s.includes(",")? `"${s}"`:s; }).join(","));
+  const periodLabel = mode==="month"?`${TM[month]}_${year+543}`:`ปี${year+543}`;
+  const hospLabel   = selHosp==="all"?"ทุก_รพ":hospitals.find(h=>h.id===selHosp)?.short||selHosp;
+  const blob=new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`Sales_${salesName}_${periodLabel}_${hospLabel}.csv`; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function SalesView({ user, appointments, hospitals, salesList=[], setAppointments }) {
+  const now   = new Date();
+  const [year,  setYear]  = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth());
+  const [mode,  setMode]  = useState("month");
+  const [selHosp, setSelHosp] = useState("all");
+  const [selSales, setSelSales] = useState("all"); // filter by sales person
+
+  const TMF=["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  const TMS=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+  const pfx = mode==="month"?`${year}-${String(month+1).padStart(2,"0")}`:`${year}`;
+
+  // Filter
+  const allSales = appointments.filter(a =>
+    a.cpapPurchase?.price>0 &&
+    a.status!=="cancelled" &&
+    a.date.startsWith(pfx) &&
+    (selHosp==="all"||a.hospId===selHosp) &&
+    (selSales==="all"||a.cpapPurchase?.salesPerson===selSales)
+  );
+
+  // Stats
+  const totalRevenue    = allSales.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0);
+  const totalCommission = allSales.reduce((s,a)=>s+(a.cpapPurchase?.price||0)*(a.cpapPurchase?.commissionRate??2)/100,0);
+  const billed   = allSales.filter(a=>a.cpapPurchase?.billingStatus==="billed");
+  const paid     = allSales.filter(a=>a.cpapPurchase?.billingStatus==="paid");
+  const pending  = allSales.filter(a=>!a.cpapPurchase?.billingStatus||a.cpapPurchase?.billingStatus==="pending");
+
+  // Monthly trend
+  const monthlyData = Array.from({length:12},(_,mi)=>{
+    const mp=`${year}-${String(mi+1).padStart(2,"0")}`;
+    const ms=appointments.filter(a=>a.cpapPurchase?.price>0&&a.status!=="cancelled"&&a.date.startsWith(mp)&&(selHosp==="all"||a.hospId===selHosp)&&(selSales==="all"||a.cpapPurchase?.salesPerson===selSales));
+    return { label:TMS[mi], count:ms.length, revenue:ms.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0), commission:ms.reduce((s,a)=>s+(a.cpapPurchase?.price||0)*(a.cpapPurchase?.commissionRate??2)/100,0) };
+  });
+  const maxRev = Math.max(...monthlyData.map(m=>m.revenue),1);
+
+  const prevP = ()=>mode==="month"?(month===0?(setMonth(11),setYear(y=>y-1)):setMonth(m=>m-1)):setYear(y=>y-1);
+  const nextP = ()=>mode==="month"?(month===11?(setMonth(0),setYear(y=>y+1)):setMonth(m=>m+1)):setYear(y=>y+1);
+
+  return (
+    <div style={{ height:"100%",overflowY:"auto",fontFamily:FONT }}>
+      <div style={{ maxWidth:900,margin:"0 auto",padding:"20px 24px",display:"flex",flexDirection:"column",gap:18 }}>
+
+        {/* Controls */}
+        <div style={{ display:"flex",alignItems:"center",gap:10,flexWrap:"wrap" }}>
+          {/* Mode */}
+          <div style={{ display:"flex",borderRadius:10,overflow:"hidden",border:`1px solid ${T.line}` }}>
+            {["month","year"].map(m=>(
+              <button key={m} onClick={()=>setMode(m)} style={{ padding:"8px 16px",fontSize:12,fontWeight:mode===m?700:400,background:mode===m?"#059669":"white",color:mode===m?"white":T.muted,border:"none",cursor:"pointer",fontFamily:FONT }}>
+                {m==="month"?"รายเดือน":"รายปี"}
+              </button>
+            ))}
+          </div>
+          {/* Period */}
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <button onClick={prevP} style={{ width:30,height:30,border:`1px solid ${T.line}`,borderRadius:8,background:T.card,color:T.muted,cursor:"pointer",fontSize:15,...R,justifyContent:"center" }}>‹</button>
+            <span style={{ fontSize:15,fontWeight:700,color:T.navy,minWidth:150,textAlign:"center" }}>{mode==="month"?`${TMF[month]} ${year+543}`:`ปี ${year+543}`}</span>
+            <button onClick={nextP} style={{ width:30,height:30,border:`1px solid ${T.line}`,borderRadius:8,background:T.card,color:T.muted,cursor:"pointer",fontSize:15,...R,justifyContent:"center" }}>›</button>
+          </div>
+          {/* Hospital filter */}
+          <select value={selHosp} onChange={e=>setSelHosp(e.target.value)}
+            style={{ padding:"8px 12px",fontSize:12,border:`1px solid ${T.line}`,borderRadius:9,background:T.card,color:T.ink,fontFamily:FONT,flex:1,minWidth:150 }}>
+            <option value="all">ทุก รพ.</option>
+            {hospitals.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}
+          </select>
+          {/* Sales filter */}
+          <select value={selSales} onChange={e=>setSelSales(e.target.value)}
+            style={{ padding:"8px 12px",fontSize:12,border:`1px solid ${T.line}`,borderRadius:9,background:T.card,color:T.ink,fontFamily:FONT,flex:1,minWidth:150 }}>
+            <option value="all">ทุก Sales</option>
+            {salesList.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+          {/* Export */}
+          <button onClick={()=>exportSalesExcel(allSales,hospitals,mode,year,month,selHosp,selSales==="all"?"ทุก_Sales":selSales)}
+            style={{ padding:"8px 14px",fontSize:12,fontWeight:700,borderRadius:9,background:"#059669",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6 }}>
+            <i className="ti ti-file-spreadsheet" style={{ fontSize:14 }}></i>Export Excel
+          </button>
+        </div>
+
+        {/* Selected Sales banner */}
+        {selSales!=="all" && (
+          <div style={{ padding:"12px 16px",background:"#d1fae5",borderRadius:12,display:"flex",alignItems:"center",gap:10 }}>
+            <div style={{ width:40,height:40,borderRadius:"50%",background:"#059669",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+              <i className="ti ti-user-check" style={{ fontSize:20,color:"white" }}></i>
+            </div>
+            <div>
+              <div style={{ fontSize:14,fontWeight:800,color:"#065f46" }}>{selSales}</div>
+              <div style={{ fontSize:11,color:"#059669" }}>กรองเฉพาะยอดขายของ Sales คนนี้</div>
+            </div>
+            <button onClick={()=>setSelSales("all")} style={{ marginLeft:"auto",padding:"5px 12px",fontSize:11,borderRadius:8,border:"1px solid #86efac",background:"white",color:"#059669",cursor:"pointer" }}>ดูทั้งหมด</button>
+          </div>
+        )}
+
+        {/* Summary cards */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12 }}>
+          {[
+            ["ti-shopping-cart","ขายทั้งหมด",allSales.length,"เครื่อง","#059669","#d1fae5"],
+            ["ti-currency-baht","ยอดขายรวม",(totalRevenue/1000).toFixed(0)+"k","บาท","#1e40af","#dbeafe"],
+            ["ti-percentage","ค่าคอมรวม",Math.round(totalCommission).toLocaleString(),"บาท","#7c3aed","#ede9fe"],
+            ["ti-check","รับเงินแล้ว",paid.length,"เครื่อง","#059669","#d1fae5"],
+          ].map(([ic,lb,val,unit,col,bg])=>(
+            <div key={lb} style={{ padding:"14px 16px",background:bg,borderRadius:14,border:`0.5px solid ${col}20` }}>
+              <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:6 }}>
+                <i className={`ti ${ic}`} style={{ fontSize:18,color:col }}></i>
+                <span style={{ fontSize:11,color:col,fontWeight:500 }}>{lb}</span>
+              </div>
+              <div style={{ fontSize:26,fontWeight:800,color:col,lineHeight:1 }}>{val}</div>
+              <div style={{ fontSize:10,color:col,opacity:.7,marginTop:3 }}>{unit}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Billing status summary */}
+        <div style={{ background:T.card,borderRadius:14,border:`0.5px solid ${T.line}`,padding:"16px 18px" }}>
+          <div style={{ fontSize:13,fontWeight:700,color:T.navy,marginBottom:12,display:"flex",alignItems:"center",gap:8 }}>
+            <i className="ti ti-file-invoice" style={{ fontSize:15,color:"#1e40af" }}></i>
+            สถานะใบแจ้งหนี้
+          </div>
+          <div style={{ display:"flex",gap:10 }}>
+            {[[pending,"ยังไม่วางบิล","#f59e0b","#fef9c3"],[billed,"วางบิลแล้ว","#1e40af","#dbeafe"],[paid,"รับเงินแล้ว","#059669","#d1fae5"]].map(([arr,lb,col,bg])=>(
+              <div key={lb} style={{ flex:1,padding:"12px 14px",background:bg,borderRadius:11 }}>
+                <div style={{ fontSize:22,fontWeight:800,color:col }}>{arr.length}</div>
+                <div style={{ fontSize:11,color:col,opacity:.8,marginTop:2 }}>{lb}</div>
+                <div style={{ fontSize:12,fontWeight:600,color:col,marginTop:3 }}>
+                  {arr.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0).toLocaleString()} ฿
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Year bar chart */}
+        {mode==="year" && (
+          <div style={{ background:T.card,borderRadius:14,border:`0.5px solid ${T.line}`,padding:"16px 18px" }}>
+            <div style={{ fontSize:13,fontWeight:700,color:T.navy,marginBottom:14 }}>ยอดขายรายเดือน ปี {year+543}</div>
+            <div style={{ display:"flex",alignItems:"flex-end",gap:4,height:120,paddingBottom:20,position:"relative" }}>
+              {monthlyData.map((m,i)=>{
+                const h=Math.round((m.revenue/maxRev)*90);
+                const isNow=i===now.getMonth()&&year===now.getFullYear();
+                return (
+                  <div key={i} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center" }}>
+                    {m.count>0&&<div style={{ fontSize:9,color:T.muted,marginBottom:2 }}>{m.count}ชิ้น</div>}
+                    <div title={`${m.revenue.toLocaleString()} บาท`}
+                      style={{ width:"100%",height:`${Math.max(h,2)}px`,background:isNow?"#059669":"#6ee7b7",borderRadius:"3px 3px 0 0",minHeight:3 }}/>
+                    <div style={{ fontSize:9,color:isNow?"#059669":T.faint,marginTop:3,fontWeight:isNow?700:400 }}>{m.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Sale list */}
+        <div style={{ background:T.card,borderRadius:14,border:`0.5px solid ${T.line}`,overflow:"hidden" }}>
+          <div style={{ padding:"14px 18px",borderBottom:`0.5px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"space-between" }}>
+            <div style={{ fontSize:13,fontWeight:700,color:T.navy }}>รายการขาย ({allSales.length} รายการ)</div>
+          </div>
+          {allSales.length===0 && (
+            <div style={{ padding:"32px",textAlign:"center",color:T.faint,fontSize:13 }}>ไม่มีรายการขายในช่วงเวลานี้</div>
+          )}
+          {allSales.map(a=>{
+            const h=hospitals.find(x=>x.id===a.hospId);
+            const p=a.cpapPurchase||{};
+            const com=Math.round((p.price||0)*(p.commissionRate??2)/100);
+            const bs=BILLING_STATUS.find(b=>b.key===(p.billingStatus||"pending"))||BILLING_STATUS[0];
+            return (
+              <div key={a.id} style={{ padding:"13px 18px",borderBottom:`0.5px solid ${T.line}`,display:"flex",alignItems:"center",gap:14 }}>
+                <div style={{ flex:1,minWidth:0 }}>
+                  <div style={{ fontSize:13,fontWeight:700,color:T.navy }}>{a.name}</div>
+                  <div style={{ fontSize:11,color:T.faint,marginTop:2 }}>HN {a.hn} · {h?.name||"—"} · {p.purchaseDate||a.date}</div>
+                  <div style={{ fontSize:11,color:"#7c3aed",marginTop:2 }}>{p.model||"—"}</div>
+                  <div style={{ fontSize:10,color:T.faint,marginTop:2 }}>Sales: {p.salesPerson||"—"}</div>
+                </div>
+                {/* Billing status badge */}
+                <div style={{ padding:"5px 11px",borderRadius:20,background:bs.bg,border:`1px solid ${bs.color}40`,flexShrink:0 }}>
+                  <span style={{ fontSize:11,fontWeight:700,color:bs.color }}>{bs.label}</span>
+                </div>
+                <div style={{ textAlign:"right",flexShrink:0 }}>
+                  <div style={{ fontSize:15,fontWeight:800,color:"#059669" }}>{(p.price||0).toLocaleString()} ฿</div>
+                  <div style={{ fontSize:11,color:"#7c3aed",marginTop:2 }}>คอม {com.toLocaleString()} ฿</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Per-hospital breakdown */}
+        {selHosp==="all" && allSales.length>0 && (
+          <div style={{ background:T.card,borderRadius:14,border:`0.5px solid ${T.line}`,padding:"16px 18px" }}>
+            <div style={{ fontSize:13,fontWeight:700,color:T.navy,marginBottom:12,display:"flex",alignItems:"center",gap:8 }}>
+              <i className="ti ti-building-hospital" style={{ fontSize:15,color:T.blue }}></i>
+              แยกตาม รพ.
+            </div>
+            {hospitals.map(h=>{
+              const hs=allSales.filter(a=>a.hospId===h.id);
+              if(!hs.length) return null;
+              const rev=hs.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0);
+              const com=hs.reduce((s,a)=>s+Math.round((a.cpapPurchase?.price||0)*(a.cpapPurchase?.commissionRate??2)/100),0);
+              const c=hc(h.id,hospitals);
+              return (
+                <div key={h.id} style={{ display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:T.surf,borderRadius:11,marginBottom:6,border:`0.5px solid ${T.line}` }}>
+                  <span style={{ width:10,height:10,borderRadius:"50%",background:c.dot,flexShrink:0 }}/>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                    <div style={{ fontSize:10,color:T.faint }}>{hs.length} เครื่อง</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:14,fontWeight:800,color:"#059669" }}>{rev.toLocaleString()} ฿</div>
+                    <div style={{ fontSize:11,color:"#7c3aed" }}>คอม {com.toLocaleString()} ฿</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
+// ── Report View ───────────────────────────────────────────────────────────────
+function ReportView({ user, appointments, hospitals, techs }) {
+  const now = new Date();
+  const [year,  setYear]  = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth()); // 0-indexed
+  const [mode,  setMode]  = useState("month"); // "month" | "year"
+  const [selHosp, setSelHosp] = useState(user.role==="hospital" ? user.hospId : "all");
+
+  const TMF = ["มกราคม","กุมภาพันธ์","มีนาคม","เมษายน","พฤษภาคม","มิถุนายน","กรกฎาคม","สิงหาคม","กันยายน","ตุลาคม","พฤศจิกายน","ธันวาคม"];
+  const TMS = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+
+  const pfx = mode==="month"
+    ? `${year}-${String(month+1).padStart(2,"0")}`
+    : `${year}`;
+
+  // Filter appointments
+  const base = appointments.filter(a => {
+    const inPeriod = a.date.startsWith(pfx);
+    const inHosp   = selHosp==="all" || a.hospId===selHosp;
+    return inPeriod && inHosp;
+  });
+
+  // Stats
+  const sleepTests  = base.filter(a=>a.apptType==="sleep_test");
+  const cpapTrials  = base.filter(a=>a.apptType==="cpap_trial");
+  const cancelled   = base.filter(a=>a.status==="cancelled");
+  const fullNight   = sleepTests.filter(a=>a.sleepTestType==="full_night");
+  const splitNight  = sleepTests.filter(a=>a.sleepTestType==="split_night");
+  const byJourney   = (key) => sleepTests.filter(a=>a.journeyStatus===key && a.status!=="cancelled");
+
+  // CPAP sales
+  const sales = base.filter(a=>a.cpapPurchase?.price>0 && a.status!=="cancelled");
+  const totalRevenue   = sales.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0);
+  const totalCommission= sales.reduce((s,a)=>s+(a.cpapPurchase?.price||0)*(a.cpapPurchase?.commissionRate??2)/100,0);
+
+  // Per-hospital breakdown
+  const hospList = user.role==="hospital"
+    ? hospitals.filter(h=>h.id===user.hospId)
+    : hospitals;
+
+  // Monthly trend (for year mode)
+  const monthlyData = Array.from({length:12},(_,mi)=>{
+    const mp = `${year}-${String(mi+1).padStart(2,"0")}`;
+    const mBase = appointments.filter(a=>a.date.startsWith(mp)&&(selHosp==="all"||a.hospId===selHosp));
+    return {
+      label: TMS[mi],
+      total: mBase.filter(a=>a.status!=="cancelled").length,
+      cancel: mBase.filter(a=>a.status==="cancelled").length,
+      cpap: mBase.filter(a=>a.apptType==="cpap_trial"&&a.status!=="cancelled").length,
+      revenue: mBase.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0),
+    };
+  });
+  const maxTotal = Math.max(...monthlyData.map(m=>m.total),1);
+
+  const prevPeriod = () => mode==="month" ? (month===0?( setMonth(11),setYear(y=>y-1)):setMonth(m=>m-1)) : setYear(y=>y-1);
+  const nextPeriod = () => mode==="month" ? (month===11?(setMonth(0), setYear(y=>y+1)):setMonth(m=>m+1)) : setYear(y=>y+1);
+
+  const StatCard = ({icon,label,value,sub,col,bg}) => (
+    <div style={{ padding:"16px 18px",background:bg||T.surf,borderRadius:14,border:`0.5px solid ${T.line}`,display:"flex",flexDirection:"column",gap:5 }}>
+      <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+        <div style={{ width:34,height:34,borderRadius:10,background:`${col}18`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+          <i className={`ti ${icon}`} style={{ fontSize:18,color:col }}></i>
+        </div>
+        <span style={{ fontSize:12,color:T.muted,fontWeight:500 }}>{label}</span>
+      </div>
+      <div style={{ fontSize:30,fontWeight:800,color:col,lineHeight:1 }}>{value}</div>
+      {sub && <div style={{ fontSize:11,color:T.faint }}>{sub}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{ height:"100%",overflowY:"auto",fontFamily:FONT }}>
+      <div style={{ maxWidth:960,margin:"0 auto",padding:"20px 24px",display:"flex",flexDirection:"column",gap:20 }}>
+
+        {/* ── Controls ── */}
+        <div style={{ display:"flex",alignItems:"center",gap:12,flexWrap:"wrap" }}>
+          {/* Mode toggle */}
+          <div style={{ display:"flex",borderRadius:10,overflow:"hidden",border:`1px solid ${T.line}` }}>
+            {["month","year"].map(m=>(
+              <button key={m} onClick={()=>setMode(m)} style={{ padding:"8px 18px",fontSize:13,fontWeight:mode===m?700:400,background:mode===m?T.blue:"white",color:mode===m?"white":T.muted,border:"none",cursor:"pointer",fontFamily:FONT }}>
+                {m==="month"?"รายเดือน":"รายปี"}
+              </button>
+            ))}
+          </div>
+          {/* Period nav */}
+          <div style={{ display:"flex",alignItems:"center",gap:8 }}>
+            <button onClick={prevPeriod} style={{ width:32,height:32,border:`1px solid ${T.line}`,borderRadius:8,background:T.card,color:T.muted,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center" }}>‹</button>
+            <span style={{ fontSize:16,fontWeight:700,color:T.navy,minWidth:160,textAlign:"center" }}>
+              {mode==="month" ? `${TMF[month]} ${year+543}` : `ปี ${year+543}`}
+            </span>
+            <button onClick={nextPeriod} style={{ width:32,height:32,border:`1px solid ${T.line}`,borderRadius:8,background:T.card,color:T.muted,cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center" }}>›</button>
+          </div>
+          {/* Hospital filter — admin only */}
+          {user.role==="admin" && (
+            <select value={selHosp} onChange={e=>setSelHosp(e.target.value)}
+              style={{ padding:"8px 13px",fontSize:13,border:`1px solid ${T.line}`,borderRadius:10,background:T.card,color:T.ink,fontFamily:FONT,flex:1,minWidth:180 }}>
+              <option value="all">ทุก รพ.</option>
+              {hospitals.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}
+            </select>
+          )}
+        </div>
+
+        {/* ── Summary cards ── */}
+        <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12 }}>
+          <StatCard icon="ti-calendar" label="นัดทั้งหมด" value={base.length} sub={`${cancelled.length} ยกเลิก`} col={T.blue}/>
+          <StatCard icon="ti-activity" label="Sleep Test" value={sleepTests.filter(a=>a.status!=="cancelled").length} sub={`FN ${fullNight.length} / SN ${splitNight.length}`} col="#7c3aed"/>
+          <StatCard icon="ti-device-heart-monitor" label="ทดลอง CPAP" value={cpapTrials.filter(a=>a.status!=="cancelled").length} sub="" col="#059669"/>
+          <StatCard icon="ti-x" label="ยกเลิก" value={cancelled.length} sub="" col={T.red}/>
+        </div>
+
+        {/* ── Sleep Test Journey breakdown ── */}
+        <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+          <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:14,display:"flex",alignItems:"center",gap:8 }}>
+            <i className="ti ti-activity" style={{ fontSize:16,color:"#7c3aed" }}></i>
+            สถานะ Sleep Test
+          </div>
+          <div style={{ display:"flex",flexWrap:"wrap",gap:10 }}>
+            {[
+              ["scheduled","รอตรวจ","#2563eb","#dbeafe","ti-calendar-event"],
+              ["tested","ตรวจแล้ว","#7c3aed","#ede9fe","ti-activity"],
+              ["waiting_result","รอแพทย์อ่านผล","#d97706","#fef9c3","ti-clock"],
+              ["result_ready","ผลออกแล้ว","#059669","#d1fae5","ti-file-check"],
+              ["consulted","ฟังผลแล้ว","#166534","#dcfce7","ti-check-circle"],
+            ].map(([key,lb,col,bg,ic])=>{
+              const cnt = byJourney(key).length;
+              return (
+                <div key={key} style={{ flex:"1 1 130px",padding:"13px 15px",background:bg,borderRadius:12,border:`0.5px solid ${col}30` }}>
+                  <i className={`ti ${ic}`} style={{ fontSize:18,color:col }}></i>
+                  <div style={{ fontSize:26,fontWeight:800,color:col,marginTop:5,lineHeight:1 }}>{cnt}</div>
+                  <div style={{ fontSize:11,color:col,opacity:.8,marginTop:3 }}>{lb}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* ── Full Night vs Split Night ── */}
+        {sleepTests.filter(a=>a.status!=="cancelled").length>0 && (
+          <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:14,display:"flex",alignItems:"center",gap:8 }}>
+              <i className="ti ti-moon" style={{ fontSize:16,color:"#1e40af" }}></i>
+              Full Night vs Split Night
+            </div>
+            <div style={{ display:"flex",gap:12 }}>
+              {[["full_night","Full Night","#1e40af","#dbeafe","ti-moon"],["split_night","Split Night","#5b21b6","#ede9fe","ti-moon-stars"]].map(([key,lb,col,bg,ic])=>{
+                const cnt = sleepTests.filter(a=>a.sleepTestType===key&&a.status!=="cancelled").length;
+                const total = sleepTests.filter(a=>a.status!=="cancelled").length;
+                const pct = total>0?Math.round(cnt/total*100):0;
+                return (
+                  <div key={key} style={{ flex:1,padding:"16px",background:bg,borderRadius:12,border:`0.5px solid ${col}30` }}>
+                    <div style={{ display:"flex",alignItems:"center",gap:8,marginBottom:8 }}>
+                      <i className={`ti ${ic}`} style={{ fontSize:20,color:col }}></i>
+                      <span style={{ fontSize:13,fontWeight:700,color:col }}>{lb}</span>
+                    </div>
+                    <div style={{ fontSize:36,fontWeight:800,color:col,lineHeight:1 }}>{cnt}</div>
+                    <div style={{ fontSize:12,color:col,opacity:.7,marginTop:4 }}>{pct}% ของ Sleep Test ทั้งหมด</div>
+                    <div style={{ height:6,borderRadius:10,background:`${col}20`,overflow:"hidden",marginTop:10 }}>
+                      <div style={{ width:`${pct}%`,height:"100%",background:col,borderRadius:10,transition:"width .5s" }}/>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── CPAP Sales ── */}
+        {sales.length>0 && (
+          <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:14,display:"flex",alignItems:"center",gap:8 }}>
+              <i className="ti ti-shopping-cart" style={{ fontSize:16,color:"#059669" }}></i>
+              สรุปการขาย CPAP
+            </div>
+            <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:12,marginBottom:16 }}>
+              <div style={{ padding:"14px",background:"#d1fae5",borderRadius:12 }}>
+                <div style={{ fontSize:11,color:"#059669",fontWeight:600 }}>ยอดขายรวม</div>
+                <div style={{ fontSize:24,fontWeight:800,color:"#059669",marginTop:4 }}>{totalRevenue.toLocaleString()} ฿</div>
+                <div style={{ fontSize:10,color:"#059669",opacity:.7 }}>{sales.length} เครื่อง</div>
+              </div>
+              {/* ค่าคอม — Admin เท่านั้น */}
+              {user.role==="admin" && (
+                <div style={{ padding:"14px",background:"#ede9fe",borderRadius:12 }}>
+                  <div style={{ fontSize:11,color:"#7c3aed",fontWeight:600 }}>ค่าคอมรวม (Admin)</div>
+                  <div style={{ fontSize:24,fontWeight:800,color:"#7c3aed",marginTop:4 }}>{Math.round(totalCommission).toLocaleString()} ฿</div>
+                  <div style={{ fontSize:10,color:"#7c3aed",opacity:.7 }}>เฉลี่ย {sales.length>0?(totalRevenue/sales.length/1000).toFixed(0)+"k":0} ต่อเครื่อง</div>
+                </div>
+              )}
+            </div>
+            {/* Sale list */}
+            <div style={{ display:"flex",flexDirection:"column",gap:8 }}>
+              {sales.map(a=>{
+                const h=hospitals.find(x=>x.id===a.hospId);
+                const p=a.cpapPurchase;
+                const com=Math.round((p?.price||0)*(p?.commissionRate??2)/100);
+                return (
+                  <div key={a.id} style={{ display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:T.surf,borderRadius:11,border:`0.5px solid ${T.line}` }}>
+                    <div style={{ flex:1,minWidth:0 }}>
+                      <div style={{ fontSize:13,fontWeight:600,color:T.navy }}>{a.name}</div>
+                      <div style={{ fontSize:11,color:T.faint }}>HN {a.hn} · {h?.short} · {p?.purchaseDate||a.date}</div>
+                      <div style={{ fontSize:11,color:"#7c3aed",marginTop:2 }}>{p?.model}</div>
+                    </div>
+                    <div style={{ textAlign:"right",flexShrink:0 }}>
+                      <div style={{ fontSize:15,fontWeight:800,color:"#059669" }}>{(p?.price||0).toLocaleString()} ฿</div>
+                      {/* ค่าคอม + ชื่อ Sales — Admin เท่านั้น */}
+                      {user.role==="admin" && <>
+                        <div style={{ fontSize:11,color:"#7c3aed" }}>คอม {com.toLocaleString()} ฿</div>
+                        {p?.salesPerson && <div style={{ fontSize:10,color:T.faint }}>Sales: {p.salesPerson}</div>}
+                      </>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ── Yearly bar chart ── */}
+        {mode==="year" && (
+          <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:16 }}>แนวโน้มรายเดือน ปี {year+543}</div>
+            <div style={{ display:"flex",alignItems:"flex-end",gap:6,height:130,paddingBottom:24,position:"relative" }}>
+              {monthlyData.map((m,i)=>{
+                const h = Math.round((m.total/maxTotal)*100);
+                const isNow = i===now.getMonth()&&year===now.getFullYear();
+                return (
+                  <div key={i} style={{ flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4 }}>
+                    {m.total>0&&<div style={{ fontSize:10,color:T.muted,fontWeight:600 }}>{m.total}</div>}
+                    <div style={{ width:"100%",height:`${Math.max(h,2)}%`,background:isNow?T.blue:"#bfdbfe",borderRadius:"4px 4px 0 0",minHeight:3,transition:"height .3s",position:"relative" }}>
+                      {m.cancel>0&&<div style={{ position:"absolute",bottom:0,left:0,right:0,height:`${Math.round(m.cancel/(m.total||1)*100)}%`,background:"#fca5a5",borderRadius:"0 0 4px 4px" }}/>}
+                    </div>
+                    <div style={{ fontSize:9,color:isNow?T.blue:T.faint,fontWeight:isNow?700:400,position:"absolute",bottom:0 }}>{m.label}</div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ display:"flex",gap:14,marginTop:8 }}>
+              {[["#bfdbfe","นัดหมาย"],["#fca5a5","ยกเลิก"]].map(([col,lb])=>(
+                <div key={lb} style={{ display:"flex",alignItems:"center",gap:5,fontSize:11,color:T.muted }}>
+                  <div style={{ width:12,height:8,borderRadius:3,background:col }}/>
+                  {lb}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Per-hospital table ── */}
+        {user.role==="admin" && selHosp==="all" && (
+          <div style={{ background:T.card,borderRadius:16,border:`0.5px solid ${T.line}`,padding:"18px 20px" }}>
+            <div style={{ fontSize:14,fontWeight:700,color:T.navy,marginBottom:14,display:"flex",alignItems:"center",gap:8 }}>
+              <i className="ti ti-building-hospital" style={{ fontSize:16,color:T.blue }}></i>
+              แยกตาม รพ.
+            </div>
+            <div style={{ display:"flex",flexDirection:"column",gap:6 }}>
+              {hospitals.map(h=>{
+                const ha = base.filter(a=>a.hospId===h.id);
+                const hST = ha.filter(a=>a.apptType==="sleep_test"&&a.status!=="cancelled").length;
+                const hCX = ha.filter(a=>a.status==="cancelled").length;
+                const hCP = ha.filter(a=>a.apptType==="cpap_trial"&&a.status!=="cancelled").length;
+                const hRev= ha.reduce((s,a)=>s+(a.cpapPurchase?.price||0),0);
+                if(ha.length===0) return null;
+                const c = hc(h.id,hospitals);
+                return (
+                  <div key={h.id} style={{ display:"flex",alignItems:"center",gap:12,padding:"11px 14px",background:T.surf,borderRadius:11,border:`0.5px solid ${T.line}` }}>
+                    <div style={{ width:10,height:10,borderRadius:"50%",background:c.dot,flexShrink:0 }}/>
+                    <div style={{ flex:1,fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                    <div style={{ display:"flex",gap:16 }}>
+                      {[["Sleep Test",hST,"#7c3aed"],["ยกเลิก",hCX,T.red],["CPAP",hCP,"#059669"],["ยอดขาย",hRev>0?hRev.toLocaleString()+"฿":"—","#059669"]].map(([lb,val,col])=>(
+                        <div key={lb} style={{ textAlign:"center",minWidth:50 }}>
+                          <div style={{ fontSize:14,fontWeight:700,color:col }}>{val}</div>
+                          <div style={{ fontSize:10,color:T.faint }}>{lb}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+      </div>
+    </div>
+  );
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   // ── Load Google Fonts safely after mount ──
@@ -1825,9 +3448,11 @@ export default function App() {
   const [appts,setAppts]         = useState(saved?.appts      || SAMPLE_APPTS);
   const [hospitals,setHospitals] = useState(saved?.hospitals  || INIT_HOSPITALS);
   const [techs,setTechs]         = useState(saved?.techs      || INIT_TECHS);
-  const [assignments,setAssign]  = useState(saved?.assignments|| {});
-  const [checkins,setCheckins]   = useState(saved?.checkins   || {});
+  const [assignments,setAssign]  = useState(saved?.assignments|| SAMPLE_ASSIGNMENTS);
+  const [checkins,setCheckins]   = useState(saved?.checkins   || SAMPLE_CHECKINS);
   const [dayBlocks,setDayBlocks] = useState(saved?.dayBlocks  || {});
+  const [techRates,setTechRates] = useState(saved?.techRates  || {});
+  const [salesList,setSalesList] = useState(saved?.salesList  || INIT_SALES);
   const [lastSaved, setLastSaved]= useState(saved ? new Date().toISOString() : null);
 
   // ── Auto-save to localStorage on every state change ──
@@ -1839,12 +3464,14 @@ export default function App() {
   };
 
   // wrap setters to also persist
-  const setApptsSave   = (fn) => { setAppts(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts:next, hospitals, techs, assignments, checkins, dayBlocks }); return next; }); };
-  const setHospsSave   = (fn) => { setHospitals(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals:next, techs, assignments, checkins, dayBlocks }); return next; }); };
-  const setTechsSave   = (fn) => { setTechs(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs:next, assignments, checkins, dayBlocks }); return next; }); };
-  const setAssignSave  = (fn) => { setAssign(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments:next, checkins, dayBlocks }); return next; }); };
-  const setCheckinSave = (fn) => { setCheckins(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments, checkins:next, dayBlocks }); return next; }); };
-  const setBlocksSave  = (fn) => { setDayBlocks(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments, checkins, dayBlocks:next }); return next; }); };
+  const setApptsSave   = (fn) => { setAppts(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts:next, hospitals, techs, assignments, checkins, dayBlocks, techRates }); return next; }); };
+  const setHospsSave   = (fn) => { setHospitals(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals:next, techs, assignments, checkins, dayBlocks, techRates }); return next; }); };
+  const setTechsSave   = (fn) => { setTechs(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs:next, assignments, checkins, dayBlocks, techRates }); return next; }); };
+  const setAssignSave  = (fn) => { setAssign(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments:next, checkins, dayBlocks, techRates }); return next; }); };
+  const setCheckinSave = (fn) => { setCheckins(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments, checkins:next, dayBlocks, techRates }); return next; }); };
+  const setBlocksSave  = (fn) => { setDayBlocks(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments, checkins, dayBlocks:next, techRates }); return next; }); };
+  const setRatesSave   = (fn) => { setTechRates(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments, checkins, dayBlocks, techRates:next, salesList }); return next; }); };
+  const setSalesSave   = (fn) => { setSalesList(prev => { const next = typeof fn==="function"?fn(prev):fn; saveToLocal({ appts, hospitals, techs, assignments, checkins, dayBlocks, techRates, salesList:next }); return next; }); };
 
   // ── Import handler ──
   const handleImport = (data) => {
@@ -1854,20 +3481,26 @@ export default function App() {
     setAssign(data.assignments || {});
     setCheckins(data.checkins || {});
     setDayBlocks(data.dayBlocks || {});
+    setTechRates(data.techRates || {});
+    setSalesList(data.salesList || INIT_SALES);
     saveToLocal(data);
   };
 
   const isAdmin = user?.role==="admin";
+  const isTech  = user?.role==="tech";
   const tabs = [
-    ...(isAdmin||user?.role==="hospital" ? [{ id:"paste",label:"วางจาก Line",icon:"ti-brand-line" }] : []),
-    { id:"summary", label:"รายเดือน",     icon:"ti-layout-list" },
+    ...(isAdmin||user?.role==="hospital" ? [{ id:"paste",    label:"วางจาก Line",    icon:"ti-brand-line"        }] : []),
+    { id:"summary",   label:"รายเดือน",       icon:"ti-layout-list"       },
+    { id:"report",    label:"รายงาน",         icon:"ti-chart-bar"         },
+    ...(isAdmin ? [{ id:"sales",   label:"Sale Report 3N",  icon:"ti-shopping-cart"     }] : []),
+    ...(isAdmin||isTech ? [{ id:"schedule", label:"ตารางเวร",   icon:"ti-calendar-stats" }] : []),
     ...(isAdmin ? [
-      { id:"hospitals", label:"โรงพยาบาล", icon:"ti-building-hospital" },
-      { id:"techs",     label:"Sleep Tech", icon:"ti-stethoscope" },
+      { id:"hospitals", label:"โรงพยาบาล",    icon:"ti-building-hospital" },
+      { id:"techs",     label:"Sleep Tech",    icon:"ti-stethoscope"       },
     ] : []),
   ];
 
-  if(!user) return <LoginScreen onLogin={u=>{ setUser(u); setTab(u.role==="admin"?"paste":"summary"); }} />;
+  if(!user) return <LoginScreen onLogin={u=>{ setUser(u); setTab(u.role==="admin"?"paste":u.role==="tech"?"schedule":"summary"); }} />;
 
   const totalVisible = appts.filter(a=>user.role==="hospital"?a.hospId===user.hospId:true && a.status!=="cancelled").length;
   const today = new Date();
@@ -1963,7 +3596,7 @@ export default function App() {
         <div style={{ padding:"14px 24px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
             <div style={{ fontSize:20, fontWeight:800, color:T.navy, letterSpacing:"-0.02em" }}>
-              {tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
+              {tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
             </div>
             <div style={{ fontSize:13, color:T.muted, marginTop:2 }}>
               {user.role==="admin"?"3N Admin — เข้าถึงทุก รพ.":user.role==="tech"?"Sleep Tech — ดูตารางและยืนยันเวร":`${hospitals.find(h=>h.id===user.hospId)?.name||""}`}
@@ -1974,6 +3607,7 @@ export default function App() {
               <DataManager
                 appts={appts} hospitals={hospitals} techs={techs}
                 assignments={assignments} checkins={checkins} dayBlocks={dayBlocks}
+                techRates={techRates}
                 onImport={handleImport}
               />
             )}
@@ -1981,10 +3615,13 @@ export default function App() {
           </div>
         </div>
         <div style={{ flex:1, overflow:"hidden" }}>
-          {tab==="paste"     && <PasteView       user={user} hospitals={hospitals} setAppointments={setApptsSave} />}
-          {tab==="summary"   && <MonthlySummary  user={user} appointments={appts} setAppointments={setApptsSave} hospitals={hospitals} techs={techs} assignments={assignments} setAssignments={setAssignSave} checkins={checkins} setCheckins={setCheckinSave} dayBlocks={dayBlocks} setDayBlocks={setBlocksSave} />}
-          {tab==="hospitals" && <ManageHospitals hospitals={hospitals} setHospitals={setHospsSave} />}
-          {tab==="techs"     && <ManageTechs     techs={techs} setTechs={setTechsSave} />}
+          {tab==="paste"     && <PasteView         user={user} hospitals={hospitals} setAppointments={setApptsSave} />}
+          {tab==="summary"   && <MonthlySummary    user={user} appointments={appts} setAppointments={setApptsSave} hospitals={hospitals} techs={techs} assignments={assignments} setAssignments={setAssignSave} checkins={checkins} setCheckins={setCheckinSave} dayBlocks={dayBlocks} setDayBlocks={setBlocksSave} salesList={salesList} />}
+          {tab==="report"    && <ReportView        user={user} appointments={appts} hospitals={hospitals} techs={techs} />}
+          {tab==="sales"     && <SalesView         user={user} appointments={appts} hospitals={hospitals} salesList={salesList} setAppointments={setApptsSave} />}
+          {tab==="schedule"  && <TechScheduleView  user={user} techs={techs} appointments={appts} hospitals={hospitals} assignments={assignments} checkins={checkins} setCheckins={setCheckinSave} />}
+          {tab==="hospitals" && <ManageHospitals   hospitals={hospitals} setHospitals={setHospsSave} />}
+          {tab==="techs"     && <ManageTechs       techs={techs} setTechs={setTechsSave} techRates={techRates} setTechRates={setRatesSave} salesList={salesList} setSalesList={setSalesSave} />}
         </div>
       </div>
     </div>
