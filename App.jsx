@@ -1098,6 +1098,14 @@ const RECOMMENDATIONS = [
   "แนะนำลดน้ำหนัก","แนะนำผ่าตัด","ไม่จำเป็นต้องรักษา","ติดตามอาการ",
 ];
 
+// ── รายชื่อแพทย์อ่านผล ───────────────────────────────────────────────────────
+const DOCTORS = [
+  { name:"Sippanont Samchai, M.D.",       license:"ว. 27147" },
+  { name:"Vipada Tirachaimongkol, M.D.",  license:"ว. 55648" },
+  { name:"Sasikarn Poomkonsarn, M.D.",    license:"ว. 39115" },
+  { name:"Phurin Sujirakul, M.D.",        license:"ว. 37354" },
+];
+
 const BLANK_REPORT = {
   ahiLevel:"", ahi:"", doctorName:"", notes:"",
   pdfFileName:"", pdfDataUrl:"", sharedWithHosps:[],
@@ -1145,12 +1153,12 @@ function SleepReportModal({ appt, hosp, hospitals=[], onClose, onSave }) {
   };
 
   const lvl = AHI_LEVELS.find(l=>l.key===ahiLevel);
-  const IS2 = { width:"100%", padding:"10px 13px", fontSize:13, border:"1.5px solid #e2e8f0", borderRadius:10, outline:"none", background:"white", color:"#0f172a", fontFamily:FONT, boxSizing:"border-box" };
+  const IS2 = { width:"100%", padding:"10px 13px", fontSize:13, border:"1.5px solid #e2e8f0", borderRadius:10, outline:"none", background:"#ffffff", color:"#111827", fontFamily:FONT, boxSizing:"border-box" };
 
   return (
     <div onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}
-      style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.75)", display:"flex", alignItems:"center", justifyContent:"center", padding:12, fontFamily:FONT }}>
-      <div style={{ width:"100%", maxWidth:560, maxHeight:"92vh", background:"#ffffff", borderRadius:20, overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 32px 80px rgba(0,0,0,.45)" }}>
+      style={{ position:"fixed", inset:0, zIndex:9999, background:"rgba(0,0,0,.92)", display:"flex", alignItems:"center", justifyContent:"center", padding:12, fontFamily:FONT }}>
+      <div style={{ width:"100%", maxWidth:560, maxHeight:"92vh", background:"#ffffff", borderRadius:20, overflow:"hidden", display:"flex", flexDirection:"column", boxShadow:"0 40px 100px rgba(0,0,0,.6)" }}>
 
         {/* Header */}
         <div style={{ padding:"16px 20px", background:"linear-gradient(135deg,#0c1445,#1d4ed8)", display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
@@ -1162,11 +1170,11 @@ function SleepReportModal({ appt, hosp, hospitals=[], onClose, onSave }) {
         </div>
 
         {/* Body */}
-        <div style={{ flex:1, overflowY:"auto", padding:"18px 20px", display:"flex", flexDirection:"column", gap:18 }}>
+        <div style={{ flex:1, overflowY:"auto", padding:"18px 20px", display:"flex", flexDirection:"column", gap:18, background:"#ffffff" }}>
 
           {/* AHI Level selector */}
           <div>
-            <div style={{ fontSize:12, fontWeight:700, color:"#0f172a", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:"#111827", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
               <i className="ti ti-activity" style={{ fontSize:14, color:T.blue }}></i>
               AHI Level — ระดับความรุนแรง
               {lvl && <span style={{ marginLeft:"auto", fontSize:11, padding:"2px 10px", borderRadius:10, background:lvl.color, color:"white", fontWeight:600 }}>เลือกแล้ว: {lvl.label}</span>}
@@ -1176,15 +1184,15 @@ function SleepReportModal({ appt, hosp, hospitals=[], onClose, onSave }) {
                 const on = ahiLevel===lv.key;
                 return (
                   <div key={lv.key} onClick={()=>setAhiLevel(lv.key)}
-                    style={{ display:"flex", alignItems:"center", gap:12, padding:"10px 14px", borderRadius:11, cursor:"pointer",
-                      border: on ? `2px solid ${lv.color}` : "1.5px solid #e2e8f0",
-                      background: on ? lv.bg : "#f8fafc", transition:"all .1s" }}>
-                    <div style={{ width:16, height:16, borderRadius:"50%", background:on?lv.color:"#cbd5e1", flexShrink:0, border:`2px solid ${on?lv.color:"#e2e8f0"}`, transition:"all .1s" }}/>
+                    style={{ display:"flex", alignItems:"center", gap:12, padding:"11px 14px", borderRadius:11, cursor:"pointer",
+                      border: on ? `2px solid ${lv.color}` : "1.5px solid #e5e7eb",
+                      background: on ? lv.bg : "#ffffff", transition:"all .1s" }}>
+                    <div style={{ width:16, height:16, borderRadius:"50%", background:on?lv.color:"#d1d5db", flexShrink:0, border:`2px solid ${on?lv.color:"#e5e7eb"}`, transition:"all .1s" }}/>
                     <div style={{ flex:1 }}>
-                      <div style={{ fontSize:13, fontWeight:on?700:500, color:on?lv.color:"#334155" }}>{lv.label}</div>
-                      <div style={{ fontSize:11, color:on?lv.color:"#94a3b8", marginTop:1 }}>{lv.desc}</div>
+                      <div style={{ fontSize:13, fontWeight:on?700:500, color:on?lv.color:"#111827" }}>{lv.label}</div>
+                      <div style={{ fontSize:11, color:on?lv.color:"#6b7280", marginTop:1 }}>{lv.desc}</div>
                     </div>
-                    <span style={{ fontSize:11, padding:"2px 9px", borderRadius:8, background:on?lv.color:"#e2e8f0", color:on?"white":"#94a3b8", fontWeight:600, flexShrink:0 }}>{lv.range}</span>
+                    <span style={{ fontSize:11, padding:"2px 9px", borderRadius:8, background:on?lv.color:"#f3f4f6", color:on?"white":"#6b7280", fontWeight:600, flexShrink:0 }}>{lv.range}</span>
                   </div>
                 );
               })}
@@ -1192,22 +1200,39 @@ function SleepReportModal({ appt, hosp, hospitals=[], onClose, onSave }) {
           </div>
 
           {/* AHI value + Doctor */}
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
+          <div style={{ display:"flex", flexDirection:"column", gap:12 }}>
             <div>
-              <div style={{ fontSize:11, fontWeight:600, color:"#64748b", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>ค่า AHI (events/hr)</div>
-              <input type="number" value={ahi} onChange={e=>setAhi(e.target.value)} placeholder="เช่น 38.8" style={{ ...IS2, fontSize:16, fontWeight:700, color:"#0f172a" }}
+              <div style={{ fontSize:11, fontWeight:700, color:"#374151", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>ค่า AHI (events/hr)</div>
+              <input type="number" value={ahi} onChange={e=>setAhi(e.target.value)} placeholder="เช่น 38.8"
+                style={{ ...IS2, fontSize:20, fontWeight:800, color:"#111827", maxWidth:200 }}
                 onFocus={e=>e.target.style.borderColor=T.blue} onBlur={e=>e.target.style.borderColor="#e2e8f0"}/>
             </div>
             <div>
-              <div style={{ fontSize:11, fontWeight:600, color:"#64748b", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>แพทย์ผู้อ่านผล</div>
-              <input value={doctorName} onChange={e=>setDoctorName(e.target.value)} placeholder="พญ./นพ. ..." style={IS2}
-                onFocus={e=>e.target.style.borderColor=T.blue} onBlur={e=>e.target.style.borderColor="#e2e8f0"}/>
+              <div style={{ fontSize:11, fontWeight:700, color:"#374151", marginBottom:8, textTransform:"uppercase", letterSpacing:".05em" }}>แพทย์ผู้อ่านผล</div>
+              <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                {DOCTORS.map(d=>{
+                  const on = doctorName===`${d.name} ${d.license}`;
+                  return (
+                    <div key={d.name} onClick={()=>setDoctorName(on?"":`${d.name} ${d.license}`)}
+                      style={{ display:"flex", alignItems:"center", gap:10, padding:"10px 14px", borderRadius:10, cursor:"pointer", border:on?`2px solid ${T.blue}`:"1.5px solid #e2e8f0", background:on?"#eff6ff":"#f9fafb", transition:"all .1s" }}>
+                      <div style={{ width:32, height:32, borderRadius:"50%", background:on?T.blue:"#e2e8f0", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0, transition:"all .1s" }}>
+                        <i className="ti ti-stethoscope" style={{ fontSize:15, color:on?"white":"#9ca3af" }}></i>
+                      </div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:13, fontWeight:on?700:500, color:on?T.blue:"#111827" }}>{d.name}</div>
+                        <div style={{ fontSize:11, color:on?"#2563eb":"#6b7280", marginTop:1 }}>{d.license}</div>
+                      </div>
+                      {on && <i className="ti ti-check-circle" style={{ fontSize:18, color:T.blue, flexShrink:0 }}></i>}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
           {/* Notes */}
           <div>
-            <div style={{ fontSize:11, fontWeight:600, color:"#64748b", marginBottom:5, textTransform:"uppercase", letterSpacing:".04em" }}>หมายเหตุสำหรับ รพ.</div>
+            <div style={{ fontSize:11, fontWeight:700, color:"#374151", marginBottom:6, textTransform:"uppercase", letterSpacing:".05em" }}>หมายเหตุสำหรับ รพ.</div>
             <textarea value={notes} onChange={e=>setNotes(e.target.value)} rows={2}
               placeholder="เช่น CPAP 9 cmH₂O, แนะนำลดน้ำหนัก..."
               style={{ ...IS2, resize:"vertical" }}
@@ -3088,6 +3113,209 @@ function SalesView({ user, appointments, hospitals, salesList=[], setAppointment
   );
 }
 
+// ── Search View ───────────────────────────────────────────────────────────────
+function SearchView({ user, appointments, hospitals }) {
+  const [q, setQ] = useState("");
+  const inputRef = useEffect ? null : null;
+  const ref = { current:null };
+
+  const isHosp = user.role==="hospital";
+
+  // Filter base appointments for this user
+  const pool = appointments.filter(a =>
+    a.status!=="cancelled" &&
+    (isHosp ? a.hospId===user.hospId : true)
+  );
+
+  // Search
+  const trimQ = q.trim().toLowerCase();
+  const results = trimQ.length<1 ? [] : pool.filter(a =>
+    a.name?.toLowerCase().includes(trimQ) ||
+    a.hn?.toLowerCase().includes(trimQ) ||
+    a.phone?.toLowerCase().includes(trimQ)
+  ).sort((a,b)=>b.date.localeCompare(a.date)); // newest first
+
+  const fmtDateTH = s => {
+    if(!s) return "—";
+    const d=new Date(s);
+    const months=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+    return `${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()+543}`;
+  };
+
+  const JOURNEY_LABEL = {
+    scheduled:"รอตรวจ", tested:"ตรวจแล้ว", waiting_result:"รอแพทย์อ่านผล",
+    result_ready:"ผลออกแล้ว", consulted:"ฟังผลแล้ว",
+    trialed:"ทดลอง CPAP", received_device:"รับเครื่องแล้ว",
+  };
+  const JOURNEY_COLOR = {
+    scheduled:["#dbeafe","#1e40af"], tested:["#ede9fe","#5b21b6"],
+    waiting_result:["#fef9c3","#92400e"], result_ready:["#d1fae5","#065f46"],
+    consulted:["#d1fae5","#059669"], trialed:["#ede9fe","#7c3aed"],
+    received_device:["#dcfce7","#166534"],
+  };
+
+  return (
+    <div style={{ display:"flex", flexDirection:"column", height:"100%", fontFamily:FONT }}>
+
+      {/* Search bar — sticky */}
+      <div style={{ padding:"16px 20px", borderBottom:`1px solid ${T.line}`, background:T.card, flexShrink:0 }}>
+        <div style={{ fontSize:15, fontWeight:800, color:T.navy, marginBottom:14, display:"flex", alignItems:"center", gap:8 }}>
+          <i className="ti ti-search" style={{ fontSize:18, color:T.blue }}></i>
+          ค้นหาผู้ป่วย
+        </div>
+        {/* Search input */}
+        <div style={{ position:"relative" }}>
+          <i className="ti ti-search" style={{ position:"absolute", left:13, top:"50%", transform:"translateY(-50%)", fontSize:18, color:q?T.blue:"#94a3b8", pointerEvents:"none" }}></i>
+          <input
+            autoFocus
+            value={q}
+            onChange={e=>setQ(e.target.value)}
+            placeholder="พิมพ์ชื่อผู้ป่วย, HN, หรือเบอร์โทร..."
+            style={{ width:"100%", padding:"13px 44px 13px 42px", fontSize:15, border:`2px solid ${q?T.blue:T.line}`, borderRadius:14, outline:"none", background:"white", color:T.navy, fontFamily:FONT, boxSizing:"border-box", transition:"border-color .15s" }}
+          />
+          {q && (
+            <button onClick={()=>setQ("")}
+              style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", width:26,height:26,borderRadius:"50%",border:"none",background:"#e2e8f0",color:"#64748b",cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center" }}>
+              ×
+            </button>
+          )}
+        </div>
+
+        {/* Stats */}
+        {trimQ && (
+          <div style={{ marginTop:10, fontSize:12, color:T.muted }}>
+            {results.length>0
+              ? <><span style={{ fontWeight:700, color:T.navy }}>{results.length}</span> รายการที่ค้นพบสำหรับ <span style={{ color:T.blue, fontWeight:600 }}>"{q}"</span></>
+              : <span style={{ color:T.red }}>ไม่พบผู้ป่วยที่ค้นหา "{q}"</span>
+            }
+          </div>
+        )}
+      </div>
+
+      {/* Results */}
+      <div style={{ flex:1, overflowY:"auto", padding:"12px 20px", display:"flex", flexDirection:"column", gap:8 }}>
+
+        {/* Empty state */}
+        {!trimQ && (
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"60%", gap:14, color:T.faint }}>
+            <div style={{ width:72,height:72,borderRadius:20,background:T.surf,border:`1px solid ${T.line}`,display:"flex",alignItems:"center",justifyContent:"center" }}>
+              <i className="ti ti-search" style={{ fontSize:34,color:"#94a3b8" }}></i>
+            </div>
+            <div style={{ textAlign:"center" }}>
+              <div style={{ fontSize:16, fontWeight:700, color:T.muted }}>ค้นหาผู้ป่วย</div>
+              <div style={{ fontSize:13, color:T.faint, marginTop:6 }}>พิมพ์ชื่อ, HN หรือเบอร์โทรด้านบน</div>
+              <div style={{ fontSize:12, color:T.faint, marginTop:4 }}>ค้นหาข้ามทุกเดือน ทุกปีได้เลย</div>
+            </div>
+            {/* Tip */}
+            <div style={{ display:"flex", gap:8, flexWrap:"wrap", justifyContent:"center", marginTop:4 }}>
+              {["ค้นจาก HN","ค้นจากชื่อ","ค้นจากเบอร์"].map(t=>(
+                <span key={t} style={{ fontSize:11, padding:"4px 12px", borderRadius:20, background:T.blueL, color:T.blue, fontWeight:500 }}>{t}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* No results */}
+        {trimQ && results.length===0 && (
+          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", height:"50%", gap:10 }}>
+            <i className="ti ti-mood-empty" style={{ fontSize:40, color:"#94a3b8" }}></i>
+            <div style={{ fontSize:15, fontWeight:600, color:T.muted }}>ไม่พบ "{q}"</div>
+            <div style={{ fontSize:12, color:T.faint }}>ลองค้นด้วยชื่อเต็ม, HN, หรือเบอร์โทรอีกครั้ง</div>
+          </div>
+        )}
+
+        {/* Result cards */}
+        {results.map(a => {
+          const h  = hospitals.find(x=>x.id===a.hospId);
+          const c  = hc(a.hospId, hospitals);
+          const jl = JOURNEY_LABEL[a.journeyStatus] || a.journeyStatus;
+          const jc = JOURNEY_COLOR[a.journeyStatus] || ["#f1f5f9","#64748b"];
+          const lv = AHI_LEVELS.find(l=>l.key===a.sleepReport?.ahiLevel);
+          const pt = PAYMENT_TYPES.find(p=>p.key===a.paymentType);
+
+          return (
+            <div key={a.id} style={{ background:T.card, border:`1px solid ${T.line}`, borderRadius:14, overflow:"hidden", transition:"box-shadow .15s" }}>
+              {/* Top row */}
+              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"13px 16px" }}>
+                {/* Avatar */}
+                <div style={{ width:44, height:44, borderRadius:13, background:c.bg, border:`1.5px solid ${c.dot}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:15, fontWeight:800, color:c.text, flexShrink:0 }}>
+                  {(a.name||"?").trim()[0]}
+                </div>
+
+                {/* Info */}
+                <div style={{ flex:1, minWidth:0 }}>
+                  <div style={{ fontSize:15, fontWeight:700, color:T.navy, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                    {/* Highlight match */}
+                    {a.name}
+                  </div>
+                  <div style={{ fontSize:12, color:T.faint, marginTop:2, display:"flex", gap:8, flexWrap:"wrap" }}>
+                    <span style={{ fontFamily:"monospace", background:T.surf, padding:"1px 7px", borderRadius:6, fontSize:11, color:T.ink, fontWeight:600 }}>HN {a.hn}</span>
+                    {a.phone && <span>{a.phone}</span>}
+                  </div>
+                </div>
+
+                {/* Date */}
+                <div style={{ textAlign:"right", flexShrink:0 }}>
+                  <div style={{ fontSize:13, fontWeight:700, color:T.ink }}>{fmtDateTH(a.date)}</div>
+                  <div style={{ fontSize:11, color:c.text, marginTop:2 }}>{h?.short||"—"}</div>
+                </div>
+              </div>
+
+              {/* Badges row */}
+              <div style={{ padding:"0 16px 12px", display:"flex", gap:6, flexWrap:"wrap", alignItems:"center" }}>
+                {/* Type */}
+                <span style={{ fontSize:10, padding:"3px 9px", borderRadius:8, background:a.apptType==="cpap_trial"?"#ede9fe":"#dbeafe", color:a.apptType==="cpap_trial"?"#5b21b6":"#1e40af", fontWeight:700 }}>
+                  {a.apptType==="cpap_trial"?"ทดลอง CPAP":"Sleep Test"}
+                </span>
+                {/* Sleep test type */}
+                {a.sleepTestType && (
+                  <span style={{ fontSize:10, padding:"3px 9px", borderRadius:8, background:a.sleepTestType==="split_night"?"#ede9fe":"#eff6ff", color:a.sleepTestType==="split_night"?"#5b21b6":"#1e40af", fontWeight:600 }}>
+                    {a.sleepTestType==="split_night"?"Split Night":"Full Night"}
+                  </span>
+                )}
+                {/* Journey */}
+                <span style={{ fontSize:10, padding:"3px 9px", borderRadius:8, background:jc[0], color:jc[1], fontWeight:600 }}>
+                  {jl}
+                </span>
+                {/* Payment type */}
+                {pt && (
+                  <span style={{ fontSize:10, padding:"3px 9px", borderRadius:8, background:pt.bg, color:pt.color, fontWeight:600, display:"flex", alignItems:"center", gap:3 }}>
+                    {pt.fastResult && <i className="ti ti-bolt" style={{ fontSize:9 }}></i>}
+                    {pt.short}
+                  </span>
+                )}
+                {/* AHI result badge */}
+                {lv && (
+                  <span style={{ fontSize:10, padding:"3px 10px", borderRadius:8, background:lv.bg, color:lv.color, fontWeight:700, marginLeft:"auto", display:"flex", alignItems:"center", gap:4 }}>
+                    <i className="ti ti-activity" style={{ fontSize:10 }}></i>
+                    {lv.label}
+                    {a.sleepReport?.ahi && ` (${a.sleepReport.ahi})`}
+                  </span>
+                )}
+              </div>
+
+              {/* PDF print button for hospital */}
+              {isHosp && a.sleepReport?.pdfDataUrl && (
+                <div style={{ borderTop:`0.5px solid ${T.line}`, padding:"8px 16px", background:"#f0fdf4" }}>
+                  <button onClick={()=>{
+                    const w=window.open("","_blank");
+                    w.document.write(`<!DOCTYPE html><html><head><title>${a.sleepReport.pdfFileName}</title><style>body{margin:0;background:#333}</style></head><body><iframe src="${a.sleepReport.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+                    w.document.close();
+                  }}
+                    style={{ display:"flex", alignItems:"center", gap:7, padding:"7px 14px", fontSize:12, fontWeight:700, borderRadius:9, background:"#dc2626", color:"white", border:"none", cursor:"pointer", fontFamily:FONT }}>
+                    <i className="ti ti-printer" style={{ fontSize:13 }}></i>
+                    Print PDF รายงาน — {a.sleepReport.pdfFileName}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 // ── Report View ───────────────────────────────────────────────────────────────
 function ReportView({ user, appointments, hospitals, techs }) {
   const now = new Date();
@@ -3436,6 +3664,7 @@ export default function App() {
   const tabs = [
     ...(isAdmin||user?.role==="hospital" ? [{ id:"paste",    label:"วางจาก Line",    icon:"ti-brand-line"        }] : []),
     { id:"summary",   label:"รายเดือน",       icon:"ti-layout-list"       },
+    { id:"search",    label:"ค้นหา",           icon:"ti-search"            },
     { id:"report",    label:"รายงาน",         icon:"ti-chart-bar"         },
     ...(isAdmin ? [{ id:"sales",   label:"Sale Report 3N",  icon:"ti-shopping-cart"     }] : []),
     ...(isAdmin||isTech ? [{ id:"schedule", label:"ตารางเวร",   icon:"ti-calendar-stats" }] : []),
@@ -3541,7 +3770,7 @@ export default function App() {
         <div style={{ padding:"14px 24px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
             <div style={{ fontSize:20, fontWeight:800, color:T.navy, letterSpacing:"-0.02em" }}>
-              {tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
+              {tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
             </div>
             <div style={{ fontSize:13, color:T.muted, marginTop:2 }}>
               {user.role==="admin"?"3N Admin — เข้าถึงทุก รพ.":user.role==="tech"?"Sleep Tech — ดูตารางและยืนยันเวร":`${hospitals.find(h=>h.id===user.hospId)?.name||""}`}
@@ -3562,6 +3791,7 @@ export default function App() {
         <div style={{ flex:1, overflow:"hidden" }}>
           {tab==="paste"     && <PasteView         user={user} hospitals={hospitals} setAppointments={setApptsSave} />}
           {tab==="summary"   && <MonthlySummary    user={user} appointments={appts} setAppointments={setApptsSave} hospitals={hospitals} techs={techs} assignments={assignments} setAssignments={setAssignSave} checkins={checkins} setCheckins={setCheckinSave} dayBlocks={dayBlocks} setDayBlocks={setBlocksSave} salesList={salesList} />}
+          {tab==="search"    && <SearchView        user={user} appointments={appts} hospitals={hospitals} />}
           {tab==="report"    && <ReportView        user={user} appointments={appts} hospitals={hospitals} techs={techs} />}
           {tab==="sales"     && <SalesView         user={user} appointments={appts} hospitals={hospitals} salesList={salesList} setAppointments={setApptsSave} />}
           {tab==="schedule"  && <TechScheduleView  user={user} techs={techs} appointments={appts} hospitals={hospitals} assignments={assignments} checkins={checkins} setCheckins={setCheckinSave} />}
