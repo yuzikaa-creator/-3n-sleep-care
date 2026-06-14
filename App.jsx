@@ -954,12 +954,11 @@ const MASK_MODELS = [
   "ResMed AirFit N30i (Nasal)",
   "ResMed AirFit P10 (Nasal Pillow)",
   "ResMed AirTouch F20 (Full Face Memory Foam)",
-  "Philips DreamWear Full Face",
-  "Philips DreamWear Nasal",
-  "Philips DreamWisp Nasal",
-  "Fisher & Paykel Evora Full Face",
-  "Fisher & Paykel Eson 2 Nasal",
-  "อื่นๆ",
+  "Hingmed Nasal Mask Size M",
+  "Hingmed Nasal Mask Size L",
+  "Hingmed Full Face Mask Size M",
+  "Hingmed Full Face Mask Size L",
+  "อื่นๆ (พิมพ์เอง)",
 ];
 
 const MASK_SIZES = ["XS","S","M","L","XL","SW (Small-Wide)","MW (Medium-Wide)"];
@@ -3380,260 +3379,520 @@ function SalesView({ user, appointments, hospitals, salesList=[], setAppointment
 }
 
 // ── Sales Patient View ────────────────────────────────────────────────────────
+// ── CPAP Excel export helper ──────────────────────────────────────────────────
+function exportCpapExcel(rows, filename) {
+  const lines = rows.map(r=>r.map(c=>{ const s=String(c??""); return s.includes(",")?`"${s}"`:s; }).join(","));
+  const blob  = new Blob(["\uFEFF"+lines.join("\r\n")],{type:"text/csv;charset=utf-8;"});
+  const url   = URL.createObjectURL(blob);
+  const a     = document.createElement("a");
+  a.href=url; a.download=filename+".csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
 function SalesPatientView({ user, appointments, hospitals, setAppointments, salesList=[] }) {
-  const [filter, setFilter] = useState("all"); // "all" | "waiting" | "trialing" | "purchased"
+  const isAdmin = user.role==="admin";
+  const [tab, setTab] = useState("summary"); // summary|waiting|trialing|waiting_buy|purchased
   const [selHosp, setSelHosp] = useState("all");
   const [q, setQ] = useState("");
 
-  const isAdmin  = user.role==="admin";
-  const fmtDate  = s => { if(!s) return "—"; const d=new Date(s); const M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."]; return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()+543}`; };
+  const today = new Date().toISOString().split("T")[0];
+  const fmtDate = s => {
+    if(!s) return "—";
+    const d=new Date(s);
+    const M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+    return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()+543}`;
+  };
 
-  // Pool: cpap_trial + consulted sleep_test (รอนัด CPAP)
-  const pool = appointments.filter(a =>
+  const getStatus = a => {
+    if(["purchased_after_trial","purchase_direct"].includes(a.cpapDecision)) return "purchased";
+    const trials=(a.cpapTrials||[]).filter(t=>t.model);
+    if(!trials.length) return "waiting";
+    const allReturned = trials.every(t=>t.returnDate && t.returnDate<=today);
+    return allReturned ? "waiting_buy" : "trialing";
+  };
+
+  const pool = appointments.filter(a=>
     a.status!=="cancelled" &&
-    (a.apptType==="cpap_trial" || (a.apptType==="sleep_test" && a.journeyStatus==="consulted")) &&
-    (selHosp==="all" || a.hospId===selHosp)
+    (a.apptType==="cpap_trial"||(a.apptType==="sleep_test"&&a.journeyStatus==="consulted")) &&
+    (selHosp==="all"||a.hospId===selHosp)
   );
-
-  const filterMap = {
-    all:       pool,
-    waiting:   pool.filter(a=>a.apptType==="sleep_test"||a.cpapDecision==="not_decided"||!a.cpapDecision),
-    trialing:  pool.filter(a=>a.apptType==="cpap_trial"&&(a.cpapDecision==="trial"||(!a.cpapDecision&&(a.cpapTrials||[]).length>0))),
-    purchased: pool.filter(a=>["purchased_after_trial","purchase_direct"].includes(a.cpapDecision)),
-  };
-
   const trimQ = q.trim().toLowerCase();
-  const results = (filterMap[filter]||pool)
-    .filter(a => !trimQ || a.name?.toLowerCase().includes(trimQ) || a.hn?.toLowerCase().includes(trimQ))
-    .sort((a,b)=>b.date.localeCompare(a.date));
+  const byStatus = st => pool.filter(a=>getStatus(a)===st).filter(a=>!trimQ||a.name?.toLowerCase().includes(trimQ)||a.hn?.toLowerCase().includes(trimQ));
 
-  const updateAppt = (id, upd) => setAppointments(prev=>prev.map(a=>a.id===id?{...a,...upd}:a));
-  const updateTrial = (id, trialIdx, field, val) => {
-    setAppointments(prev=>prev.map(a=>{
+  // Update helpers
+  const upd   = (id,obj)  => setAppointments(p=>p.map(a=>a.id===id?{...a,...obj}:a));
+  const updTr = (id,ti,f,v)=>setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,[f]:v}:x);return{...a,cpapTrials:t};}));
+  const updPu = (id,f,v)  => setAppointments(p=>p.map(a=>a.id===id?{...a,cpapPurchase:{...(a.cpapPurchase||{}),[f]:v}}:a));
+
+  // Status actions
+  const startTrial = id => {
+    setAppointments(p=>p.map(a=>{
       if(a.id!==id) return a;
-      const trials=(a.cpapTrials||[]).map((t,i)=>i===trialIdx?{...t,[field]:val}:t);
-      return {...a,cpapTrials:trials};
+      const t=[...(a.cpapTrials||[]),{id:"tr"+Date.now(),model:"",trialDate:today,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:""}];
+      return {...a,cpapTrials:t,cpapDecision:"trial"};
     }));
+    setTab("trialing");
   };
-  const updatePurchase = (id, field, val) => {
-    setAppointments(prev=>prev.map(a=>a.id===id?{...a,cpapPurchase:{...(a.cpapPurchase||{}),[field]:val}}:a));
+  const finishTrial = id => {
+    setAppointments(p=>p.map(a=>{
+      if(a.id!==id) return a;
+      const t=(a.cpapTrials||[]).map((x,i)=>i===(a.cpapTrials.length-1)?{...x,returnDate:x.returnDate||today}:x);
+      return {...a,cpapTrials:t};
+    }));
+    setTab("waiting_buy");
   };
 
-  const IS4 = { width:"100%", padding:"7px 10px", fontSize:12, border:"1px solid #e2e8f0", borderRadius:8, outline:"none", background:"white", color:"#111827", boxSizing:"border-box", fontFamily:"inherit" };
+  const STATUS_CFG = {
+    waiting:    {label:"รอทดลอง",       color:"#d97706",bg:"#fef9c3",icon:"ti-clock"},
+    trialing:   {label:"กำลังทดลอง",    color:"#7c3aed",bg:"#ede9fe",icon:"ti-device-heart-monitor"},
+    waiting_buy:{label:"รอซื้อเครื่อง", color:"#1e40af",bg:"#dbeafe",icon:"ti-shopping-cart"},
+    purchased:  {label:"ซื้อแล้ว",      color:"#059669",bg:"#d1fae5",icon:"ti-check-circle"},
+  };
+  const BILLING=[
+    {key:"pending",label:"ยังไม่วางบิล",color:"#d97706",bg:"#fef9c3"},
+    {key:"billed", label:"วางบิลแล้ว",  color:"#1e40af",bg:"#dbeafe"},
+    {key:"paid",   label:"รับเงินแล้ว", color:"#059669",bg:"#d1fae5"},
+  ];
+  const IS={width:"100%",padding:"7px 10px",fontSize:12,border:"1px solid #e2e8f0",borderRadius:8,outline:"none",background:"white",color:"#111827",boxSizing:"border-box",fontFamily:"inherit"};
 
-  return (
-    <div style={{ display:"flex", flexDirection:"column", height:"100%", fontFamily:FONT }}>
-
-      {/* Header controls */}
-      <div style={{ padding:"12px 18px", borderBottom:`1px solid ${T.line}`, background:T.card, flexShrink:0 }}>
-        <div style={{ fontSize:14, fontWeight:800, color:T.navy, marginBottom:10, display:"flex", alignItems:"center", gap:8 }}>
-          <i className="ti ti-device-heart-monitor" style={{ fontSize:17, color:"#7c3aed" }}></i>
-          รายชื่อผู้ป่วย CPAP
-          <span style={{ fontSize:12, fontWeight:400, color:T.muted }}>{results.length} รายการ</span>
-        </div>
-        <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-          {/* Search */}
-          <div style={{ position:"relative", flex:1, minWidth:150 }}>
-            <i className="ti ti-search" style={{ position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"#94a3b8" }}></i>
-            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="ค้นหาชื่อ / HN..."
-              style={{ ...IS4, paddingLeft:32 }}/>
-          </div>
-          {/* Hospital filter */}
-          <select value={selHosp} onChange={e=>setSelHosp(e.target.value)}
-            style={{ ...IS4, width:"auto", minWidth:120 }}>
-            <option value="all">ทุก รพ.</option>
-            {hospitals.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}
+  // Mask input helper — "อื่นๆ" shows text input
+  const MaskInput = ({value,customVal,onModel,onCustom,onSize,sizeVal,small}) => {
+    const isOther = value==="อื่นๆ (พิมพ์เอง)";
+    return (
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <div style={{flex:2,minWidth:140}}>
+          <select value={value||""} onChange={e=>onModel(e.target.value)} style={{...IS,border:"1px solid #ddd6fe"}}>
+            <option value="">— เลือก Mask —</option>
+            {MASK_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
           </select>
         </div>
-        {/* Status tabs */}
-        <div style={{ display:"flex", gap:6, marginTop:10 }}>
-          {[
-            ["all","ทั้งหมด",pool.length,"#64748b","#f1f5f9"],
-            ["waiting","รอทดลอง",filterMap.waiting.length,"#d97706","#fef9c3"],
-            ["trialing","กำลังทดลอง",filterMap.trialing.length,"#7c3aed","#ede9fe"],
-            ["purchased","ซื้อแล้ว",filterMap.purchased.length,"#059669","#d1fae5"],
-          ].map(([key,lb,cnt,col,bg])=>(
-            <button key={key} onClick={()=>setFilter(key)}
-              style={{ padding:"7px 14px", fontSize:12, fontWeight:filter===key?700:400, borderRadius:20, border:`1.5px solid ${filter===key?col:"#e2e8f0"}`, background:filter===key?bg:"white", color:filter===key?col:T.muted, cursor:"pointer", display:"flex", alignItems:"center", gap:5, fontFamily:FONT }}>
-              {lb}
-              <span style={{ fontSize:11, background:filter===key?col:"#e2e8f0", color:filter===key?"white":"#64748b", borderRadius:10, padding:"1px 7px", fontWeight:700 }}>{cnt}</span>
+        {isOther && (
+          <input value={customVal||""} onChange={e=>onCustom(e.target.value)} placeholder="ระบุรุ่น Mask..."
+            style={{...IS,flex:2,minWidth:100,border:"1px solid #ddd6fe"}}/>
+        )}
+        {onSize && (
+          <select value={sizeVal||""} onChange={e=>onSize(e.target.value)} style={{...IS,minWidth:70,flex:1,border:"1px solid #ddd6fe"}}>
+            <option value="">ขนาด</option>
+            {MASK_SIZES.map(s=><option key={s} value={s}>{s}</option>)}
+          </select>
+        )}
+      </div>
+    );
+  };
+
+  // Export functions
+  const doExport = () => {
+    if(tab==="summary") {
+      const rows=[["สถานะ","จำนวน"],["รอทดลอง",byStatus("waiting").length],["กำลังทดลอง",byStatus("trialing").length],["รอซื้อเครื่อง",byStatus("waiting_buy").length],["ซื้อแล้ว",byStatus("purchased").length]];
+      exportCpapExcel(rows,"CPAP_Summary");
+    } else if(tab==="waiting") {
+      const hdr=["ชื่อ","HN","เบอร์โทร","โรงพยาบาล","วันนัด"];
+      const rows=byStatus("waiting").map(a=>{const h=hospitals.find(x=>x.id===a.hospId);return[a.name,a.hn,a.phone||"—",h?.name||"",fmtDate(a.date)];});
+      exportCpapExcel([hdr,...rows],"CPAP_รอทดลอง");
+    } else if(tab==="trialing") {
+      const hdr=["ชื่อ","HN","เบอร์โทร","รพ.","รุ่นที่ทดลอง","S/N","DN","Mask","ขนาด","วันเริ่ม","วันคืน"];
+      const rows=byStatus("trialing").flatMap(a=>{
+        const h=hospitals.find(x=>x.id===a.hospId);
+        const t=(a.cpapTrials||[]);
+        if(!t.length)return[[a.name,a.hn,a.phone||"—",h?.name||"","","","","","","",""]];
+        return t.map((tr,i)=>[i===0?a.name:"",i===0?a.hn:"",i===0?(a.phone||"—"):"",i===0?(h?.name||""):"",tr.model||"",tr.serialNo||"",tr.dn||"",tr.maskModel==="อื่นๆ (พิมพ์เอง)"?(tr.maskOther||""):tr.maskModel||"",tr.maskSize||"",fmtDate(tr.trialDate),fmtDate(tr.returnDate)]);
+      });
+      exportCpapExcel([hdr,...rows],"CPAP_กำลังทดลอง");
+    } else if(tab==="waiting_buy") {
+      const hdr=["ชื่อ","HN","เบอร์โทร","รพ.","รุ่นที่ทดลอง","S/N (trial)","Mask ทดลอง","วันคืน"];
+      const rows=byStatus("waiting_buy").flatMap(a=>{
+        const h=hospitals.find(x=>x.id===a.hospId);
+        const t=(a.cpapTrials||[]).filter(x=>x.model);
+        return t.map((tr,i)=>[i===0?a.name:"",i===0?a.hn:"",i===0?(a.phone||"—"):"",i===0?(h?.name||""):"",tr.model||"",tr.serialNo||"",tr.maskModel||"",fmtDate(tr.returnDate)]);
+      });
+      exportCpapExcel([hdr,...rows],"CPAP_รอซื้อ");
+    } else if(tab==="purchased") {
+      const hdr=["ชื่อ","HN","เบอร์โทร","รพ.","รุ่นที่ซื้อ","S/N ขาย","ราคา","Mask ซื้อ","วันซื้อ","สถานะบิล"];
+      const rows=byStatus("purchased").map(a=>{const h=hospitals.find(x=>x.id===a.hospId);const p=a.cpapPurchase||{};const b=BILLING.find(x=>x.key===(p.billingStatus||"pending"));return[a.name,a.hn,a.phone||"—",h?.name||"",p.model||"",p.serialNo||"",p.price||0,p.maskModel||"",fmtDate(p.purchaseDate),b?.label||""];});
+      exportCpapExcel([hdr,...rows],"CPAP_ซื้อแล้ว");
+    }
+  };
+
+  const TabBtn = ({id,label,cnt,col,bg}) => (
+    <button onClick={()=>setTab(id)}
+      style={{padding:"7px 14px",fontSize:12,fontWeight:tab===id?700:400,borderRadius:20,border:`1.5px solid ${tab===id?col:"#e2e8f0"}`,background:tab===id?bg:"white",color:tab===id?col:T.muted,cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:FONT}}>
+      {label}
+      {cnt!==undefined&&<span style={{fontSize:11,background:tab===id?col:"#e2e8f0",color:tab===id?"white":"#64748b",borderRadius:10,padding:"1px 7px",fontWeight:700}}>{cnt}</span>}
+    </button>
+  );
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",height:"100%",fontFamily:FONT}}>
+      {/* Header */}
+      <div style={{padding:"12px 18px",borderBottom:`1px solid ${T.line}`,background:T.card,flexShrink:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+          <i className="ti ti-device-heart-monitor" style={{fontSize:17,color:"#7c3aed"}}></i>
+          <span style={{fontSize:14,fontWeight:800,color:T.navy}}>CPAP Sales</span>
+          <span style={{fontSize:12,color:T.muted}}>{pool.length} รายการ</span>
+          <div style={{marginLeft:"auto",display:"flex",gap:8}}>
+            <select value={selHosp} onChange={e=>setSelHosp(e.target.value)}
+              style={{...IS,width:"auto",minWidth:130,border:`1px solid ${T.line}`}}>
+              <option value="all">ทุก รพ.</option>
+              {hospitals.map(h=><option key={h.id} value={h.id}>{h.name}</option>)}
+            </select>
+            <button onClick={doExport}
+              style={{padding:"7px 13px",fontSize:12,fontWeight:700,borderRadius:9,background:"#059669",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:5}}>
+              <i className="ti ti-file-spreadsheet" style={{fontSize:13}}></i>Export Excel
             </button>
-          ))}
+          </div>
+        </div>
+        {/* Tabs */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          <TabBtn id="summary"    label="สรุปภาพรวม"    col="#64748b" bg="#f1f5f9"/>
+          <TabBtn id="waiting"    label="รอทดลอง"       cnt={byStatus("waiting").length}    col="#d97706" bg="#fef9c3"/>
+          <TabBtn id="trialing"   label="กำลังทดลอง"   cnt={byStatus("trialing").length}   col="#7c3aed" bg="#ede9fe"/>
+          <TabBtn id="waiting_buy"label="รอซื้อเครื่อง" cnt={byStatus("waiting_buy").length} col="#1e40af" bg="#dbeafe"/>
+          <TabBtn id="purchased"  label="ซื้อแล้ว"      cnt={byStatus("purchased").length}  col="#059669" bg="#d1fae5"/>
         </div>
       </div>
 
-      {/* Patient cards */}
-      <div style={{ flex:1, overflowY:"auto", padding:"12px 16px", display:"flex", flexDirection:"column", gap:10 }}>
-        {results.length===0 && (
-          <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"50%",gap:12,color:T.faint }}>
-            <i className="ti ti-device-heart-monitor" style={{ fontSize:36,color:"#cbd5e1" }}></i>
-            <div style={{ fontSize:14,fontWeight:600,color:T.muted }}>ไม่มีรายการ</div>
+      <div style={{flex:1,overflowY:"auto",padding:"14px 16px",display:"flex",flexDirection:"column",gap:10}}>
+
+        {/* ── SUMMARY TAB ── */}
+        {tab==="summary" && (
+          <>
+          {/* Stat cards */}
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:4}}>
+            {[
+              ["waiting","รอทดลอง",byStatus("waiting").length,"#d97706","#fef9c3","ti-clock"],
+              ["trialing","กำลังทดลอง",byStatus("trialing").length,"#7c3aed","#ede9fe","ti-device-heart-monitor"],
+              ["waiting_buy","รอซื้อเครื่อง",byStatus("waiting_buy").length,"#1e40af","#dbeafe","ti-shopping-cart"],
+              ["purchased","ซื้อแล้ว",byStatus("purchased").length,"#059669","#d1fae5","ti-check-circle"],
+            ].map(([key,lb,cnt,col,bg,ic])=>(
+              <div key={key} onClick={()=>setTab(key)} style={{padding:"18px 16px",background:bg,borderRadius:16,border:`1.5px solid ${col}30`,cursor:"pointer",transition:"transform .12s"}}
+                onMouseEnter={e=>e.currentTarget.style.transform="scale(1.02)"}
+                onMouseLeave={e=>e.currentTarget.style.transform="scale(1)"}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:8}}>
+                  <i className={`ti ${ic}`} style={{fontSize:18,color:col}}></i>
+                  <span style={{fontSize:12,color:col,fontWeight:500}}>{lb}</span>
+                </div>
+                <div style={{fontSize:36,fontWeight:800,color:col,lineHeight:1}}>{cnt}</div>
+                <div style={{fontSize:11,color:col,opacity:.7,marginTop:5}}>ราย → กดดูรายชื่อ</div>
+              </div>
+            ))}
+          </div>
+          {/* Total not purchased */}
+          <div style={{padding:"14px 18px",background:"#fff7ed",borderRadius:14,border:"1.5px solid #fed7aa",display:"flex",alignItems:"center",gap:12}}>
+            <i className="ti ti-alert-circle" style={{fontSize:22,color:"#c2410c",flexShrink:0}}></i>
+            <div>
+              <div style={{fontSize:15,fontWeight:800,color:"#c2410c"}}>
+                {byStatus("waiting").length+byStatus("trialing").length+byStatus("waiting_buy").length} ราย ยังไม่ซื้อเครื่อง
+              </div>
+              <div style={{fontSize:12,color:"#92400e",marginTop:3}}>
+                รอทดลอง {byStatus("waiting").length} · กำลังทดลอง {byStatus("trialing").length} · รอซื้อ {byStatus("waiting_buy").length}
+              </div>
+            </div>
+          </div>
+          </>
+        )}
+
+        {/* ── SEARCH BAR (non-summary) ── */}
+        {tab!=="summary" && (
+          <div style={{position:"relative"}}>
+            <i className="ti ti-search" style={{position:"absolute",left:11,top:"50%",transform:"translateY(-50%)",fontSize:14,color:"#94a3b8"}}></i>
+            <input value={q} onChange={e=>setQ(e.target.value)} placeholder="ค้นหาชื่อ / HN..."
+              style={{...IS,paddingLeft:33,border:`1px solid ${T.line}`}}/>
           </div>
         )}
-        {results.map(a=>{
+
+        {/* ── WAITING TAB — รอทดลอง ── */}
+        {tab==="waiting" && byStatus("waiting").map(a=>{
+          const h=hospitals.find(x=>x.id===a.hospId);
+          const c=hc(a.hospId,hospitals);
+          return (
+            <div key={a.id} style={{background:T.card,border:"1px solid #e2e8f0",borderRadius:14,padding:"14px 16px",display:"flex",alignItems:"center",gap:12}}>
+              <div style={{width:44,height:44,borderRadius:12,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16,fontWeight:800,color:c.text,flexShrink:0}}>
+                {(a.name||"?")[0]}
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:14,fontWeight:700,color:T.navy}}>{a.name}</div>
+                <div style={{fontSize:11,color:T.faint,marginTop:2}}>HN {a.hn} · {h?.name}</div>
+                {a.phone && (
+                  <div style={{fontSize:12,color:"#059669",fontWeight:600,marginTop:3,display:"flex",alignItems:"center",gap:5}}>
+                    <i className="ti ti-phone" style={{fontSize:12}}></i>
+                    <a href={`tel:${a.phone}`} style={{color:"inherit",textDecoration:"none"}}>{a.phone}</a>
+                  </div>
+                )}
+                {a.note && <div style={{fontSize:11,color:T.faint,marginTop:2}}>{a.note}</div>}
+              </div>
+              <div style={{textAlign:"right",flexShrink:0}}>
+                <div style={{fontSize:11,color:T.faint,marginBottom:7}}>{fmtDate(a.date)}</div>
+                <button onClick={()=>startTrial(a.id)}
+                  style={{padding:"8px 16px",fontSize:12,fontWeight:700,borderRadius:10,background:"#7c3aed",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6}}>
+                  <i className="ti ti-device-heart-monitor" style={{fontSize:13}}></i>เริ่มทดลอง
+                </button>
+              </div>
+            </div>
+          );
+        })}
+        {tab==="waiting" && byStatus("waiting").length===0 && (
+          <div style={{textAlign:"center",padding:"40px",color:T.faint}}>
+            <i className="ti ti-check-circle" style={{fontSize:36,color:"#10b981"}}></i>
+            <div style={{marginTop:10,fontSize:14,fontWeight:600,color:"#059669"}}>ไม่มีผู้ป่วยรอทดลอง</div>
+          </div>
+        )}
+
+        {/* ── TRIALING TAB — กำลังทดลอง ── */}
+        {tab==="trialing" && byStatus("trialing").map(a=>{
           const h=hospitals.find(x=>x.id===a.hospId);
           const c=hc(a.hospId,hospitals);
           const trials=a.cpapTrials||[];
-          const purchase=a.cpapPurchase||{};
-          const dec=a.cpapDecision||"";
-          const decColor=dec==="purchased_after_trial"||dec==="purchase_direct"?"#059669":dec==="trial"?"#d97706":"#64748b";
-          const decBg=dec==="purchased_after_trial"||dec==="purchase_direct"?"#d1fae5":dec==="trial"?"#fef9c3":"#f1f5f9";
-          const decLabel={ not_decided:"ยังไม่ตัดสินใจ", trial:"ทดลองต่อ", purchased_after_trial:"ซื้อหลังทดลอง", purchase_direct:"ซื้อโดยไม่ทดลอง" }[dec]||"รอทดลอง";
-          const com=Math.round((purchase.price||0)*(purchase.commissionRate??2)/100);
-
           return (
-            <div key={a.id} style={{ background:T.card, border:`1px solid ${T.line}`, borderRadius:14, overflow:"hidden" }}>
+            <div key={a.id} style={{background:T.card,border:"1.5px solid #ddd6fe",borderRadius:14,overflow:"hidden"}}>
               {/* Patient header */}
-              <div style={{ display:"flex", alignItems:"center", gap:12, padding:"12px 16px", background:T.surf }}>
-                <div style={{ width:40,height:40,borderRadius:12,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0 }}>
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"#fafaff",borderBottom:"1px solid #e2e8f0"}}>
+                <div style={{width:40,height:40,borderRadius:11,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0}}>
                   {(a.name||"?")[0]}
                 </div>
-                <div style={{ flex:1,minWidth:0 }}>
-                  <div style={{ fontSize:14,fontWeight:700,color:T.navy }}>{a.name}</div>
-                  <div style={{ fontSize:11,color:T.faint,marginTop:1 }}>HN {a.hn} · {h?.name} · {fmtDate(a.date)}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.navy}}>{a.name}</div>
+                  <div style={{fontSize:11,color:T.faint}}>HN {a.hn} · {h?.name}</div>
+                  {a.phone&&<div style={{fontSize:11,color:"#059669",fontWeight:600,display:"flex",alignItems:"center",gap:4,marginTop:1}}><i className="ti ti-phone" style={{fontSize:10}}></i>{a.phone}</div>}
                 </div>
-                <span style={{ fontSize:11,padding:"4px 10px",borderRadius:20,background:decBg,color:decColor,fontWeight:700,flexShrink:0 }}>
-                  {decLabel}
-                </span>
+                <button onClick={()=>finishTrial(a.id)}
+                  style={{padding:"8px 16px",fontSize:12,fontWeight:700,borderRadius:10,background:"#1e40af",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                  <i className="ti ti-check" style={{fontSize:13}}></i>ทดลองเสร็จแล้ว
+                </button>
               </div>
-
-              <div style={{ padding:"12px 16px", display:"flex", flexDirection:"column", gap:10 }}>
-                {/* Trial entries */}
-                {trials.length>0 && (
-                  <div>
-                    <div style={{ fontSize:11,fontWeight:700,color:"#7c3aed",marginBottom:7,display:"flex",alignItems:"center",gap:5 }}>
-                      <i className="ti ti-device-heart-monitor" style={{ fontSize:12 }}></i>เครื่องที่ทดลอง
+              {/* Trials */}
+              <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
+                {trials.map((tr,i)=>(
+                  <div key={tr.id||i} style={{padding:"12px",background:"white",borderRadius:11,border:"1px solid #ede9fe"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
+                      <span style={{fontSize:11,fontWeight:700,color:"#7c3aed",minWidth:54}}>รุ่นที่ {i+1}</span>
+                      <select value={tr.model||""} onChange={e=>updTr(a.id,i,"model",e.target.value)}
+                        style={{flex:1,...IS,border:"1.5px solid #a78bfa",fontWeight:600}}>
+                        <option value="">— เลือกรุ่น CPAP/BiPAP —</option>
+                        {CPAP_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
+                      </select>
                     </div>
-                    {trials.map((tr,i)=>(
-                      <div key={tr.id} style={{ padding:"10px 12px",background:"#fafaff",borderRadius:10,border:"0.5px solid #ddd6fe",marginBottom:7 }}>
-                        <div style={{ display:"grid",gridTemplateColumns:"auto 1fr",gap:"5px 12px",alignItems:"center" }}>
-                          <span style={{ fontSize:11,fontWeight:700,color:"#7c3aed" }}>รุ่นที่ {i+1}</span>
-                          <span style={{ fontSize:12,fontWeight:600,color:T.ink }}>{tr.model||"—"}</span>
-                          {tr.serialNo && <><span style={{ fontSize:10,color:T.faint }}>S/N</span><span style={{ fontSize:11,fontFamily:"monospace",color:T.ink }}>{tr.serialNo}</span></>}
-                          {tr.dn && <><span style={{ fontSize:10,color:T.faint }}>DN</span><span style={{ fontSize:11,fontFamily:"monospace",color:T.ink }}>{tr.dn}</span></>}
-                          {tr.maskModel && <><span style={{ fontSize:10,color:T.faint }}>Mask</span><span style={{ fontSize:11,color:T.ink }}>{tr.maskModel} {tr.maskSize&&`(${tr.maskSize})`}</span></>}
-                          {tr.trialDate && <><span style={{ fontSize:10,color:T.faint }}>เริ่ม</span><span style={{ fontSize:11,color:T.ink }}>{fmtDate(tr.trialDate)}</span></>}
-                          {tr.returnDate && <><span style={{ fontSize:10,color:T.faint }}>คืน</span><span style={{ fontSize:11,color:T.ink }}>{fmtDate(tr.returnDate)}</span></>}
-                          {tr.note && <><span style={{ fontSize:10,color:T.faint }}>หมายเหตุ</span><span style={{ fontSize:11,color:T.ink }}>{tr.note}</span></>}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {/* Quick add trial (Sales can add) */}
-                {a.apptType==="cpap_trial" && trials.length<3 && (
-                  <button onClick={()=>{
-                    const newTrials=[...trials,{id:"tr"+Date.now(),model:"",trialDate:a.date,serialNo:"",dn:"",maskModel:"",maskSize:"",note:""}];
-                    updateAppt(a.id,{cpapTrials:newTrials});
-                  }}
-                    style={{ padding:"8px",fontSize:12,fontWeight:600,borderRadius:9,border:"1.5px dashed #a78bfa",background:"transparent",color:"#7c3aed",cursor:"pointer",fontFamily:FONT }}>
-                    <i className="ti ti-plus" style={{ marginRight:5 }}></i>เพิ่มรุ่นทดลอง
-                  </button>
-                )}
-
-                {/* Quick edit trial fields (if trials exist) */}
-                {a.apptType==="cpap_trial" && trials.length>0 && (
-                  <details style={{ marginTop:-4 }}>
-                    <summary style={{ fontSize:11,color:T.blue,cursor:"pointer",listStyle:"none",display:"flex",alignItems:"center",gap:5,userSelect:"none" }}>
-                      <i className="ti ti-edit" style={{ fontSize:11 }}></i>แก้ไขข้อมูลทดลอง
-                    </summary>
-                    <div style={{ marginTop:8, display:"flex", flexDirection:"column", gap:8 }}>
-                      {trials.map((tr,i)=>(
-                        <div key={tr.id} style={{ padding:"10px",background:"#f5f3ff",borderRadius:10,border:"0.5px solid #ddd6fe" }}>
-                          <div style={{ fontSize:11,fontWeight:700,color:"#7c3aed",marginBottom:7 }}>รุ่นที่ {i+1}</div>
-                          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>รุ่นเครื่อง</div>
-                              <select value={tr.model} onChange={e=>updateTrial(a.id,i,"model",e.target.value)} style={{ ...IS4, fontSize:11 }}>
-                                <option value="">—</option>{CPAP_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
-                              </select>
-                            </div>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>📅 วันเริ่มทดลอง</div>
-                              <input type="date" value={tr.trialDate} onChange={e=>updateTrial(a.id,i,"trialDate",e.target.value)} style={IS4}/>
-                            </div>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>📅 วันคืนเครื่อง</div>
-                              <input type="date" value={tr.returnDate||""} onChange={e=>updateTrial(a.id,i,"returnDate",e.target.value)} style={IS4}/>
-                            </div>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>Serial No.</div>
-                              <input value={tr.serialNo||""} onChange={e=>updateTrial(a.id,i,"serialNo",e.target.value)} placeholder="SN-XXXXXXXX" style={{ ...IS4, fontFamily:"monospace" }}/>
-                            </div>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>DN</div>
-                              <input value={tr.dn||""} onChange={e=>updateTrial(a.id,i,"dn",e.target.value)} placeholder="DN-XXXX" style={{ ...IS4, fontFamily:"monospace" }}/>
-                            </div>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>รุ่น Mask</div>
-                              <select value={tr.maskModel||""} onChange={e=>updateTrial(a.id,i,"maskModel",e.target.value)} style={{ ...IS4, fontSize:11 }}>
-                                <option value="">—</option>{MASK_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
-                              </select>
-                            </div>
-                            <div><div style={{ fontSize:10,color:T.muted,marginBottom:3 }}>ขนาด Mask</div>
-                              <select value={tr.maskSize||""} onChange={e=>updateTrial(a.id,i,"maskSize",e.target.value)} style={IS4}>
-                                <option value="">—</option>{MASK_SIZES.map(s=><option key={s} value={s}>{s}</option>)}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </details>
-                )}
-
-                {/* Purchase info + price editor for Sales */}
-                {(dec==="purchased_after_trial"||dec==="purchase_direct") && (
-                  <div style={{ padding:"12px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac" }}>
-                    <div style={{ fontSize:11,fontWeight:700,color:"#059669",marginBottom:8,display:"flex",alignItems:"center",gap:5 }}>
-                      <i className="ti ti-shopping-cart" style={{ fontSize:13 }}></i>ข้อมูลการซื้อ
-                    </div>
-                    <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:8 }}>
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
                       <div>
-                        <div style={{ fontSize:10,color:"#059669",marginBottom:3 }}>รุ่นที่ซื้อ</div>
-                        <select value={purchase.model||""} onChange={e=>updatePurchase(a.id,"model",e.target.value)} style={{ ...IS4, borderColor:"#86efac" }}>
-                          <option value="">—</option>{CPAP_MODELS.filter(m=>m!=="อื่นๆ").map(m=><option key={m} value={m}>{m}</option>)}
+                        <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>Serial No. (S/N)</div>
+                        <input value={tr.serialNo||""} onChange={e=>updTr(a.id,i,"serialNo",e.target.value)} placeholder="SN-XXXXXXXX"
+                          style={{...IS,border:"1px solid #ddd6fe",fontFamily:"monospace"}}/>
+                      </div>
+                      <div>
+                        <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>DN (Delivery Note)</div>
+                        <input value={tr.dn||""} onChange={e=>updTr(a.id,i,"dn",e.target.value)} placeholder="DN-XXXX"
+                          style={{...IS,border:"1px solid #ddd6fe",fontFamily:"monospace"}}/>
+                      </div>
+                    </div>
+                    <div style={{marginBottom:8}}>
+                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>รุ่น Mask</div>
+                      <div style={{display:"flex",gap:7}}>
+                        <select value={tr.maskModel||""} onChange={e=>updTr(a.id,i,"maskModel",e.target.value)}
+                          style={{flex:1,...IS,border:"1px solid #ddd6fe"}}>
+                          <option value="">— เลือก Mask —</option>
+                          {MASK_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
                         </select>
+                        {tr.maskModel!=="อื่นๆ (พิมพ์เอง)" && (
+                          <select value={tr.maskSize||""} onChange={e=>updTr(a.id,i,"maskSize",e.target.value)}
+                            style={{...IS,minWidth:80,flex:"none",border:"1px solid #ddd6fe"}}>
+                            <option value="">ขนาด</option>
+                            {MASK_SIZES.map(s=><option key={s} value={s}>{s}</option>)}
+                          </select>
+                        )}
                       </div>
-                      <div>
-                        <div style={{ fontSize:10,color:"#059669",marginBottom:3 }}>วันที่ซื้อ</div>
-                        <input type="date" value={purchase.purchaseDate||""} onChange={e=>updatePurchase(a.id,"purchaseDate",e.target.value)} style={{ ...IS4, borderColor:"#86efac" }}/>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:10,color:"#059669",marginBottom:3 }}>ราคาขาย (บาท) — กรอกเองตาม รพ.</div>
-                        <input type="number" value={purchase.price||""} onChange={e=>updatePurchase(a.id,"price",Number(e.target.value))}
-                          placeholder="ราคา..." style={{ ...IS4, borderColor:"#86efac", fontSize:14, fontWeight:700, color:"#059669" }}/>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:10,color:"#059669",marginBottom:3 }}>S/N เครื่องที่ขาย</div>
-                        <input value={purchase.serialNo||""} onChange={e=>updatePurchase(a.id,"serialNo",e.target.value)}
-                          placeholder="SN-XXXXXXXX" style={{ ...IS4, borderColor:"#86efac", fontFamily:"monospace" }}/>
-                      </div>
-                      <div>
-                        <div style={{ fontSize:10,color:"#059669",marginBottom:3 }}>DN ขาย</div>
-                        <input value={purchase.dn||""} onChange={e=>updatePurchase(a.id,"dn",e.target.value)}
-                          placeholder="DN-XXXX" style={{ ...IS4, borderColor:"#86efac", fontFamily:"monospace" }}/>
-                      </div>
-                      {isAdmin && (
-                        <div>
-                          <div style={{ fontSize:10,color:"#059669",marginBottom:3 }}>ค่าคอม %</div>
-                          <input type="number" value={purchase.commissionRate??2} onChange={e=>updatePurchase(a.id,"commissionRate",Number(e.target.value))}
-                            style={{ ...IS4, borderColor:"#86efac", width:70 }}/>
-                          <span style={{ fontSize:11,color:"#059669",marginLeft:6,fontWeight:700 }}>= {com.toLocaleString()} บาท</span>
-                        </div>
+                      {tr.maskModel==="อื่นๆ (พิมพ์เอง)" && (
+                        <input value={tr.maskOther||""} onChange={e=>updTr(a.id,i,"maskOther",e.target.value)}
+                          placeholder="ระบุรุ่น Mask..." style={{...IS,marginTop:6,border:"1px solid #ddd6fe"}}/>
                       )}
                     </div>
-                    {purchase.price>0 && (
-                      <div style={{ marginTop:8,padding:"7px 11px",background:"#dcfce7",borderRadius:8,display:"flex",justifyContent:"space-between" }}>
-                        <span style={{ fontSize:12,color:"#166534" }}>ราคา: {(purchase.price||0).toLocaleString()} ฿</span>
-                        {isAdmin&&<span style={{ fontSize:12,fontWeight:700,color:"#166534" }}>คอม: {com.toLocaleString()} ฿</span>}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                      <div>
+                        <div style={{fontSize:10,color:"#059669",fontWeight:600,marginBottom:3}}>📅 วันเริ่มทดลอง</div>
+                        <input type="date" value={tr.trialDate||""} onChange={e=>updTr(a.id,i,"trialDate",e.target.value)}
+                          style={{...IS,border:"1px solid #86efac"}}/>
                       </div>
-                    )}
+                      <div>
+                        <div style={{fontSize:10,color:"#dc2626",fontWeight:600,marginBottom:3}}>📅 วันกำหนดคืนเครื่อง</div>
+                        <input type="date" value={tr.returnDate||""} onChange={e=>updTr(a.id,i,"returnDate",e.target.value)}
+                          style={{...IS,border:"1px solid #fca5a5"}}/>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {trials.length<3 && (
+                  <button onClick={()=>{const t=[...(a.cpapTrials||[]),{id:"tr"+Date.now(),model:"",trialDate:today,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:""}];upd(a.id,{cpapTrials:t});}}
+                    style={{padding:"9px",fontSize:12,fontWeight:600,borderRadius:10,border:"1.5px dashed #a78bfa",background:"transparent",color:"#7c3aed",cursor:"pointer",fontFamily:FONT}}>
+                    <i className="ti ti-plus" style={{marginRight:5}}></i>เพิ่มรุ่นทดลอง ({trials.length}/3)
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        {tab==="trialing" && byStatus("trialing").length===0 && (
+          <div style={{textAlign:"center",padding:"40px",color:T.faint}}>
+            <i className="ti ti-device-heart-monitor" style={{fontSize:36,color:"#a78bfa"}}></i>
+            <div style={{marginTop:10,fontSize:14,fontWeight:600,color:"#7c3aed"}}>ไม่มีผู้ป่วยกำลังทดลอง</div>
+          </div>
+        )}
+
+        {/* ── WAITING BUY TAB — รอซื้อเครื่อง ── */}
+        {tab==="waiting_buy" && byStatus("waiting_buy").map(a=>{
+          const h=hospitals.find(x=>x.id===a.hospId);
+          const c=hc(a.hospId,hospitals);
+          const trials=(a.cpapTrials||[]).filter(t=>t.model);
+          const purch=a.cpapPurchase||{};
+          const com=Math.round((purch.price||0)*(purch.commissionRate??2)/100);
+          return (
+            <div key={a.id} style={{background:T.card,border:"1.5px solid #bfdbfe",borderRadius:14,overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"#eff6ff",borderBottom:"1px solid #e2e8f0"}}>
+                <div style={{width:40,height:40,borderRadius:11,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0}}>
+                  {(a.name||"?")[0]}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.navy}}>{a.name}</div>
+                  <div style={{fontSize:11,color:T.faint}}>HN {a.hn} · {h?.name}</div>
+                  {a.phone&&<div style={{fontSize:11,color:"#059669",fontWeight:600,display:"flex",alignItems:"center",gap:4,marginTop:1}}><i className="ti ti-phone" style={{fontSize:10}}></i>{a.phone}</div>}
+                </div>
+                {/* Tried summary chips */}
+                <div style={{display:"flex",gap:5,flexWrap:"wrap",maxWidth:200}}>
+                  {trials.map((tr,i)=>(
+                    <span key={i} style={{fontSize:10,padding:"3px 8px",borderRadius:8,background:"#ede9fe",color:"#7c3aed",fontWeight:600}}>
+                      {(tr.model||"").split(" ").slice(0,3).join(" ")}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              {/* Purchase form */}
+              <div style={{padding:"12px 16px"}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#1e40af",marginBottom:10,display:"flex",alignItems:"center",gap:6}}>
+                  <i className="ti ti-shopping-cart" style={{fontSize:13}}></i>บันทึกการซื้อ
+                </div>
+                <div style={{display:"flex",gap:7,marginBottom:10}}>
+                  {[["purchased_after_trial","ซื้อหลังทดลอง","#059669","#d1fae5"],["purchase_direct","ซื้อโดยไม่ทดลอง","#7c3aed","#ede9fe"]].map(([key,lb,col,bg])=>(
+                    <button key={key} onClick={()=>upd(a.id,{cpapDecision:key})}
+                      style={{flex:1,padding:"8px",fontSize:12,fontWeight:700,borderRadius:9,border:`1.5px solid ${col}`,background:a.cpapDecision===key?bg:"white",color:col,cursor:"pointer",fontFamily:FONT}}>
+                      {lb}
+                    </button>
+                  ))}
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+                  <div>
+                    <div style={{fontSize:10,color:T.muted,marginBottom:3}}>รุ่นที่ซื้อ</div>
+                    <select value={purch.model||""} onChange={e=>updPu(a.id,"model",e.target.value)} style={{...IS,border:"1px solid #86efac"}}>
+                      <option value="">— เลือกรุ่น —</option>
+                      {CPAP_MODELS.filter(m=>m!=="อื่นๆ").map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:T.muted,marginBottom:3}}>S/N เครื่องที่ขาย</div>
+                    <input value={purch.serialNo||""} onChange={e=>updPu(a.id,"serialNo",e.target.value)} placeholder="SN-XXXXXXXX"
+                      style={{...IS,border:"1px solid #86efac",fontFamily:"monospace"}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:T.muted,marginBottom:3}}>DN ขาย</div>
+                    <input value={purch.dn||""} onChange={e=>updPu(a.id,"dn",e.target.value)} placeholder="DN-XXXX"
+                      style={{...IS,border:"1px solid #86efac",fontFamily:"monospace"}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:T.muted,marginBottom:3}}>ราคาขาย (บาท)</div>
+                    <input type="number" value={purch.price||""} onChange={e=>updPu(a.id,"price",Number(e.target.value))} placeholder="เช่น 45000"
+                      style={{...IS,border:"1px solid #86efac",fontSize:14,fontWeight:700,color:"#059669"}}/>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:T.muted,marginBottom:3}}>รุ่น Mask ที่ซื้อ</div>
+                    <select value={purch.maskModel||""} onChange={e=>updPu(a.id,"maskModel",e.target.value)} style={{...IS,border:"1px solid #86efac"}}>
+                      <option value="">—</option>
+                      {MASK_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                  <div>
+                    <div style={{fontSize:10,color:T.muted,marginBottom:3}}>วันที่ขาย</div>
+                    <input type="date" value={purch.purchaseDate||""} onChange={e=>updPu(a.id,"purchaseDate",e.target.value)}
+                      style={{...IS,border:"1px solid #86efac"}}/>
+                  </div>
+                </div>
+                {purch.maskModel==="อื่นๆ (พิมพ์เอง)" && (
+                  <input value={purch.maskOther||""} onChange={e=>updPu(a.id,"maskOther",e.target.value)}
+                    placeholder="ระบุรุ่น Mask..." style={{...IS,marginTop:8,border:"1px solid #86efac"}}/>
+                )}
+                {purch.price>0 && (
+                  <div style={{marginTop:8,padding:"8px 12px",background:"#dcfce7",borderRadius:9,fontSize:12,color:"#166534",fontWeight:600}}>
+                    ราคา: {(purch.price||0).toLocaleString()} ฿  {isAdmin&&`· คอม: ${com.toLocaleString()} ฿`}
                   </div>
                 )}
               </div>
             </div>
           );
         })}
+        {tab==="waiting_buy" && byStatus("waiting_buy").length===0 && (
+          <div style={{textAlign:"center",padding:"40px",color:T.faint}}>
+            <i className="ti ti-shopping-cart" style={{fontSize:36,color:"#93c5fd"}}></i>
+            <div style={{marginTop:10,fontSize:14,fontWeight:600,color:"#1e40af"}}>ไม่มีผู้ป่วยรอซื้อเครื่อง</div>
+          </div>
+        )}
+
+        {/* ── PURCHASED TAB — ซื้อแล้ว ── */}
+        {tab==="purchased" && byStatus("purchased").map(a=>{
+          const h=hospitals.find(x=>x.id===a.hospId);
+          const c=hc(a.hospId,hospitals);
+          const purch=a.cpapPurchase||{};
+          const billing=BILLING.find(b=>b.key===(purch.billingStatus||"pending"))||BILLING[0];
+          const com=Math.round((purch.price||0)*(purch.commissionRate??2)/100);
+          return (
+            <div key={a.id} style={{background:T.card,border:"1.5px solid #86efac",borderRadius:14,overflow:"hidden"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"#f0fdf4",borderBottom:"1px solid #e2e8f0"}}>
+                <div style={{width:40,height:40,borderRadius:11,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0}}>
+                  {(a.name||"?")[0]}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:T.navy}}>{a.name}</div>
+                  <div style={{fontSize:11,color:T.faint}}>HN {a.hn} · {h?.name} · {fmtDate(purch.purchaseDate||a.date)}</div>
+                  <div style={{fontSize:12,color:"#059669",fontWeight:600,marginTop:2}}>{purch.model||"—"}</div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>{(purch.price||0).toLocaleString()} ฿</div>
+                  {isAdmin&&<div style={{fontSize:11,color:"#7c3aed"}}>คอม {com.toLocaleString()} ฿</div>}
+                </div>
+              </div>
+              <div style={{padding:"12px 16px"}}>
+                {/* Info summary */}
+                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:10,fontSize:11}}>
+                  {[["S/N",purch.serialNo||"—"],["DN",purch.dn||"—"],["Mask",purch.maskOther||purch.maskModel||"—"]].map(([k,v])=>(
+                    <div key={k} style={{padding:"8px 10px",background:T.surf,borderRadius:9,border:`0.5px solid ${T.line}`}}>
+                      <div style={{color:T.faint,marginBottom:2}}>{k}</div>
+                      <div style={{fontWeight:600,color:T.ink,fontFamily:k==="S/N"||k==="DN"?"monospace":"inherit"}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Billing status */}
+                <div style={{fontSize:10,color:T.muted,fontWeight:600,marginBottom:6}}>สถานะใบแจ้งหนี้</div>
+                <div style={{display:"flex",gap:7}}>
+                  {BILLING.map(b=>{
+                    const on=(purch.billingStatus||"pending")===b.key;
+                    return (
+                      <button key={b.key} onClick={()=>updPu(a.id,"billingStatus",b.key)}
+                        style={{flex:1,padding:"8px 10px",fontSize:12,fontWeight:on?700:400,borderRadius:9,border:`${on?2:1}px solid ${b.color}`,background:on?b.bg:"white",color:on?b.color:"#64748b",cursor:"pointer",fontFamily:FONT}}>
+                        {b.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+        {tab==="purchased" && byStatus("purchased").length===0 && (
+          <div style={{textAlign:"center",padding:"40px",color:T.faint}}>
+            <i className="ti ti-check-circle" style={{fontSize:36,color:"#6ee7b7"}}></i>
+            <div style={{marginTop:10,fontSize:14,fontWeight:600,color:"#059669"}}>ยังไม่มีการซื้อ</div>
+          </div>
+        )}
+
       </div>
     </div>
   );
 }
+
 
 // ── Search View ───────────────────────────────────────────────────────────────
 function SearchView({ user, appointments, hospitals }) {
