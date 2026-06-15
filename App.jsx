@@ -4226,9 +4226,9 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
           const c=hc(a.hospId,hospitals);
           const trials=a.cpapTrials||[];
           return (
-            <div key={a.id} style={{background:T.card,border:"1.5px solid #ddd6fe",borderRadius:14,overflow:"hidden"}}>
+            <div key={a.id} style={{background:T.card,border:"1.5px solid #ddd6fe",borderRadius:14}}>
               {/* Patient header */}
-              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"#fafaff",borderBottom:"1px solid #e2e8f0"}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"#fafaff",borderRadius:"14px 14px 0 0",borderBottom:"1px solid #e2e8f0"}}>
                 <div style={{width:40,height:40,borderRadius:11,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0}}>
                   {(a.name||"?")[0]}
                 </div>
@@ -4238,51 +4238,65 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
                   {a.phone&&<div style={{fontSize:11,color:"#059669",fontWeight:600,display:"flex",alignItems:"center",gap:4,marginTop:1}}><i className="ti ti-phone" style={{fontSize:10}}></i>{a.phone}</div>}
                 </div>
                 <button onClick={()=>finishTrial(a.id)}
-                  style={{padding:"8px 16px",fontSize:12,fontWeight:700,borderRadius:10,background:"#1e40af",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                  <i className="ti ti-check" style={{fontSize:13}}></i>ทดลองเสร็จแล้ว
+                  style={{padding:"8px 14px",fontSize:12,fontWeight:700,borderRadius:10,background:"#1e40af",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                  <i className="ti ti-check" style={{fontSize:12}}></i>ทดลองเสร็จแล้ว
                 </button>
               </div>
-              {/* Trials */}
-              <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
+
+              {/* Trial cards */}
+              <div style={{padding:"12px 14px",display:"flex",flexDirection:"column",gap:10}}>
                 {trials.length===0 && (
-                  <div style={{padding:"10px 13px",background:"#f5f3ff",borderRadius:10,border:"1px solid #a78bfa",fontSize:12,color:"#7c3aed",display:"flex",alignItems:"center",gap:7}}>
-                    <i className="ti ti-edit" style={{fontSize:14}}></i>
-                    กรุณากรอกรายละเอียดเครื่องทดลองด้านล่าง แล้วกด <strong>"ทดลองเสร็จแล้ว"</strong> เมื่อผู้ป่วยคืนเครื่อง
+                  <div style={{padding:"10px 13px",background:"#f5f3ff",borderRadius:10,border:"1px solid #a78bfa",fontSize:12,color:"#7c3aed"}}>
+                    <i className="ti ti-edit" style={{marginRight:6}}></i>
+                    กรุณากรอกรายละเอียดเครื่องทดลองด้านล่าง
                   </div>
                 )}
                 {trials.map((tr,i)=>(
-                  <div key={tr.id||i} style={{padding:"12px",background:"white",borderRadius:11,border:"1.5px solid #a78bfa"}}>
-                    <div style={{fontSize:11,fontWeight:700,color:"#7c3aed",marginBottom:8}}>รุ่นที่ {i+1} — กรอกรายละเอียดการทดลอง</div>
-                    <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
-                      <select value={["(รอกรอกรุ่น)"].includes(tr.model)?"":tr.model||""} onChange={e=>updTr(a.id,i,"model",e.target.value)}
-                        style={{flex:1,...IS,border:"1.5px solid #a78bfa",fontWeight:600}}>
+                  <div key={tr.id||i} style={{background:"white",borderRadius:12,border:"1.5px solid #a78bfa",padding:"14px"}}>
+                    <div style={{fontSize:12,fontWeight:700,color:"#7c3aed",marginBottom:12,display:"flex",alignItems:"center",gap:7}}>
+                      <span style={{width:24,height:24,borderRadius:"50%",background:"#7c3aed",color:"white",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>{i+1}</span>
+                      รุ่นที่ {i+1} — กรอกรายละเอียด
+                    </div>
+
+                    {/* Row 1: Model */}
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:700,marginBottom:4}}>รุ่นเครื่อง CPAP/BiPAP</div>
+                      <select value={["(รอกรอกรุ่น)"].includes(tr.model)?"":tr.model||""}
+                        onChange={e=>updTr(a.id,i,"model",e.target.value)}
+                        style={{width:"100%",padding:"9px 12px",fontSize:13,fontWeight:600,border:"1.5px solid #a78bfa",borderRadius:9,outline:"none",background:"white",color:"#111827",boxSizing:"border-box"}}>
                         <option value="">— เลือกรุ่น CPAP/BiPAP —</option>
                         {CPAP_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
                       </select>
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+
+                    {/* Row 2: S/N + DN */}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
                       <div>
-                        <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>Serial No. (S/N)</div>
-                        <input value={tr.serialNo||""} onChange={e=>updTr(a.id,i,"serialNo",e.target.value)} placeholder="SN-XXXXXXXX"
-                          style={{...IS,border:"1px solid #ddd6fe",fontFamily:"monospace"}}/>
+                        <div style={{fontSize:10,color:"#7c3aed",fontWeight:700,marginBottom:4}}>Serial No. (S/N)</div>
+                        <input value={tr.serialNo||""} onChange={e=>updTr(a.id,i,"serialNo",e.target.value)}
+                          placeholder="SN-XXXXXXXX"
+                          style={{width:"100%",padding:"8px 10px",fontSize:12,border:"1px solid #ddd6fe",borderRadius:8,outline:"none",background:"white",color:"#111827",fontFamily:"monospace",boxSizing:"border-box"}}/>
                       </div>
                       <div>
-                        <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>DN (Delivery Note)</div>
-                        <input value={tr.dn||""} onChange={e=>updTr(a.id,i,"dn",e.target.value)} placeholder="DN-XXXX"
-                          style={{...IS,border:"1px solid #ddd6fe",fontFamily:"monospace"}}/>
+                        <div style={{fontSize:10,color:"#7c3aed",fontWeight:700,marginBottom:4}}>DN (Delivery Note)</div>
+                        <input value={tr.dn||""} onChange={e=>updTr(a.id,i,"dn",e.target.value)}
+                          placeholder="DN-XXXX"
+                          style={{width:"100%",padding:"8px 10px",fontSize:12,border:"1px solid #ddd6fe",borderRadius:8,outline:"none",background:"white",color:"#111827",fontFamily:"monospace",boxSizing:"border-box"}}/>
                       </div>
                     </div>
-                    <div style={{marginBottom:8}}>
-                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>รุ่น Mask</div>
-                      <div style={{display:"flex",gap:7}}>
+
+                    {/* Row 3: Mask model + Size */}
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:700,marginBottom:4}}>รุ่น Mask + ขนาด</div>
+                      <div style={{display:"grid",gridTemplateColumns:"1fr auto",gap:8}}>
                         <select value={tr.maskModel||""} onChange={e=>updTr(a.id,i,"maskModel",e.target.value)}
-                          style={{flex:1,...IS,border:"1px solid #ddd6fe"}}>
+                          style={{padding:"8px 10px",fontSize:12,border:"1px solid #ddd6fe",borderRadius:8,outline:"none",background:"white",color:"#111827",width:"100%"}}>
                           <option value="">— เลือก Mask —</option>
                           {MASK_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
                         </select>
-                        {tr.maskModel!=="อื่นๆ (พิมพ์เอง)" && (
+                        {tr.maskModel && tr.maskModel!=="อื่นๆ (พิมพ์เอง)" && (
                           <select value={tr.maskSize||""} onChange={e=>updTr(a.id,i,"maskSize",e.target.value)}
-                            style={{...IS,minWidth:80,flex:"none",border:"1px solid #ddd6fe"}}>
+                            style={{padding:"8px 10px",fontSize:12,border:"1px solid #ddd6fe",borderRadius:8,outline:"none",background:"white",color:"#111827",minWidth:90}}>
                             <option value="">ขนาด</option>
                             {MASK_SIZES.map(s=><option key={s} value={s}>{s}</option>)}
                           </select>
@@ -4290,54 +4304,57 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
                       </div>
                       {tr.maskModel==="อื่นๆ (พิมพ์เอง)" && (
                         <input value={tr.maskOther||""} onChange={e=>updTr(a.id,i,"maskOther",e.target.value)}
-                          placeholder="ระบุรุ่น Mask..." style={{...IS,marginTop:6,border:"1px solid #ddd6fe"}}/>
+                          placeholder="ระบุรุ่น Mask..."
+                          style={{width:"100%",padding:"8px 10px",fontSize:12,border:"1px solid #ddd6fe",borderRadius:8,outline:"none",background:"white",color:"#111827",marginTop:7,boxSizing:"border-box"}}/>
                       )}
                     </div>
-                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+
+                    {/* Row 4: Dates */}
+                    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:10}}>
                       <div>
-                        <div style={{fontSize:10,color:"#059669",fontWeight:600,marginBottom:3}}>📅 วันเริ่มทดลอง</div>
+                        <div style={{fontSize:10,color:"#059669",fontWeight:700,marginBottom:4}}>📅 วันเริ่มทดลอง</div>
                         <input type="date" value={tr.trialDate||""} onChange={e=>updTr(a.id,i,"trialDate",e.target.value)}
-                          style={{...IS,border:"1px solid #86efac"}}/>
+                          style={{width:"100%",padding:"8px 10px",fontSize:12,border:"1px solid #86efac",borderRadius:8,outline:"none",background:"white",color:"#111827",boxSizing:"border-box"}}/>
                       </div>
                       <div>
-                        <div style={{fontSize:10,color:"#dc2626",fontWeight:600,marginBottom:3}}>📅 วันกำหนดคืนเครื่อง</div>
+                        <div style={{fontSize:10,color:"#dc2626",fontWeight:700,marginBottom:4}}>📅 วันคืนเครื่อง</div>
                         <input type="date" value={tr.returnDate||""} onChange={e=>updTr(a.id,i,"returnDate",e.target.value)}
-                          style={{...IS,border:"1px solid #fca5a5"}}/>
+                          style={{width:"100%",padding:"8px 10px",fontSize:12,border:"1px solid #fca5a5",borderRadius:8,outline:"none",background:"white",color:"#111827",boxSizing:"border-box"}}/>
                       </div>
                     </div>
-                    {/* Pressure / หมายเหตุ */}
-                    <div style={{marginTop:8}}>
-                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>แรงดัน / Pressure / หมายเหตุ</div>
-                      <input value={tr.note||""} onChange={e=>updTr(a.id,i,"note",e.target.value)} placeholder="เช่น APAP 6-12 cmH₂O, ปรับ Auto, ใช้ได้ดี..."
-                        style={{...IS,border:"1px solid #ddd6fe"}}/>
+
+                    {/* Row 5: Pressure note */}
+                    <div style={{marginBottom:10}}>
+                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:700,marginBottom:4}}>แรงดัน / Pressure / หมายเหตุ</div>
+                      <input value={tr.note||""} onChange={e=>updTr(a.id,i,"note",e.target.value)}
+                        placeholder="เช่น APAP 6-12 cmH₂O, ปรับ Auto, ใช้ได้ดี..."
+                        style={{width:"100%",padding:"8px 10px",fontSize:12,border:"1px solid #ddd6fe",borderRadius:8,outline:"none",background:"white",color:"#111827",boxSizing:"border-box"}}/>
                     </div>
-                    {/* PDF ผลการทดลอง per trial */}
-                    <div style={{marginTop:8}}>
-                      <div style={{fontSize:10,color:"#dc2626",fontWeight:600,marginBottom:5,display:"flex",alignItems:"center",gap:4}}>
+
+                    {/* Row 6: PDF attachment */}
+                    <div>
+                      <div style={{fontSize:10,color:"#dc2626",fontWeight:700,marginBottom:5,display:"flex",alignItems:"center",gap:4}}>
                         <i className="ti ti-file-type-pdf" style={{fontSize:12}}></i>แนบผลการทดลองรุ่นที่ {i+1} (PDF)
                       </div>
                       {tr.pdfDataUrl ? (
-                        <div style={{padding:"7px 11px",background:"#f0fdf4",borderRadius:9,border:"1px solid #86efac",display:"flex",alignItems:"center",gap:8}}>
-                          <i className="ti ti-file-check" style={{fontSize:16,color:"#059669",flexShrink:0}}></i>
+                        <div style={{padding:"8px 12px",background:"#f0fdf4",borderRadius:9,border:"1px solid #86efac",display:"flex",alignItems:"center",gap:9}}>
+                          <i className="ti ti-file-check" style={{fontSize:18,color:"#059669",flexShrink:0}}></i>
                           <span style={{fontSize:11,fontWeight:600,color:"#166534",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tr.pdfFileName||"ผลทดลอง.pdf"}</span>
                           <button onClick={()=>{ const w=window.open("","_blank"); w.document.write(`<html><body style="margin:0;background:#333"><iframe src="${tr.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`); w.document.close(); }}
-                            style={{padding:"4px 10px",fontSize:11,fontWeight:700,borderRadius:7,background:"#059669",color:"white",border:"none",cursor:"pointer",flexShrink:0}}>
+                            style={{padding:"5px 11px",fontSize:11,fontWeight:700,borderRadius:8,background:"#059669",color:"white",border:"none",cursor:"pointer",flexShrink:0}}>
                             <i className="ti ti-printer" style={{marginRight:3,fontSize:10}}></i>Print
                           </button>
                           <button onClick={()=>updTrObj(a.id,i,{pdfDataUrl:"",pdfFileName:""})}
-                            style={{padding:"4px 8px",fontSize:11,borderRadius:7,border:"1px solid #fecaca",background:"white",color:"#dc2626",cursor:"pointer",flexShrink:0}}>ลบ</button>
+                            style={{padding:"5px 9px",fontSize:11,borderRadius:8,border:"1px solid #fecaca",background:"white",color:"#dc2626",cursor:"pointer",flexShrink:0}}>ลบ</button>
                         </div>
                       ) : (
-                        <label style={{display:"flex",alignItems:"center",gap:7,padding:"8px 11px",borderRadius:9,border:"1.5px dashed #fca5a5",background:"#fff5f5",cursor:"pointer"}}>
-                          <i className="ti ti-upload" style={{fontSize:14,color:"#dc2626",flexShrink:0}}></i>
-                          <span style={{fontSize:11,color:"#dc2626",fontWeight:500}}>แนบ PDF ผลทดลองรุ่นนี้ (รพ. จะ Print ให้หมอ)</span>
+                        <label style={{display:"flex",alignItems:"center",gap:9,padding:"10px 14px",borderRadius:9,border:"1.5px dashed #fca5a5",background:"#fff5f5",cursor:"pointer"}}>
+                          <i className="ti ti-upload" style={{fontSize:16,color:"#dc2626",flexShrink:0}}></i>
+                          <span style={{fontSize:12,color:"#dc2626",fontWeight:500}}>คลิกเพื่อแนบ PDF ผลทดลองรุ่นนี้</span>
                           <input type="file" accept=".pdf,application/pdf" style={{display:"none"}} onChange={e=>{
                             const file=e.target.files?.[0]; if(!file) return;
                             const reader=new FileReader();
-                            reader.onload=ev=>{
-                              // single update for both fields — prevents race condition
-                              updTrObj(a.id,i,{pdfDataUrl:ev.target.result, pdfFileName:file.name});
-                            };
+                            reader.onload=ev=>updTrObj(a.id,i,{pdfDataUrl:ev.target.result,pdfFileName:file.name});
                             reader.readAsDataURL(file); e.target.value="";
                           }}/>
                         </label>
@@ -4345,10 +4362,13 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
                     </div>
                   </div>
                 ))}
+
+                {/* Add trial button */}
                 {trials.length<3 && (
                   <button onClick={()=>addTrialSlot(a.id)}
-                    style={{padding:"9px",fontSize:12,fontWeight:700,borderRadius:10,border:"1.5px dashed #a78bfa",background:"transparent",color:"#7c3aed",cursor:"pointer",fontFamily:FONT,width:"100%"}}>
-                    <i className="ti ti-plus" style={{marginRight:5}}></i>เพิ่มรุ่นทดลอง ({trials.length}/3)
+                    style={{padding:"10px",fontSize:12,fontWeight:700,borderRadius:10,border:"1.5px dashed #a78bfa",background:"transparent",color:"#7c3aed",cursor:"pointer",fontFamily:FONT,width:"100%",marginTop:4}}>
+                    <i className="ti ti-plus" style={{marginRight:6}}></i>
+                    เพิ่มรุ่นที่ {trials.length+1} ({trials.length}/3)
                   </button>
                 )}
               </div>
