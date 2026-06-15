@@ -46,19 +46,6 @@ const INIT_USERS = [
   { id:"hc4",    name:"รพ. กรุงเทพ BHQ",         role:"hospital", hospId:"hc4" },
 ];
 
-const SAMPLE_APPTS = [
-  // ── มิถุนายน 2026 (ข้อมูลทดสอบ 10 ราย) ──
-  { id:"j01", hn:"10000001", name:"น.ส.ดวงดี ดวงใจ",       phone:"081-100-0001", date:"2026-06-03", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"consulted",      status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j02", hn:"10000002", name:"นายสมชาย มีสุข",         phone:"081-100-0002", date:"2026-06-05", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"split_night", journeyStatus:"result_ready",   status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j03", hn:"10000003", name:"น.ส.สุดา ใจดี",           phone:"081-100-0003", date:"2026-06-05", hospId:"h2", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"waiting_result", status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j04", hn:"10000004", name:"นางวิไล รักดี",           phone:"081-100-0004", date:"2026-06-10", hospId:"h4", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"tested",         status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j05", hn:"10000005", name:"นายมานะ ขยันดี",          phone:"081-100-0005", date:"2026-06-10", hospId:"h4", note:"", apptType:"sleep_test",  sleepTestType:"split_night", journeyStatus:"scheduled",      status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j06", hn:"10000006", name:"น.ส.นภา แจ่มใส",          phone:"081-100-0006", date:"2026-06-12", hospId:"h7", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"result_ready",   status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j07", hn:"10000007", name:"นายประสิทธิ์ สุขสม",      phone:"081-100-0007", date:"2026-06-12", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"full_night",  journeyStatus:"consulted",      status:"cancelled", cancelReason:"ผู้ป่วยขอเลื่อน", cancelledAt:"2026-06-10T00:00:00.000Z" },
-  { id:"j08", hn:"10000008", name:"นางสุภาพ เรียบร้อย",      phone:"081-100-0008", date:"2026-06-17", hospId:"h5", note:"", apptType:"cpap_trial",  sleepTestType:"",            journeyStatus:"trialed",        status:"active", cancelReason:"", cancelledAt:null, cpapTrials:[{id:"t1",model:"ResMed AirSense 11 AutoSet",trialDate:"2026-06-17",note:"Pressure Auto"}], cpapDecision:"purchased_after_trial", cpapPurchase:{model:"ResMed AirSense 11 AutoSet",purchaseDate:"2026-06-20",note:"",price:45000,commissionRate:2,salesPerson:"",saleDate:"2026-06-20"} },
-  { id:"j09", hn:"10000009", name:"นายสุรชัย ดีงาม",          phone:"081-100-0009", date:"2026-06-19", hospId:"h1", note:"", apptType:"sleep_test",  sleepTestType:"split_night", journeyStatus:"waiting_result", status:"active", cancelReason:"", cancelledAt:null },
-  { id:"j10", hn:"10000010", name:"น.ส.ปวีณา มงคล",          phone:"081-100-0010", date:"2026-06-24", hospId:"h7", note:"", apptType:"cpap_trial",  sleepTestType:"",            journeyStatus:"received_device",status:"active", cancelReason:"", cancelledAt:null, cpapDecision:"purchase_direct", cpapPurchase:{model:"ResMed AirSense 10 AutoSet",purchaseDate:"2026-06-24",note:"",price:38000,commissionRate:2,salesPerson:"",saleDate:"2026-06-24"} },
-];
 
 // ข้อมูล assign Tech เดือนมิถุนายน (ทดสอบ)
 const SAMPLE_ASSIGNMENTS = {
@@ -2291,7 +2278,7 @@ function parseLineText(text, defaultHospId) {
   const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
 
   // isBlockStart: bare HN digits เท่านั้น (ไม่ใช่ "HN: xxx")
-  const isBlockStart = l => /^\d{6,12}$/.test(l) || /^\d[-/]\d{2,3}[-/]\d+/.test(l);
+  const isBlockStart = l => /^\d{6,12}$/.test(l) || /^\d[-\/]\d{2,3}[-\/]\d+/.test(l);
   // isHNField: ทุก format สำหรับ extract
   const isHNField = l => isBlockStart(l) || /^(hn|HN)\s*[:\-\s]\s*[\d\-]+/i.test(l);
   // isNameStart: ชื่อนำ
@@ -2327,7 +2314,7 @@ function parseLineText(text, defaultHospId) {
         if(/^0\d{8,9}$/.test(bare)) { phone=bare; return; }
       }
       if(!date && /(?:จอง|วันที่|นัด|date|วัน|คิว)/i.test(l)) {
-        const dm = l.match(/(\d{1,2})[\/-\.](\d{1,2})(?:[\/-\.](\d{2,4}))?/);
+        const dm = l.match(/(\d{1,2})[-\/.](\d{1,2})(?:[-\/.](\d{2,4}))?/);
         if(dm) {
           const d=parseInt(dm[1]), mo=parseInt(dm[2]);
           let yr=dm[3]?parseInt(dm[3]):new Date().getFullYear()+543;
@@ -5383,7 +5370,7 @@ export default function App() {
 
   const [user,setUser]           = useState(null);
   const [tab,setTab]             = useState("summary");
-  const [appts,setAppts]         = useState(saved?.appts      || SAMPLE_APPTS);
+  const [appts,setAppts]         = useState(saved?.appts      || []);
   const [hospitals,setHospitals] = useState(saved?.hospitals  || INIT_HOSPITALS);
   const [techs,setTechs]         = useState(saved?.techs      || INIT_TECHS);
   const [assignments,setAssign]  = useState(saved?.assignments|| SAMPLE_ASSIGNMENTS);
