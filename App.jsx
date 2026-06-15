@@ -432,7 +432,12 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
   const prev = () => month===0 ? (setMonth(11),setYear(y=>y-1)) : setMonth(m=>m-1);
   const next = () => month===11? (setMonth(0), setYear(y=>y+1)) : setMonth(m=>m+1);
 
-  const visible = appointments.filter(a => user.role==="hospital" ? a.hospId===user.hospId : true);
+  // CPAP-only รพ. ไม่แสดงใน Sleep Test schedule
+  const cpapOnlyIds = new Set(hospitals.filter(h=>h.cpapOnly).map(h=>h.id));
+  const visible = appointments.filter(a =>
+    !cpapOnlyIds.has(a.hospId) &&   // ไม่แสดง CPAP-only
+    (user.role==="hospital" ? a.hospId===user.hospId : true)
+  );
   const daysInMon = new Date(year, month+1, 0).getDate();
 
   // build day array
@@ -492,7 +497,10 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 
           {/* Hospital filter */}
           <div style={{ ...R,gap:5,flexWrap:"wrap" }}>
-            {(user.role!=="hospital"?[{id:"all",short:"ทั้งหมด"},...hospitals]:hospitals.filter(h=>h.id===user.hospId)).map(h=>{
+            {(user.role!=="hospital"
+              ? [{id:"all",short:"ทั้งหมด"},...hospitals.filter(h=>!h.cpapOnly)]  // ไม่แสดง CPAP-only
+              : hospitals.filter(h=>h.id===user.hospId)
+            ).map(h=>{
               const on = filterHosp===h.id;
               const c  = h.id!=="all" ? hc(h.id,hospitals) : null;
               return <div key={h.id} onClick={()=>setFilterHosp(h.id)} style={{ padding:"4px 11px",fontSize:11,borderRadius:20,cursor:"pointer",fontWeight:on?600:400,border:on?`1.5px solid ${c?c.dot:T.blue}`:`0.5px solid ${T.line}`,background:on?(c?c.bg:T.blueL):T.card,color:on?(c?c.text:T.blue):T.muted,transition:"all .1s" }}>{h.short}</div>;
@@ -793,12 +801,16 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
   };
 
   if(!open) return (
-    <button
-      onClick={e=>{ e.stopPropagation(); setOpen(true); setForm(f=>({...f,hospId:defaultHospId||hospitals[0]?.id||""})); }}
-      style={{ width:"100%", marginTop:6, padding:"9px 14px", borderRadius:10, border:`1.5px dashed ${isFull?"#fca5a5":T.blueMid}`, background:"transparent", color:isFull?T.red:T.blue, cursor:"pointer", fontSize:13, fontWeight:600, fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:7, transition:"all .15s" }}>
-      <i className="ti ti-user-plus" style={{ fontSize:15 }}></i>
-      {isFull ? "เพิ่มนัด (เกิน capacity)" : "+ เพิ่มนัดหมาย"}
-    </button>
+    <>
+      {(!isFull || isAdmin) && (
+        <button
+          onClick={e=>{ e.stopPropagation(); setOpen(true); setForm(f=>({...f,hospId:defaultHospId||hospitals[0]?.id||""})); }}
+          style={{ width:"100%", marginTop:6, padding:"9px 14px", borderRadius:10, border:`1.5px dashed ${isFull?"#fca5a5":T.blueMid}`, background:isFull?"#fff5f5":"transparent", color:isFull?T.red:T.blue, cursor:"pointer", fontSize:13, fontWeight:600, fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:7 }}>
+          <i className={`ti ${isFull?"ti-alert-triangle":"ti-user-plus"}`} style={{ fontSize:14 }}></i>
+          {isFull ? "⚠ Admin: เพิ่มนัดเกิน capacity (ห้องเต็มแล้ว)" : "+ เพิ่มนัดหมาย"}
+        </button>
+      )}
+    </>
   );
 
   return (
@@ -2390,13 +2402,19 @@ function PasteView({ user, hospitals, setAppointments }) {
 
   const parse = () => {
     if(!text.trim()) return;
-    setError(""); setParsed([]);
-    const results = parseLineText(text, user.hospId||hospitals[0]?.id);
-    if(!results||results.length===0) {
-      setError("ไม่พบข้อมูล — ตรวจสอบรูปแบบข้อความตามตัวอย่างด้านบน");
-      return;
+    setError(""); setParsed([]); setLoading(true);
+    try {
+      const results = parseLineText(text.trim(), user.hospId||hospitals[0]?.id);
+      if(!results||results.length===0) {
+        setError("ไม่พบข้อมูล — ตรวจสอบว่าข้อความมีรหัส HN (เลข) ชื่อ และโทรศัพท์");
+      } else {
+        setParsed(results);
+      }
+    } catch(e) {
+      setError("เกิดข้อผิดพลาด: " + e.message);
+    } finally {
+      setLoading(false);
     }
-    setParsed(results);
   };
 
   const save = () => {
@@ -2406,6 +2424,11 @@ function PasteView({ user, hospitals, setAppointments }) {
   };
 
   const updateParsed = (id, upd) => setParsed(p=>p.map(x=>x.id===id?{...x,...upd}:x));
+
+  const safeFmt = s => {
+    if(!s) return "—";
+    try { const d=new Date(s); if(isNaN(d.getTime()))return s; return `${d.getDate()} ${TM[d.getMonth()]} ${d.getFullYear()+543}`; } catch(e){return s;}
+  };
 
   return (
     <div style={{ padding:20, display:"flex", flexDirection:"column", gap:16, height:"100%", overflowY:"auto" }}>
@@ -2476,9 +2499,9 @@ function PasteView({ user, hospitals, setAppointments }) {
         />
 
         <div style={{ marginTop:11 }}>
-          <Btn variant="primary" onClick={parse} disabled={!text.trim()}>
-            <i className="ti ti-file-search" style={{ fontSize:14 }}></i>
-            แปลงข้อความ
+          <Btn variant="primary" onClick={parse} disabled={!text.trim()||loading}>
+            <i className={`ti ${loading?"ti-loader ti-spin":"ti-file-search"}`} style={{ fontSize:14 }}></i>
+            {loading?"กำลังแปลง...":"แปลงข้อความ"}
           </Btn>
         </div>
 
@@ -2525,8 +2548,8 @@ function PasteView({ user, hospitals, setAppointments }) {
                       <div style={{ fontSize:11, color:"#059669", marginTop:2 }}>โรค: {a.diagnosis}</div>
                     )}
                   </div>
-                  <div style={{ fontSize:12, fontWeight:600, color:c.text, background:c.soft, padding:"4px 9px", borderRadius:8, whiteSpace:"nowrap" }}>
-                    {fmtDate(a.date)}
+                  <div style={{ fontSize:12, fontWeight:600, color:c.text, background:c.bg, padding:"4px 9px", borderRadius:8, whiteSpace:"nowrap" }}>
+                    {safeFmt(a.date)}
                   </div>
                   {user.role==="admin" && (
                     <select value={a.hospId} onChange={e=>updateParsed(a.id,{hospId:e.target.value})}
@@ -2713,12 +2736,12 @@ function ManageHospitals({ hospitals,setHospitals }) {
                     <div style={{ fontSize:9,color:"#92400e",opacity:.7 }}>บาท/case</div>
                   </div>
                   <button onClick={()=>{ setEditPriceId(isEdit?null:h.id); setPriceVal(h.psgPrice||5800); }}
-                    style={{ width:28,height:28,border:`0.5px solid ${isEdit?"#1d4ed8":T.line}`,borderRadius:7,background:isEdit?T.blueL:T.surf,color:isEdit?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                    <i className="ti ti-currency-baht"></i>
+                    style={{ padding:"5px 11px",fontSize:11,fontWeight:600,border:`1px solid ${isEdit?"#1d4ed8":"#e2e8f0"}`,borderRadius:8,background:isEdit?T.blueL:"white",color:isEdit?T.blue:"#475569",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                    <i className="ti ti-currency-baht" style={{fontSize:12}}></i>แก้ราคา PSG
                   </button>
-                  <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))}
-                    style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                    <i className="ti ti-trash"></i>
+                  <button onClick={()=>{ if(window.confirm(`ลบ "${h.name}" ออกจากระบบ?`)) setHospitals(p=>p.filter(x=>x.id!==h.id)); }}
+                    style={{ padding:"5px 11px",fontSize:11,fontWeight:600,border:"1px solid #fecaca",borderRadius:8,background:"#fef2f2",color:"#dc2626",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                    <i className="ti ti-trash" style={{fontSize:12}}></i>ลบ
                   </button>
                 </div>
                 {isEdit && (
@@ -2760,12 +2783,12 @@ function ManageHospitals({ hospitals,setHospitals }) {
                 </div>
                 {/* Toggle back to full */}
                 <button onClick={()=>toggleCpapOnly(h.id)} title="เปลี่ยนเป็น Sleep Test + CPAP"
-                  style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11 }}>
-                  <i className="ti ti-transfer"></i>
+                  style={{ padding:"5px 11px",fontSize:11,fontWeight:600,border:"1px solid #e2e8f0",borderRadius:8,background:"white",color:"#475569",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                  <i className="ti ti-transfer" style={{fontSize:12}}></i>เปลี่ยนเป็น Sleep Test
                 </button>
-                <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))}
-                  style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                  <i className="ti ti-trash"></i>
+                <button onClick={()=>{ if(window.confirm(`ลบ "${h.name}" ออกจากระบบ?`)) setHospitals(p=>p.filter(x=>x.id!==h.id)); }}
+                  style={{ padding:"5px 11px",fontSize:11,fontWeight:600,border:"1px solid #fecaca",borderRadius:8,background:"#fef2f2",color:"#dc2626",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                  <i className="ti ti-trash" style={{fontSize:12}}></i>ลบ
                 </button>
               </div>
             );})}
@@ -2861,11 +2884,13 @@ function ManageSales({ salesList=[], setSalesList }) {
               ) : (
                 <>
                   <span style={{ flex:1, fontSize:13, fontWeight:600, color:T.ink }}>{name}</span>
-                  <button onClick={()=>{ setEditIdx(i); setEditVal(name); }} style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                    <i className="ti ti-edit"></i>
+                  <button onClick={()=>{ setEditIdx(i); setEditVal(name); }}
+                    style={{ padding:"5px 12px",fontSize:11,fontWeight:600,border:`1px solid #e2e8f0`,borderRadius:8,background:"white",color:"#475569",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                    <i className="ti ti-edit" style={{fontSize:12}}></i>แก้ชื่อ
                   </button>
-                  <button onClick={()=>remove(i)} style={{ width:28,height:28,border:`0.5px solid #fecaca`,borderRadius:7,background:"#fef2f2",color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                    <i className="ti ti-trash"></i>
+                  <button onClick={()=>remove(i)}
+                    style={{ padding:"5px 12px",fontSize:11,fontWeight:600,border:"1px solid #fecaca",borderRadius:8,background:"#fef2f2",color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                    <i className="ti ti-trash" style={{fontSize:12}}></i>ลบ
                   </button>
                 </>
               )}
@@ -2954,12 +2979,14 @@ function ManageTechs({ techs, setTechs, techRates, setTechRates, salesList=[], s
                     </div>
                   ))}
                 </div>
-                <div style={{ ...R,gap:4 }}>
-                  <button onClick={()=>isEdit?setEditRateId(null):openRate(t)} style={{ width:28,height:28,border:`0.5px solid #ddd6fe`,borderRadius:7,background:isEdit?"#ede9fe":T.surf,color:isEdit?"#7c3aed":T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                    <i className="ti ti-currency-baht"></i>
+                <div style={{ ...R,gap:6 }}>
+                  <button onClick={()=>isEdit?setEditRateId(null):openRate(t)}
+                    style={{ padding:"5px 12px",fontSize:11,fontWeight:600,border:`1px solid ${isEdit?"#a78bfa":"#e2e8f0"}`,borderRadius:8,background:isEdit?"#ede9fe":"white",color:isEdit?"#7c3aed":"#475569",cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                    <i className="ti ti-currency-baht" style={{fontSize:12}}></i>{isEdit?"ปิด":"แก้ค่าตรวจ"}
                   </button>
-                  <button onClick={()=>setTechs(p=>p.filter(x=>x.id!==t.id))} style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
-                    <i className="ti ti-trash"></i>
+                  <button onClick={()=>{ if(window.confirm(`ลบ "${t.name}" ออกจากรายชื่อ?`)) setTechs(p=>p.filter(x=>x.id!==t.id)); }}
+                    style={{ padding:"5px 12px",fontSize:11,fontWeight:600,border:"1px solid #fecaca",borderRadius:8,background:"#fef2f2",color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:5 }}>
+                    <i className="ti ti-trash" style={{fontSize:12}}></i>ลบ
                   </button>
                 </div>
               </div>
@@ -4172,16 +4199,19 @@ function HospCpapView({ user, appointments, hospitals }) {
 }
 
 function SalesPatientView({ user, appointments, hospitals, setAppointments, salesList=[], isCpapOnlyHosp=false }) {
-  // CPAP-only hospital → ใช้ HospCpapView แทน
-  if(isCpapOnlyHosp) return <HospCpapView user={user} appointments={appointments} hospitals={hospitals}/>;
-
+  // ── Hooks MUST come first (before any conditional returns) ──
   const isAdmin   = user.role==="admin";
+  const canEdit   = isAdmin || user.role==="sales";
+  const [tab, setTab]         = useState("summary");
   const [selHosp, setSelHosp] = useState(isCpapOnlyHosp?user.hospId:"all");
-  const [q, setQ] = useState("");
+  const [q, setQ]             = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [addForm, setAddForm] = useState({ name:"", hn:"", phone:"", hospId:isCpapOnlyHosp?user.hospId:"", paymentType:"" });
 
   const cpapOnlyHosps = hospitals.filter(h=>h.cpapOnly);
+
+  // CPAP-only hospital → dedicated read-only view (after all hooks)
+  if(isCpapOnlyHosp) return <HospCpapView user={user} appointments={appointments} hospitals={hospitals}/>;
 
   const addPatient = () => {
     if(!addForm.name.trim()||!addForm.hospId) return;
