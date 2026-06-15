@@ -31,13 +31,18 @@ const INIT_TECHS = [
 ];
 
 const INIT_USERS = [
-  { id:"admin",  name:"3N Admin",              role:"admin",    hospId:null },
-  { id:"tech",   name:"Sleep Tech 3N",          role:"tech",     hospId:null },
-  { id:"sales",  name:"Sales 3N",               role:"sales",    hospId:null },
-  // โรงพยาบาล
-  { id:"h1",     name:"รพ. บางปะกอก 8",         role:"hospital", hospId:"h1" },
-  { id:"h4",     name:"รพ. ราษฎร์บูรณะ",        role:"hospital", hospId:"h4" },
-  { id:"h7",     name:"รพ. ราชพิพัฒน์",         role:"hospital", hospId:"h7" },
+  { id:"admin",  name:"3N Admin",              role:"admin",    hospId:null  },
+  { id:"tech",   name:"Sleep Tech 3N",          role:"tech",     hospId:null  },
+  { id:"sales",  name:"Sales 3N",               role:"sales",    hospId:null  },
+  // รพ. Sleep Test + CPAP
+  { id:"h1",     name:"รพ. บางปะกอก 8",         role:"hospital", hospId:"h1"  },
+  { id:"h4",     name:"รพ. ราษฎร์บูรณะ",        role:"hospital", hospId:"h4"  },
+  { id:"h7",     name:"รพ. ราชพิพัฒน์",         role:"hospital", hospId:"h7"  },
+  // รพ. CPAP-only (ไม่ทำ Sleep Test)
+  { id:"hc1",    name:"รพ. จุฬาลงกรณ์",         role:"hospital", hospId:"hc1" },
+  { id:"hc2",    name:"รพ. วิภาราม",             role:"hospital", hospId:"hc2" },
+  { id:"hc3",    name:"รพ. พญาไท ศรีราชา",       role:"hospital", hospId:"hc3" },
+  { id:"hc4",    name:"รพ. กรุงเทพ BHQ",         role:"hospital", hospId:"hc4" },
 ];
 
 const SAMPLE_APPTS = [
@@ -2584,7 +2589,200 @@ function ManageHospitals({ hospitals,setHospitals }) {
   const [adding,setAdding] = useState(false);
   const [editPriceId, setEditPriceId] = useState(null);
   const [priceVal, setPriceVal] = useState(5800);
-  const [form,setForm] = useState({ name:"",short:"",city:"",type:"private_ins",cap:2,psgPrice:5800 });
+  const [form,setForm] = useState({ name:"",short:"",city:"",type:"private_ins",cap:2,psgPrice:5800,cpapOnly:false });
+  const setF = upd => setForm(f=>({...f,...upd}));
+
+  const add = () => {
+    if(!form.name.trim()) return;
+    const isCpapOnly = form.cpapOnly;
+    setHospitals(p=>[...p,{
+      id:"h"+Date.now(),
+      name:form.name.trim(),
+      short:form.short.trim()||form.name.split(" ").slice(-1)[0],
+      city:form.city.trim(),
+      type:form.type,
+      cap:isCpapOnly?0:Number(form.cap)||2,
+      psgPrice:isCpapOnly?0:Number(form.psgPrice)||5800,
+      cpapOnly:isCpapOnly,
+    }]);
+    setForm({ name:"",short:"",city:"",type:"private_ins",cap:2,psgPrice:5800,cpapOnly:false });
+    setAdding(false);
+  };
+  const savePrice = (id) => {
+    setHospitals(p=>p.map(h=>h.id===id?{...h,psgPrice:Number(priceVal)||5800}:h));
+    setEditPriceId(null);
+  };
+  const toggleCpapOnly = (id) => {
+    setHospitals(p=>p.map(h=>{
+      if(h.id!==id) return h;
+      const now = !h.cpapOnly;
+      return {...h,cpapOnly:now,cap:now?0:h.cap||2,psgPrice:now?0:h.psgPrice||5800};
+    }));
+  };
+
+  const sleepHosps = hospitals.filter(h=>!h.cpapOnly);
+  const cpapHosps  = hospitals.filter(h=>h.cpapOnly);
+
+  return (
+    <div style={{ padding:20,...FL,gap:14,height:"100%",overflowY:"auto" }}>
+      <div style={{ ...R,justifyContent:"space-between" }}>
+        <div>
+          <div style={{ fontSize:15,fontWeight:700,color:T.navy }}>โรงพยาบาลในระบบ ({hospitals.length})</div>
+          <div style={{ fontSize:11,color:T.faint,marginTop:2 }}>แบ่งเป็น Sleep Test และ CPAP-only</div>
+        </div>
+        <Btn variant="primary" small onClick={()=>setAdding(a=>!a)}><i className="ti ti-plus" style={{ fontSize:13 }}></i> เพิ่ม รพ.</Btn>
+      </div>
+
+      {/* Add form */}
+      {adding && (
+        <div style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:14,padding:16,...FL,gap:10 }}>
+          <div style={{ fontSize:12,fontWeight:700,color:T.ink }}>เพิ่มโรงพยาบาลใหม่</div>
+
+          {/* CPAP-only toggle — ตัวเลือกสำคัญ */}
+          <div style={{ padding:"11px 14px",borderRadius:11,border:`2px solid ${form.cpapOnly?"#7c3aed":"#e2e8f0"}`,background:form.cpapOnly?"#f5f3ff":"#f8fafc",cursor:"pointer",display:"flex",alignItems:"center",gap:12 }}
+            onClick={()=>setF({cpapOnly:!form.cpapOnly})}>
+            <div style={{ width:44,height:24,borderRadius:12,background:form.cpapOnly?"#7c3aed":"#e2e8f0",position:"relative",transition:"background .15s",flexShrink:0 }}>
+              <div style={{ width:20,height:20,borderRadius:"50%",background:"white",position:"absolute",top:2,left:form.cpapOnly?22:2,transition:"left .15s",boxShadow:"0 1px 3px rgba(0,0,0,.2)" }}/>
+            </div>
+            <div>
+              <div style={{ fontSize:13,fontWeight:700,color:form.cpapOnly?"#7c3aed":T.ink }}>
+                {form.cpapOnly?"🏥 CPAP-only — ไม่ทำ Sleep Test":"🛌 Sleep Test + CPAP (ปกติ)"}
+              </div>
+              <div style={{ fontSize:11,color:form.cpapOnly?"#7c3aed":T.faint,marginTop:2 }}>
+                {form.cpapOnly?"ขายและทดลองเครื่อง CPAP เท่านั้น — ไม่มี PSG / capacity":"รพ. ทำ Sleep Test ปกติ มี capacity และราคา PSG"}
+              </div>
+            </div>
+          </div>
+
+          {/* Basic info */}
+          {[["name","ชื่อเต็ม เช่น รพ. จุฬาลงกรณ์"],["short","ชื่อย่อ"],["city","จังหวัด"]].map(([k,ph])=>(
+            <input key={k} value={form[k]} onChange={e=>setF({[k]:e.target.value})} placeholder={ph}
+              style={{ padding:"9px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink }}/>
+          ))}
+          <select value={form.type} onChange={e=>setF({type:e.target.value})}
+            style={{ padding:"9px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
+            {Object.entries(HOSP_TYPE_LABEL).map(([k,v])=><option key={k} value={k}>{v}</option>)}
+          </select>
+
+          {/* Capacity + PSG price — hide for cpapOnly */}
+          {!form.cpapOnly && (
+            <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
+              <div>
+                <div style={{ fontSize:11,color:T.muted,marginBottom:4 }}>Capacity/วัน</div>
+                <select value={form.cap} onChange={e=>setF({cap:Number(e.target.value)})}
+                  style={{ width:"100%",padding:"8px 10px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
+                  <option value={1}>1 คน/วัน</option><option value={2}>2 คน/วัน</option><option value={3}>3 คน/วัน</option>
+                </select>
+              </div>
+              <div>
+                <div style={{ fontSize:11,color:T.muted,marginBottom:4 }}>ราคาตรวจ PSG (บาท)</div>
+                <input type="number" value={form.psgPrice} onChange={e=>setF({psgPrice:e.target.value})}
+                  style={{ width:"100%",padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink,boxSizing:"border-box" }}/>
+              </div>
+            </div>
+          )}
+
+          <div style={{ ...R,gap:8 }}>
+            <Btn variant="primary" small onClick={add} disabled={!form.name.trim()}>
+              <i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก
+            </Btn>
+            <Btn variant="outline" small onClick={()=>setAdding(false)}>ยกเลิก</Btn>
+          </div>
+        </div>
+      )}
+
+      {/* ── Sleep Test hospitals ── */}
+      {sleepHosps.length>0 && (
+        <div>
+          <div style={{ fontSize:12,fontWeight:700,color:T.muted,marginBottom:8,display:"flex",alignItems:"center",gap:6 }}>
+            <i className="ti ti-moon" style={{ fontSize:13 }}></i>Sleep Test + CPAP ({sleepHosps.length} แห่ง)
+          </div>
+          <div style={{ ...FL,gap:7 }}>
+            {sleepHosps.map(h=>{ const c=hc(h.id,hospitals); const isEdit=editPriceId===h.id; return (
+              <div key={h.id} style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:12 }}>
+                <div style={{ ...R,gap:12,padding:"11px 14px" }}>
+                  <div style={{ width:34,height:34,borderRadius:9,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                    <i className="ti ti-building-hospital" style={{ fontSize:16,color:c.text }}></i>
+                  </div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                    <div style={{ fontSize:11,color:T.faint }}>{h.city&&`${h.city} · `}{HOSP_TYPE_LABEL[h.type]} · cap {h.cap}/วัน</div>
+                  </div>
+                  <div style={{ textAlign:"center",padding:"5px 11px",background:"#fef9c3",borderRadius:9,border:"0.5px solid #fde68a" }}>
+                    <div style={{ fontSize:13,fontWeight:800,color:"#92400e" }}>{(h.psgPrice||5800).toLocaleString()}</div>
+                    <div style={{ fontSize:9,color:"#92400e",opacity:.7 }}>บาท/case</div>
+                  </div>
+                  <button onClick={()=>{ setEditPriceId(isEdit?null:h.id); setPriceVal(h.psgPrice||5800); }}
+                    style={{ width:28,height:28,border:`0.5px solid ${isEdit?"#1d4ed8":T.line}`,borderRadius:7,background:isEdit?T.blueL:T.surf,color:isEdit?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                    <i className="ti ti-currency-baht"></i>
+                  </button>
+                  <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))}
+                    style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                    <i className="ti ti-trash"></i>
+                  </button>
+                </div>
+                {isEdit && (
+                  <div style={{ padding:"11px 14px",borderTop:"0.5px solid #fde68a",background:"#fffbeb",...R,gap:10,alignItems:"flex-end" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11,fontWeight:600,color:"#92400e",marginBottom:5 }}>ราคาตรวจ PSG ต่อ case (บาท)</div>
+                      <input type="number" value={priceVal} onChange={e=>setPriceVal(e.target.value)}
+                        style={{ width:"100%",padding:"9px 12px",fontSize:16,fontWeight:700,border:"1.5px solid #f59e0b",borderRadius:9,outline:"none",background:"white",color:"#92400e",fontFamily:FONT,boxSizing:"border-box" }}/>
+                    </div>
+                    <Btn variant="primary" small onClick={()=>savePrice(h.id)}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn>
+                    <Btn variant="outline" small onClick={()=>setEditPriceId(null)}>ยกเลิก</Btn>
+                  </div>
+                )}
+              </div>
+            );})}
+          </div>
+        </div>
+      )}
+
+      {/* ── CPAP-only hospitals ── */}
+      {cpapHosps.length>0 && (
+        <div>
+          <div style={{ fontSize:12,fontWeight:700,color:"#7c3aed",marginBottom:8,display:"flex",alignItems:"center",gap:6 }}>
+            <i className="ti ti-device-heart-monitor" style={{ fontSize:13 }}></i>CPAP-only — ไม่ทำ Sleep Test ({cpapHosps.length} แห่ง)
+          </div>
+          <div style={{ ...FL,gap:7 }}>
+            {cpapHosps.map(h=>{ const c=hc(h.id,hospitals); return (
+              <div key={h.id} style={{ background:"#fafaff",border:"1.5px solid #ddd6fe",borderRadius:12,...R,gap:12,padding:"11px 14px" }}>
+                <div style={{ width:34,height:34,borderRadius:9,background:"#ede9fe",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                  <i className="ti ti-device-heart-monitor" style={{ fontSize:16,color:"#7c3aed" }}></i>
+                </div>
+                <div style={{ flex:1 }}>
+                  <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                  <div style={{ fontSize:11,color:"#7c3aed" }}>{h.city&&`${h.city} · `}{HOSP_TYPE_LABEL[h.type]}</div>
+                </div>
+                {/* CPAP Only badge */}
+                <div style={{ padding:"4px 11px",borderRadius:20,background:"#ede9fe",border:"1px solid #a78bfa" }}>
+                  <span style={{ fontSize:11,fontWeight:700,color:"#7c3aed" }}>CPAP Sales เท่านั้น</span>
+                </div>
+                {/* Toggle back to full */}
+                <button onClick={()=>toggleCpapOnly(h.id)} title="เปลี่ยนเป็น Sleep Test + CPAP"
+                  style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11 }}>
+                  <i className="ti ti-transfer"></i>
+                </button>
+                <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))}
+                  style={{ width:28,height:28,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:13 }}>
+                  <i className="ti ti-trash"></i>
+                </button>
+              </div>
+            );})}
+          </div>
+        </div>
+      )}
+
+      <div style={{ padding:"11px 14px",background:"#fef9c3",borderRadius:11,border:"0.5px solid #fde68a",...R,gap:8 }}>
+        <i className="ti ti-info-circle" style={{ fontSize:14,color:"#92400e",flexShrink:0 }}></i>
+        <div style={{ fontSize:12,color:"#92400e" }}>
+          CPAP-only คือ รพ. ที่มีเฉพาะ CPAP Sales — จะไม่ปรากฎในตารางนัดหมาย Sleep Test
+          · Sleep Test+CPAP ตั้งราคา PSG ได้โดยกดไอคอน 💰
+        </div>
+      </div>
+    </div>
+  );
+}
 
   const add = () => {
     if(!form.name.trim()) return;
@@ -2597,92 +2795,6 @@ function ManageHospitals({ hospitals,setHospitals }) {
     setEditPriceId(null);
   };
 
-  return (
-    <div style={{ padding:20,...FL,gap:14,height:"100%",overflowY:"auto" }}>
-      <div style={{ ...R,justifyContent:"space-between" }}>
-        <div>
-          <div style={{ fontSize:15,fontWeight:700,color:T.navy }}>โรงพยาบาลในระบบ ({hospitals.length})</div>
-          <div style={{ fontSize:11,color:T.faint,marginTop:2 }}>ตั้งค่าราคาตรวจ PSG ต่อ รพ. ได้ด้านล่าง</div>
-        </div>
-        <Btn variant="primary" small onClick={()=>setAdding(a=>!a)}><i className="ti ti-plus" style={{ fontSize:13 }}></i> เพิ่ม รพ.</Btn>
-      </div>
-
-      {adding&&(
-        <div style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:14,padding:16,...FL,gap:9 }}>
-          <div style={{ fontSize:12,fontWeight:700,color:T.ink }}>เพิ่มโรงพยาบาลใหม่</div>
-          {[["name","ชื่อเต็ม เช่น รพ. พระมงกุฎเกล้า"],["short","ชื่อย่อ"],["city","จังหวัด"]].map(([k,ph])=>(
-            <input key={k} value={form[k]} onChange={e=>setForm(f=>({...f,[k]:e.target.value}))} placeholder={ph} style={{ padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink }} />
-          ))}
-          <select value={form.type} onChange={e=>setForm(f=>({...f,type:e.target.value}))} style={{ padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
-            {Object.entries(HOSP_TYPE_LABEL).map(([k,v])=><option key={k} value={k}>{v}</option>)}
-          </select>
-          <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:10 }}>
-            <div>
-              <div style={{ fontSize:11,color:T.muted,marginBottom:4 }}>Capacity/วัน</div>
-              <select value={form.cap} onChange={e=>setForm(f=>({...f,cap:Number(e.target.value)}))} style={{ width:"100%",padding:"8px 10px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.ink }}>
-                <option value={1}>1 คน/วัน</option><option value={2}>2 คน/วัน</option><option value={3}>3 คน/วัน</option>
-              </select>
-            </div>
-            <div>
-              <div style={{ fontSize:11,color:T.muted,marginBottom:4 }}>ราคาตรวจ PSG (บาท)</div>
-              <input type="number" value={form.psgPrice} onChange={e=>setForm(f=>({...f,psgPrice:e.target.value}))} style={{ width:"100%",padding:"8px 12px",fontSize:13,border:`0.5px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink,boxSizing:"border-box" }}/>
-            </div>
-          </div>
-          <div style={{ ...R,gap:8 }}><Btn variant="primary" small onClick={add}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn><Btn variant="outline" small onClick={()=>setAdding(false)}>ยกเลิก</Btn></div>
-        </div>
-      )}
-
-      {/* Hospital list */}
-      <div style={{ ...FL,gap:8 }}>
-        {hospitals.map(h=>{ const c=hc(h.id,hospitals); const isEdit=editPriceId===h.id; return (
-          <div key={h.id} style={{ background:T.card,border:`0.5px solid ${T.line}`,borderRadius:12,overflow:"hidden" }}>
-            <div style={{ ...R,gap:12,padding:"12px 14px" }}>
-              <div style={{ width:36,height:36,borderRadius:10,background:c.bg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}><i className="ti ti-building-hospital" style={{ fontSize:17,color:c.text }}></i></div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
-                <div style={{ fontSize:11,color:T.faint }}>{h.city&&`${h.city} · `}{HOSP_TYPE_LABEL[h.type]} · cap {h.cap}/วัน</div>
-              </div>
-              {/* PSG price badge */}
-              <div style={{ textAlign:"center",padding:"6px 12px",background:"#fef9c3",borderRadius:10,border:"0.5px solid #fde68a" }}>
-                <div style={{ fontSize:14,fontWeight:800,color:"#92400e" }}>{(h.psgPrice||5800).toLocaleString()}</div>
-                <div style={{ fontSize:9,color:"#92400e",opacity:.7 }}>บาท/case</div>
-              </div>
-              {/* Edit price button */}
-              <button onClick={()=>{ setEditPriceId(isEdit?null:h.id); setPriceVal(h.psgPrice||5800); }}
-                style={{ width:30,height:30,border:`0.5px solid ${isEdit?"#1d4ed8":T.line}`,borderRadius:8,background:isEdit?T.blueL:T.surf,color:isEdit?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>
-                <i className="ti ti-currency-baht"></i>
-              </button>
-              <button onClick={()=>setHospitals(p=>p.filter(x=>x.id!==h.id))}
-                style={{ width:30,height:30,border:`0.5px solid ${T.line}`,borderRadius:8,background:T.surf,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14 }}>
-                <i className="ti ti-trash"></i>
-              </button>
-            </div>
-            {/* Price editor */}
-            {isEdit && (
-              <div style={{ padding:"12px 14px",borderTop:"0.5px solid #fde68a",background:"#fffbeb",...R,gap:10,alignItems:"flex-end" }}>
-                <div style={{ flex:1 }}>
-                  <div style={{ fontSize:11,fontWeight:600,color:"#92400e",marginBottom:5 }}>ราคาตรวจ PSG ต่อ case (บาท)</div>
-                  <input type="number" value={priceVal} onChange={e=>setPriceVal(e.target.value)}
-                    style={{ width:"100%",padding:"10px 13px",fontSize:16,fontWeight:700,border:"1.5px solid #f59e0b",borderRadius:10,outline:"none",background:"white",color:"#92400e",fontFamily:FONT,boxSizing:"border-box" }}/>
-                </div>
-                <Btn variant="primary" small onClick={()=>savePrice(h.id)}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn>
-                <Btn variant="outline" small onClick={()=>setEditPriceId(null)}>ยกเลิก</Btn>
-              </div>
-            )}
-          </div>
-        );})}
-      </div>
-
-      {/* Summary: total PSG default revenue */}
-      <div style={{ padding:"12px 16px",background:"#fef9c3",borderRadius:12,border:"0.5px solid #fde68a",...R,gap:10 }}>
-        <i className="ti ti-info-circle" style={{ fontSize:16,color:"#92400e",flexShrink:0 }}></i>
-        <div style={{ fontSize:12,color:"#92400e" }}>
-          ราคาตรวจ PSG จะถูกใช้คำนวณรายได้รายเดือนใน Tab <strong>รายงาน</strong> — กดไอคอน 💰 เพื่อปรับราคาแต่ละ รพ.
-        </div>
-      </div>
-    </div>
-  );
-}
 
 // ── Manage Sales ─────────────────────────────────────────────────────────────
 function ManageSales({ salesList=[], setSalesList }) {
@@ -3886,13 +3998,188 @@ function PurchasedCard({ a, h, c, purch, billing, com, isAdmin, salesList=[], on
   );
 }
 
-function SalesPatientView({ user, appointments, hospitals, setAppointments, salesList=[] }) {
-  const isAdmin = user.role==="admin";
-  const [tab, setTab] = useState("summary");
-  const [selHosp, setSelHosp] = useState("all");
+// ── Hospital CPAP-Only View — Status + Print PDF only ─────────────────────────
+function HospCpapView({ user, appointments, hospitals }) {
+  const [q, setQ] = useState("");
+  const [filter, setFilter] = useState("all"); // all|waiting|trialing|waiting_buy|purchased
+
+  const today = new Date().toISOString().split("T")[0];
+  const fmtDate = s => {
+    if(!s) return "—";
+    const d=new Date(s); const M=["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
+    return `${d.getDate()} ${M[d.getMonth()]} ${d.getFullYear()+543}`;
+  };
+
+  const getStage = a => {
+    const dec = a.cpapDecision||"";
+    if(["purchased_after_trial","purchase_direct"].includes(dec)) return "purchased";
+    if(dec==="finished_trial") return "waiting_buy";
+    const trials=a.cpapTrials||[];
+    const withModel=trials.filter(t=>t.model&&t.model!=="(รอกรอกรุ่น)");
+    if(dec==="trial"||trials.length>0){
+      const allRet=withModel.length>0&&withModel.every(t=>t.returnDate&&t.returnDate<=today);
+      return allRet?"waiting_buy":"trialing";
+    }
+    return "waiting";
+  };
+
+  const STAGES = {
+    waiting:    {label:"รอทดลอง",       color:"#d97706",bg:"#fef9c3",icon:"ti-clock"},
+    trialing:   {label:"กำลังทดลอง",    color:"#7c3aed",bg:"#ede9fe",icon:"ti-device-heart-monitor"},
+    waiting_buy:{label:"รอซื้อเครื่อง", color:"#1e40af",bg:"#dbeafe",icon:"ti-shopping-cart"},
+    purchased:  {label:"ซื้อแล้ว",      color:"#059669",bg:"#d1fae5",icon:"ti-check-circle"},
+  };
+
+  const pool = appointments.filter(a=>
+    a.status!=="cancelled" && a.hospId===user.hospId &&
+    (a.apptType==="cpap_trial"||(a.apptType==="sleep_test"&&a.journeyStatus==="consulted"))
+  );
+  const trimQ = q.trim().toLowerCase();
+  const list = pool
+    .filter(a=>filter==="all"||getStage(a)===filter)
+    .filter(a=>!trimQ||a.name?.toLowerCase().includes(trimQ)||a.hn?.toLowerCase().includes(trimQ))
+    .sort((a,b)=>(b.date||"").localeCompare(a.date||""));
+
+  const counts = { waiting:0,trialing:0,waiting_buy:0,purchased:0 };
+  pool.forEach(a=>{ const s=getStage(a); counts[s]=(counts[s]||0)+1; });
+
+  const openPdf = url => {
+    const w=window.open("","_blank");
+    w.document.write(`<html><body style="margin:0;background:#333"><iframe src="${url}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+    w.document.close();
+  };
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",height:"100%",fontFamily:FONT}}>
+      {/* Header */}
+      <div style={{padding:"12px 16px",borderBottom:`1px solid ${T.line}`,background:T.card,flexShrink:0}}>
+        <div style={{fontSize:13,fontWeight:800,color:"#5b21b6",marginBottom:10,display:"flex",alignItems:"center",gap:7}}>
+          <i className="ti ti-device-heart-monitor" style={{fontSize:15}}></i>
+          สถานะ CPAP ผู้ป่วย
+          <span style={{fontSize:11,fontWeight:400,color:T.muted,marginLeft:2}}>{pool.length} ราย</span>
+        </div>
+        {/* Filter chips */}
+        <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+          {[["all","ทั้งหมด",pool.length,"#64748b","#f1f5f9"],
+            ["waiting","รอทดลอง",counts.waiting,"#d97706","#fef9c3"],
+            ["trialing","กำลังทดลอง",counts.trialing,"#7c3aed","#ede9fe"],
+            ["waiting_buy","รอซื้อเครื่อง",counts.waiting_buy,"#1e40af","#dbeafe"],
+            ["purchased","ซื้อแล้ว",counts.purchased,"#059669","#d1fae5"],
+          ].map(([key,lb,cnt,col,bg])=>(
+            <button key={key} onClick={()=>setFilter(key)}
+              style={{padding:"5px 12px",fontSize:11,fontWeight:filter===key?700:400,borderRadius:16,border:`1.5px solid ${filter===key?col:"#e2e8f0"}`,background:filter===key?bg:"white",color:filter===key?col:T.muted,cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:FONT}}>
+              {lb}<span style={{fontSize:10,background:filter===key?col:"#e2e8f0",color:filter===key?"white":"#64748b",borderRadius:8,padding:"0 6px",fontWeight:700}}>{cnt}</span>
+            </button>
+          ))}
+        </div>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="ค้นหาชื่อ / HN..."
+          style={{width:"100%",padding:"8px 12px",fontSize:12,border:`1px solid ${T.line}`,borderRadius:9,outline:"none",background:T.surf,color:T.ink,boxSizing:"border-box"}}/>
+      </div>
+
+      {/* Patient list */}
+      <div style={{flex:1,overflowY:"auto",padding:"12px 14px",display:"flex",flexDirection:"column",gap:10}}>
+        {list.length===0 && (
+          <div style={{textAlign:"center",padding:"50px 20px",color:T.faint}}>
+            <i className="ti ti-device-heart-monitor" style={{fontSize:36,color:"#ddd6fe"}}></i>
+            <div style={{marginTop:10,fontSize:13,fontWeight:600,color:T.muted}}>ไม่พบผู้ป่วย</div>
+          </div>
+        )}
+        {list.map(a=>{
+          const stage = getStage(a);
+          const sc    = STAGES[stage]||STAGES.waiting;
+          const trials = (a.cpapTrials||[]).filter(t=>t.model&&t.model!=="(รอกรอกรุ่น)");
+          const purch  = a.cpapPurchase||{};
+          const c      = hc(a.hospId, hospitals);
+
+          return (
+            <div key={a.id} style={{background:"white",borderRadius:14,border:`1.5px solid ${sc.color}30`,overflow:"hidden"}}>
+              {/* Patient row */}
+              <div style={{display:"flex",alignItems:"center",gap:10,padding:"12px 14px",background:sc.bg+"60",borderBottom:`0.5px solid ${sc.color}20`}}>
+                <div style={{width:38,height:38,borderRadius:10,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:800,color:c.text,flexShrink:0}}>
+                  {(a.name||"?")[0]}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{a.name}</div>
+                  <div style={{fontSize:11,color:T.faint}}>HN {a.hn}
+                    {a.phone&&<> · <a href={`tel:${a.phone}`} style={{color:"#059669",textDecoration:"none"}}>{a.phone}</a></>}
+                  </div>
+                </div>
+                {/* Stage badge */}
+                <div style={{display:"flex",alignItems:"center",gap:5,padding:"5px 12px",borderRadius:20,background:sc.bg,border:`1px solid ${sc.color}50`,flexShrink:0}}>
+                  <i className={`ti ${sc.icon}`} style={{fontSize:11,color:sc.color}}></i>
+                  <span style={{fontSize:11,fontWeight:700,color:sc.color}}>{sc.label}</span>
+                </div>
+              </div>
+
+              {/* Trial details — compact */}
+              {(trials.length>0||purch.model) && (
+                <div style={{padding:"10px 14px",display:"flex",flexDirection:"column",gap:8}}>
+                  {trials.map((tr,i)=>(
+                    <div key={i} style={{padding:"9px 12px",background:"#fafaff",borderRadius:10,border:"0.5px solid #ddd6fe"}}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                        <div>
+                          <div style={{fontSize:11,color:"#7c3aed",fontWeight:700,marginBottom:2}}>รุ่นที่ {i+1}: {tr.model}</div>
+                          <div style={{fontSize:10,color:T.faint,display:"flex",gap:10}}>
+                            {tr.trialDate&&<span>เริ่ม {fmtDate(tr.trialDate)}</span>}
+                            {tr.returnDate&&<span>คืน {fmtDate(tr.returnDate)}</span>}
+                            {tr.note&&<span>• {tr.note}</span>}
+                          </div>
+                          {tr.maskModel&&<div style={{fontSize:10,color:T.faint,marginTop:1}}>Mask: {tr.maskModel==="อื่นๆ (พิมพ์เอง)"?(tr.maskOther||"—"):tr.maskModel}{tr.maskSize?` (${tr.maskSize})`:""}</div>}
+                        </div>
+                        {/* Print PDF per trial */}
+                        {tr.pdfDataUrl && (
+                          <button onClick={()=>openPdf(tr.pdfDataUrl)}
+                            style={{padding:"6px 13px",fontSize:11,fontWeight:700,borderRadius:8,background:"#dc2626",color:"white",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                            <i className="ti ti-printer" style={{fontSize:12}}></i>Print
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {/* Purchased info */}
+                  {purch.model && (
+                    <div style={{padding:"9px 12px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac",display:"flex",alignItems:"center",justifyContent:"space-between",gap:8}}>
+                      <div>
+                        <div style={{fontSize:11,fontWeight:700,color:"#059669"}}>✓ ซื้อแล้ว: {purch.model}</div>
+                        <div style={{fontSize:10,color:"#166534",marginTop:2}}>
+                          {purch.serialNo&&<span>S/N {purch.serialNo}</span>}
+                          {purch.purchaseDate&&<span> · {fmtDate(purch.purchaseDate)}</span>}
+                          {purch.price>0&&<span> · {purch.price.toLocaleString()} ฿</span>}
+                        </div>
+                      </div>
+                      {purch.trialPdfDataUrl && (
+                        <button onClick={()=>openPdf(purch.trialPdfDataUrl)}
+                          style={{padding:"6px 13px",fontSize:11,fontWeight:700,borderRadius:8,background:"#dc2626",color:"white",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                          <i className="ti ti-printer" style={{fontSize:12}}></i>Print PDF
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+              {/* No data yet */}
+              {trials.length===0 && !purch.model && (
+                <div style={{padding:"9px 14px",fontSize:11,color:T.faint,display:"flex",alignItems:"center",gap:6}}>
+                  <i className="ti ti-clock" style={{fontSize:13}}></i>รอ Sales บันทึกข้อมูลการทดลอง
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function SalesPatientView({ user, appointments, hospitals, setAppointments, salesList=[], isCpapOnlyHosp=false }) {
+  // CPAP-only hospital → ใช้ HospCpapView แทน
+  if(isCpapOnlyHosp) return <HospCpapView user={user} appointments={appointments} hospitals={hospitals}/>;
+
+  const isAdmin   = user.role==="admin";
+  const [selHosp, setSelHosp] = useState(isCpapOnlyHosp?user.hospId:"all");
   const [q, setQ] = useState("");
   const [showAdd, setShowAdd] = useState(false);
-  const [addForm, setAddForm] = useState({ name:"", hn:"", phone:"", hospId:"", paymentType:"" });
+  const [addForm, setAddForm] = useState({ name:"", hn:"", phone:"", hospId:isCpapOnlyHosp?user.hospId:"", paymentType:"" });
 
   const cpapOnlyHosps = hospitals.filter(h=>h.cpapOnly);
 
@@ -3932,6 +4219,7 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
     return "waiting";
   };
 
+  // CPAP-only รพ. เห็นเฉพาะผู้ป่วยของ รพ. ตัวเอง
   const pool = appointments.filter(a=>
     a.status!=="cancelled" &&
     (a.apptType==="cpap_trial"||(a.apptType==="sleep_test"&&a.journeyStatus==="consulted")) &&
@@ -3940,9 +4228,9 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
   const trimQ = q.trim().toLowerCase();
   const byStatus = st => pool.filter(a=>getStatus(a)===st).filter(a=>!trimQ||a.name?.toLowerCase().includes(trimQ)||a.hn?.toLowerCase().includes(trimQ));
 
-  // Update helpers
-  const upd      = (id,obj)     => setAppointments(p=>p.map(a=>a.id===id?{...a,...obj}:a));
-  const updTr    = (id,ti,f,v)  => setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,[f]:v}:x);return{...a,cpapTrials:t};}));
+  // Update helpers — disabled for hospital role (read-only)
+  const upd      = (id,obj)     => canEdit&&setAppointments(p=>p.map(a=>a.id===id?{...a,...obj}:a));
+  const updTr    = (id,ti,f,v)  => canEdit&&setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,[f]:v}:x);return{...a,cpapTrials:t};}));
   // อัปเดตหลาย field พร้อมกัน (ป้องกัน race condition)
   const updTrObj = (id,ti,obj)  => setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,...obj}:x);return{...a,cpapTrials:t};}));
   // เพิ่ม trial slot ใหม่ (ใช้ functional update ป้องกัน stale state)
@@ -4063,8 +4351,8 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
           <span style={{fontSize:14,fontWeight:800,color:T.navy}}>CPAP Sales</span>
           <span style={{fontSize:12,color:T.muted}}>{pool.length} รายการ</span>
           <div style={{marginLeft:"auto",display:"flex",gap:8}}>
-            {/* Add patient button (CPAP-only hospitals) */}
-            {(cpapOnlyHosps.length>0||(user.role==="sales"||isAdmin)) && (
+            {/* Add patient — Sales, Admin, CPAP-only hospital can add */}
+            {(isAdmin || user.role==="sales" || isCpapOnlyHosp) && (
               <button onClick={()=>setShowAdd(s=>!s)}
                 style={{padding:"7px 13px",fontSize:12,fontWeight:700,borderRadius:9,background:showAdd?"#7c3aed":T.surf,color:showAdd?"white":"#7c3aed",border:`1.5px solid ${showAdd?"#7c3aed":"#a78bfa"}`,cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:5}}>
                 <i className="ti ti-user-plus" style={{fontSize:13}}></i>เพิ่มผู้ป่วย
@@ -5132,15 +5420,26 @@ export default function App() {
     saveToLocal(data);
   };
 
-  const isAdmin = user?.role==="admin";
-  const isTech  = user?.role==="tech";
-  const isSales = user?.role==="sales";
+  const isAdmin   = user?.role==="admin";
+  const isTech    = user?.role==="tech";
+  const isSales   = user?.role==="sales";
+  const isHospital= user?.role==="hospital";
+  // ตรวจว่า รพ. นี้เป็น CPAP-only หรือไม่
+  const myHosp    = isHospital ? hospitals.find(h=>h.id===user.hospId) : null;
+  const isCpapOnly= myHosp?.cpapOnly===true;
+
   const tabs = [
-    ...(isAdmin||user?.role==="hospital" ? [{ id:"paste",    label:"วางจาก Line",    icon:"ti-brand-line"        }] : []),
-    ...(!isSales ? [{ id:"summary",  label:"รายเดือน",       icon:"ti-layout-list"       }] : []),
+    // Paste — Sleep Test รพ. เท่านั้น (ไม่ใช่ CPAP-only)
+    ...((isAdmin || (isHospital && !isCpapOnly)) ? [{ id:"paste",    label:"วางจาก Line",    icon:"ti-brand-line"        }] : []),
+    // รายเดือน — Sleep Test รพ. เท่านั้น
+    ...((isAdmin || isTech || (isHospital && !isCpapOnly)) ? [{ id:"summary", label:"รายเดือน", icon:"ti-layout-list" }] : []),
+    // ค้นหา — ทุก role
     { id:"search",    label:"ค้นหา",           icon:"ti-search"            },
-    ...(isSales||isAdmin ? [{ id:"cpapsales", label:"CPAP Sales",        icon:"ti-device-heart-monitor"}] : []),
-    { id:"report",    label:"รายงาน",         icon:"ti-chart-bar"         },
+    // CPAP Sales — Admin, Sales, CPAP-only รพ.
+    ...(isSales||isAdmin||(isHospital&&isCpapOnly) ? [{ id:"cpapsales", label:"CPAP Sales", icon:"ti-device-heart-monitor"}] : []),
+    // รายงาน — ไม่ใช่ CPAP-only รพ. (CPAP-only ไม่มี PSG report)
+    ...(!isCpapOnly ? [{ id:"report", label:"รายงาน", icon:"ti-chart-bar" }] : []),
+    // Sale Report — Admin เท่านั้น
     ...(isAdmin ? [{ id:"sales",   label:"Sale Report 3N",  icon:"ti-shopping-cart"     }] : []),
     ...(isAdmin||isTech ? [{ id:"schedule", label:"ตารางเวร",   icon:"ti-calendar-stats" }] : []),
     ...(isAdmin ? [
@@ -5149,7 +5448,7 @@ export default function App() {
     ] : []),
   ];
 
-  if(!user) return <LoginScreen onLogin={u=>{ setUser(u); setTab(u.role==="admin"?"paste":u.role==="tech"?"schedule":u.role==="sales"?"cpapsales":"summary"); }} />;
+  if(!user) return <LoginScreen onLogin={u=>{ setUser(u); const h=INIT_HOSPITALS.find(x=>x.id===u.hospId); setTab(u.role==="admin"?"paste":u.role==="tech"?"schedule":u.role==="sales"?"cpapsales":(h?.cpapOnly?"cpapsales":"summary")); }} />;
 
   const totalVisible = appts.filter(a=>user.role==="hospital"?a.hospId===user.hospId:true && a.status!=="cancelled").length;
   const today = new Date();
@@ -5245,7 +5544,7 @@ export default function App() {
         <div style={{ padding:"14px 24px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
             <div style={{ fontSize:20, fontWeight:800, color:T.navy, letterSpacing:"-0.02em" }}>
-              {tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapsales"?"CPAP Sales — รายชื่อผู้ป่วย":tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
+              {tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
             </div>
             <div style={{ fontSize:13, color:T.muted, marginTop:2 }}>
               {user.role==="admin"?"3N Admin — เข้าถึงทุก รพ.":user.role==="tech"?"Sleep Tech — ดูตารางและยืนยันเวร":`${hospitals.find(h=>h.id===user.hospId)?.name||""}`}
@@ -5267,7 +5566,7 @@ export default function App() {
           {tab==="paste"     && <PasteView         user={user} hospitals={hospitals} setAppointments={setApptsSave} />}
           {tab==="summary"   && <MonthlySummary    user={user} appointments={appts} setAppointments={setApptsSave} hospitals={hospitals} techs={techs} assignments={assignments} setAssignments={setAssignSave} checkins={checkins} setCheckins={setCheckinSave} dayBlocks={dayBlocks} setDayBlocks={setBlocksSave} salesList={salesList} />}
           {tab==="search"    && <SearchView        user={user} appointments={appts} hospitals={hospitals} />}
-          {tab==="cpapsales" && <SalesPatientView  user={user} appointments={appts} hospitals={hospitals} setAppointments={setApptsSave} salesList={salesList} />}
+          {tab==="cpapsales" && <SalesPatientView  user={user} appointments={appts} hospitals={hospitals} setAppointments={setApptsSave} salesList={salesList} isCpapOnlyHosp={isCpapOnly} />}
           {tab==="report"    && <ReportView        user={user} appointments={appts} hospitals={hospitals} techs={techs} />}
           {tab==="sales"     && <SalesView         user={user} appointments={appts} hospitals={hospitals} salesList={salesList} setAppointments={setApptsSave} />}
           {tab==="schedule"  && <TechScheduleView  user={user} techs={techs} appointments={appts} hospitals={hospitals} assignments={assignments} checkins={checkins} setCheckins={setCheckinSave} />}
