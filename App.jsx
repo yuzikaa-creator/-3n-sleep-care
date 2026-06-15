@@ -564,11 +564,13 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                 </div>
 
                 {/* Appointment rows — hide if blocked */}
-                {!block && appts.map(a => {
+                {!block && appts.map((a, idx) => {
                   const c = hc(a.hospId, hospitals);
                   const h = hospitals.find(x=>x.id===a.hospId);
                   const canEdit = user.role==="admin" || (user.role==="hospital" && a.hospId===user.hospId);
                   const isCancelled = a.status==="cancelled";
+                  // ตรวจว่า HN เดิมนัดซ้ำในวันเดียวกัน
+                  const isDuplicate = !isCancelled && appts.some((b,bi)=>bi!==idx && b.hn===a.hn && b.status!=="cancelled");
                   return (
                     <ApptCard
                       key={a.id}
@@ -580,12 +582,13 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                       isAdmin={user.role==="admin"}
                       movingAppt={movingAppt}
                       isCancelled={isCancelled}
+                      isDuplicate={isDuplicate}
                       onStartMove={()=>setMovingAppt(a)}
                       onUpdate={updated=>setAppointments(prev=>prev.map(x=>x.id===a.id?{...x,...updated}:x))}
                       onDelete={()=>setAppointments(prev=>prev.filter(x=>x.id!==a.id))}
                       onBookCpap={src=>{
                         // ป้องกัน duplicate — ตรวจว่ามี cpap_trial อยู่แล้วหรือไม่
-                        const exists=appts.some(x=>x.hn===src.hn&&x.apptType==="cpap_trial"&&x.status!=="cancelled");
+                        const exists=appointments.some(x=>x.hn===src.hn&&x.apptType==="cpap_trial"&&x.status!=="cancelled");
                         if(exists){ alert(`ผู้ป่วย ${src.name} มีนัดทดลอง CPAP อยู่แล้วในระบบ`); return; }
                         setApptsSave(prev=>[...prev,{ id:"cpap"+Date.now(), hn:src.hn, name:src.name, phone:src.phone, hospId:src.hospId, date:src.date, note:`[ต่อเนื่องจาก Sleep Test]`, status:"active", apptType:"cpap_trial", journeyStatus:"scheduled", cancelReason:"", cancelledAt:null }]);
                       }}
@@ -1907,7 +1910,7 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[] }) 
 // ── Appointment Card (edit + reschedule + cancel) ─────────────────────────────
 const CANCEL_REASONS = ["ผู้ป่วยติดธุระ","ผู้ป่วยไม่สบาย","ผู้ป่วยขอเลื่อน","รพ. ขอเลื่อน","อุปกรณ์ไม่พร้อม","อื่นๆ"];
 
-function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[] }) {
+function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[], isDuplicate=false }) {
   const [mode, setMode]               = useState(null);
   const [showReport, setShowReport]   = useState(false);
   const [form, setForm]               = useState({ name:a.name, phone:a.phone, hn:a.hn, hospId:a.hospId, note:a.note||"", paymentType:a.paymentType||"" });
@@ -1959,6 +1962,11 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
           <div style={{ ...R, gap:6, marginBottom:4 }}>
             <div style={{ fontSize:14, fontWeight:700, color:isCancelled?T.faint:T.navy, textDecoration:isCancelled?"line-through":"none", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{a.name}</div>
             {isCancelled && <span style={{ fontSize:10,padding:"2px 7px",borderRadius:8,background:"#fef2f2",color:"#991b1b",fontWeight:700,flexShrink:0 }}>ยกเลิก</span>}
+            {isDuplicate && !isCancelled && (
+              <span style={{ fontSize:10,padding:"2px 8px",borderRadius:8,background:"#fef9c3",color:"#92400e",fontWeight:700,flexShrink:0,display:"flex",alignItems:"center",gap:3 }}>
+                <i className="ti ti-alert-triangle" style={{ fontSize:10 }}></i>ซ้ำ
+              </span>
+            )}
           </div>
           <div style={{ fontSize:12, color:T.faint, marginBottom:5 }}>HN {a.hn} · {a.phone}</div>
           {/* Journey badge */}
@@ -1982,15 +1990,39 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:5, flexShrink:0 }}>
           <span style={{ fontSize:11,padding:"3px 10px",borderRadius:10,background:c.bg,color:c.text,fontWeight:600,whiteSpace:"nowrap" }}>{h?.short}</span>
           {!movingAppt && (
-            <div style={{ ...R, gap:3 }}>
-              {isCancelled ? (
-                isAdmin && <button onClick={restoreAppt} style={{ fontSize:10,padding:"3px 9px",borderRadius:7,border:`0.5px solid ${T.line}`,background:T.card,color:T.green,cursor:"pointer",fontWeight:500 }}>คืนสถานะ</button>
-              ) : (
+            <div style={{ ...R, gap:4 }}>
+              {!isCancelled && (
                 <>
                   {isAdmin && <button onClick={e=>{e.stopPropagation();onStartMove();}} style={{ width:26,height:26,border:`0.5px solid ${T.line}`,borderRadius:7,background:T.card,color:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="ย้ายวัน"><i className="ti ti-arrows-move"></i></button>}
                   {canEdit && <button onClick={e=>{e.stopPropagation();setMode(mode==="edit"?null:"edit");setForm({name:a.name,phone:a.phone,hn:a.hn,hospId:a.hospId,note:a.note||"",paymentType:a.paymentType||""});}} style={{ width:26,height:26,border:`0.5px solid ${T.line}`,borderRadius:7,background:mode==="edit"?T.blueL:T.card,color:mode==="edit"?T.blue:T.muted,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="แก้ไข"><i className="ti ti-edit"></i></button>}
-                  {canEdit && <button onClick={openAction} style={{ width:26,height:26,border:`0.5px solid #fecaca`,borderRadius:7,background:mode==="action"?T.redL:T.card,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="เลื่อน/ยกเลิกนัด"><i className="ti ti-calendar-x"></i></button>}
                 </>
+              )}
+              {/* ปุ่มยกเลิก/ลบ — แสดงเสมอ ทุก status */}
+              {canEdit && (
+                isCancelled
+                  ? (
+                    <div style={{ display:"flex", gap:4 }}>
+                      {isAdmin && <button onClick={restoreAppt} style={{ fontSize:10,padding:"3px 9px",borderRadius:7,border:`0.5px solid ${T.line}`,background:T.card,color:T.green,cursor:"pointer",fontWeight:500 }}>คืนสถานะ</button>}
+                      <button onClick={()=>{ if(window.confirm(`ลบ "${a.name}" ออกจากระบบ?`)) onDelete(); }}
+                        style={{ padding:"3px 9px",fontSize:10,fontWeight:600,borderRadius:7,border:"0.5px solid #fecaca",background:"#fef2f2",color:T.red,cursor:"pointer" }}>
+                        <i className="ti ti-trash" style={{ fontSize:10, marginRight:3 }}></i>ลบ
+                      </button>
+                    </div>
+                  )
+                  : (
+                    <button onClick={e=>{e.stopPropagation();
+                      if(isAdmin){
+                        openAction(e);
+                      } else {
+                        if(window.confirm(`ยกเลิกนัด "${a.name}"?`)){
+                          onUpdate({ status:"cancelled", cancelReason:"ยกเลิกโดย รพ.", cancelledAt:new Date().toISOString() });
+                        }
+                      }
+                    }}
+                      style={{ width:26,height:26,border:`0.5px solid #fecaca`,borderRadius:7,background:mode==="action"?T.redL:T.card,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",fontSize:12 }} title="ยกเลิกนัด">
+                      <i className="ti ti-calendar-x"></i>
+                    </button>
+                  )
               )}
             </div>
           )}
