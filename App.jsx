@@ -590,10 +590,21 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                       onUpdate={updated=>setAppointments(prev=>prev.map(x=>x.id===a.id?{...x,...updated}:x))}
                       onDelete={()=>setAppointments(prev=>prev.filter(x=>x.id!==a.id))}
                       onBookCpap={src=>{
-                        // ป้องกัน duplicate — ตรวจว่ามี cpap_trial อยู่แล้วหรือไม่
+                        // ป้องกัน duplicate
                         const exists=appointments.some(x=>x.hn===src.hn&&x.apptType==="cpap_trial"&&x.status!=="cancelled");
                         if(exists){ alert(`ผู้ป่วย ${src.name} มีนัดทดลอง CPAP อยู่แล้วในระบบ`); return; }
-                        setApptsSave(prev=>[...prev,{ id:"cpap"+Date.now(), hn:src.hn, name:src.name, phone:src.phone, hospId:src.hospId, date:src.date, note:`[ต่อเนื่องจาก Sleep Test]`, status:"active", apptType:"cpap_trial", journeyStatus:"scheduled", cancelReason:"", cancelledAt:null }]);
+                        // เพิ่ม cpap_trial พร้อม 2 trial slots เริ่มต้น
+                        setAppointments(prev=>[...prev,{
+                          id:"cpap"+Date.now(), hn:src.hn, name:src.name, phone:src.phone,
+                          hospId:src.hospId, date:src.date, note:"[ต่อเนื่องจาก Sleep Test]",
+                          status:"active", apptType:"cpap_trial", journeyStatus:"scheduled",
+                          cpapDecision:"trial",
+                          cpapTrials:[
+                            {id:"tr1"+Date.now(),model:"",trialDate:src.date,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:""},
+                            {id:"tr2"+Date.now(),model:"",trialDate:src.date,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:""},
+                          ],
+                          cancelReason:"", cancelledAt:null
+                        }]);
                       }}
                       salesList={salesList}
                     />
@@ -1513,6 +1524,17 @@ function CpapTrialReadOnly({ appt }) {
                     {tr.returnDate && <><span style={{color:T.faint}}>คืน</span><span style={{color:"#dc2626",fontWeight:600}}>{fmtDate(tr.returnDate)}</span></>}
                     {tr.note       && <><span style={{color:T.faint}}>หมาย</span><span style={{color:"#334155"}}>{tr.note}</span></>}
                   </div>
+                  {/* PDF ผลทดลอง — Print button for hospital */}
+                  {tr.pdfDataUrl && (
+                    <div style={{marginTop:8,padding:"7px 10px",background:"#fff5f5",borderRadius:8,border:"1px solid #fca5a5",display:"flex",alignItems:"center",gap:8}}>
+                      <i className="ti ti-file-check" style={{fontSize:16,color:"#dc2626",flexShrink:0}}></i>
+                      <span style={{fontSize:11,color:"#991b1b",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>ผลทดลองรุ่นที่ {i+1}: {tr.pdfFileName||"ผลทดลอง.pdf"}</span>
+                      <button onClick={()=>{ const w=window.open("","_blank"); w.document.write(`<html><body style="margin:0;background:#333"><iframe src="${tr.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`); w.document.close(); }}
+                        style={{padding:"5px 12px",fontSize:11,fontWeight:700,borderRadius:8,background:"#dc2626",color:"white",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:4,flexShrink:0}}>
+                        <i className="ti ti-printer" style={{fontSize:12}}></i>Print PDF
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
               {purchase.model && (
@@ -1780,10 +1802,14 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[], ha
     if(appt.apptType!=="cpap_trial") return null;
     const dec = appt.cpapDecision||"";
     if(["purchased_after_trial","purchase_direct"].includes(dec)) return "purchased";
-    const trials = (appt.cpapTrials||[]).filter(t=>t.model);
-    if(!trials.length) return "waiting";
-    const allRet = trials.every(t=>t.returnDate&&t.returnDate<=today);
-    return allRet ? "waiting_buy" : "trialing";
+    if(dec==="finished_trial") return "waiting_buy";
+    const allTrials       = appt.cpapTrials||[];
+    const trialsWithModel = allTrials.filter(t=>t.model&&t.model!=="(รอกรอกรุ่น)");
+    if(dec==="trial" || allTrials.length>0) {
+      const allReturned = trialsWithModel.length>0 && trialsWithModel.every(t=>t.returnDate&&t.returnDate<=today);
+      return allReturned ? "waiting_buy" : "trialing";
+    }
+    return "waiting";
   })();
 
   const CPAP_STAGES = [
@@ -3820,6 +3846,46 @@ function exportCpapExcel(rows, filename) {
   exportToXLS(rows[0], rows.slice(1), filename);
 }
 
+// ── PurchasedCard — collapsed by default, click to expand ─────────────────────
+function PurchasedCard({ a, h, c, purch, billing, com, isAdmin, salesList=[], onDecision, onPurchaseChange }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{background:"white",border:"1.5px solid #86efac",borderRadius:14,overflow:"hidden",transition:"box-shadow .15s"}}>
+      {/* Clickable summary header */}
+      <div onClick={()=>setOpen(o=>!o)} style={{display:"flex",alignItems:"center",gap:12,padding:"13px 16px",background:"#f0fdf4",cursor:"pointer",userSelect:"none"}}>
+        <div style={{width:42,height:42,borderRadius:12,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0}}>
+          {(a.name||"?")[0]}
+        </div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:13,fontWeight:700,color:"#0f172a"}}>{a.name}</div>
+          <div style={{fontSize:11,color:"#64748b",marginTop:2}}>HN {a.hn} · {h?.name}</div>
+          <div style={{display:"flex",gap:6,marginTop:4,flexWrap:"wrap"}}>
+            {purch.model && <span style={{fontSize:11,fontWeight:600,color:"#059669"}}>{purch.model}</span>}
+            {purch.serialNo && <span style={{fontSize:10,padding:"1px 7px",borderRadius:7,background:"#f1f5f9",color:"#475569",fontFamily:"monospace"}}>{purch.serialNo}</span>}
+          </div>
+        </div>
+        <div style={{textAlign:"right",flexShrink:0}}>
+          <div style={{fontSize:18,fontWeight:800,color:"#059669",lineHeight:1}}>{(purch.price||0).toLocaleString()} ฿</div>
+          {isAdmin&&<div style={{fontSize:10,color:"#7c3aed",marginTop:2}}>คอม {com.toLocaleString()} ฿</div>}
+          <div style={{fontSize:10,padding:"2px 9px",borderRadius:8,background:billing.bg,color:billing.color,fontWeight:600,marginTop:4,display:"inline-block"}}>{billing.label}</div>
+        </div>
+        <i className={`ti ti-chevron-${open?"up":"down"}`} style={{fontSize:14,color:"#64748b",flexShrink:0,marginLeft:4}}></i>
+      </div>
+      {/* Expandable edit form */}
+      {open && (
+        <PurchaseCard
+          a={a}
+          hospitals={[h].filter(Boolean)}
+          isAdmin={isAdmin}
+          salesList={salesList}
+          onDecision={onDecision}
+          onPurchaseChange={onPurchaseChange}
+        />
+      )}
+    </div>
+  );
+}
+
 function SalesPatientView({ user, appointments, hospitals, setAppointments, salesList=[] }) {
   const isAdmin = user.role==="admin";
   const [tab, setTab] = useState("summary");
@@ -3854,10 +3920,16 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
 
   const getStatus = a => {
     if(["purchased_after_trial","purchase_direct"].includes(a.cpapDecision)) return "purchased";
-    const trials=(a.cpapTrials||[]).filter(t=>t.model);
-    if(!trials.length) return "waiting";
-    const allReturned = trials.every(t=>t.returnDate && t.returnDate<=today);
-    return allReturned ? "waiting_buy" : "trialing";
+    const allTrials       = a.cpapTrials||[];
+    const trialsWithModel = allTrials.filter(t=>t.model&&t.model!=="(รอกรอกรุ่น)");
+    // finished_trial = คืนเครื่องแล้ว → รอซื้อ
+    if(a.cpapDecision==="finished_trial") return "waiting_buy";
+    // cpapDecision="trial" OR มี trial record = กำลังทดลอง
+    if(a.cpapDecision==="trial" || allTrials.length>0) {
+      const allReturned = trialsWithModel.length>0 && trialsWithModel.every(t=>t.returnDate&&t.returnDate<=today);
+      return allReturned ? "waiting_buy" : "trialing";
+    }
+    return "waiting";
   };
 
   const pool = appointments.filter(a=>
@@ -3869,24 +3941,36 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
   const byStatus = st => pool.filter(a=>getStatus(a)===st).filter(a=>!trimQ||a.name?.toLowerCase().includes(trimQ)||a.hn?.toLowerCase().includes(trimQ));
 
   // Update helpers
-  const upd   = (id,obj)  => setAppointments(p=>p.map(a=>a.id===id?{...a,...obj}:a));
-  const updTr = (id,ti,f,v)=>setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,[f]:v}:x);return{...a,cpapTrials:t};}));
+  const upd      = (id,obj)     => setAppointments(p=>p.map(a=>a.id===id?{...a,...obj}:a));
+  const updTr    = (id,ti,f,v)  => setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,[f]:v}:x);return{...a,cpapTrials:t};}));
+  // อัปเดตหลาย field พร้อมกัน (ป้องกัน race condition)
+  const updTrObj = (id,ti,obj)  => setAppointments(p=>p.map(a=>{if(a.id!==id)return a;const t=(a.cpapTrials||[]).map((x,i)=>i===ti?{...x,...obj}:x);return{...a,cpapTrials:t};}));
+  // เพิ่ม trial slot ใหม่ (ใช้ functional update ป้องกัน stale state)
+  const addTrialSlot = id => setAppointments(p=>p.map(a=>{ if(a.id!==id)return a; const t=[...(a.cpapTrials||[]),{id:"tr"+Date.now(),model:"",trialDate:today,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:"",pdfDataUrl:"",pdfFileName:""}]; return {...a,cpapTrials:t}; }));
   const updPu = (id,f,v)  => setAppointments(p=>p.map(a=>a.id===id?{...a,cpapPurchase:{...(a.cpapPurchase||{}),[f]:v}}:a));
 
   // Status actions
   const startTrial = id => {
     setAppointments(p=>p.map(a=>{
       if(a.id!==id) return a;
-      const t=[...(a.cpapTrials||[]),{id:"tr"+Date.now(),model:"",trialDate:today,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:""}];
-      return {...a,cpapTrials:t,cpapDecision:"trial"};
+      const existing = a.cpapTrials||[];
+      // เพิ่มจนครบ 2 slots
+      const slots = [...existing];
+      while(slots.length < 2) {
+        slots.push({id:"tr"+Date.now()+"_"+slots.length,model:"",trialDate:today,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:"",pdfDataUrl:"",pdfFileName:""});
+      }
+      return {...a,cpapTrials:slots,cpapDecision:"trial"};
     }));
     setTab("trialing");
   };
   const finishTrial = id => {
     setAppointments(p=>p.map(a=>{
       if(a.id!==id) return a;
-      const t=(a.cpapTrials||[]).map((x,i)=>i===(a.cpapTrials.length-1)?{...x,returnDate:x.returnDate||today}:x);
-      return {...a,cpapTrials:t};
+      // ถ้ายังไม่มีรุ่น ให้ใส่ returnDate วันนี้ไว้ก่อน แล้ว Sales ค่อยกลับมากรอก model
+      const t=(a.cpapTrials||[]).map((x,i)=>
+        i===(a.cpapTrials.length-1)?{...x,returnDate:x.returnDate||today,model:x.model||"(รอกรอกรุ่น)"}:x
+      );
+      return {...a,cpapTrials:t,cpapDecision:"finished_trial"};
     }));
     setTab("waiting_buy");
   };
@@ -4160,11 +4244,17 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
               </div>
               {/* Trials */}
               <div style={{padding:"12px 16px",display:"flex",flexDirection:"column",gap:10}}>
+                {trials.length===0 && (
+                  <div style={{padding:"10px 13px",background:"#f5f3ff",borderRadius:10,border:"1px solid #a78bfa",fontSize:12,color:"#7c3aed",display:"flex",alignItems:"center",gap:7}}>
+                    <i className="ti ti-edit" style={{fontSize:14}}></i>
+                    กรุณากรอกรายละเอียดเครื่องทดลองด้านล่าง แล้วกด <strong>"ทดลองเสร็จแล้ว"</strong> เมื่อผู้ป่วยคืนเครื่อง
+                  </div>
+                )}
                 {trials.map((tr,i)=>(
-                  <div key={tr.id||i} style={{padding:"12px",background:"white",borderRadius:11,border:"1px solid #ede9fe"}}>
+                  <div key={tr.id||i} style={{padding:"12px",background:"white",borderRadius:11,border:"1.5px solid #a78bfa"}}>
+                    <div style={{fontSize:11,fontWeight:700,color:"#7c3aed",marginBottom:8}}>รุ่นที่ {i+1} — กรอกรายละเอียดการทดลอง</div>
                     <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:9}}>
-                      <span style={{fontSize:11,fontWeight:700,color:"#7c3aed",minWidth:54}}>รุ่นที่ {i+1}</span>
-                      <select value={tr.model||""} onChange={e=>updTr(a.id,i,"model",e.target.value)}
+                      <select value={["(รอกรอกรุ่น)"].includes(tr.model)?"":tr.model||""} onChange={e=>updTr(a.id,i,"model",e.target.value)}
                         style={{flex:1,...IS,border:"1.5px solid #a78bfa",fontWeight:600}}>
                         <option value="">— เลือกรุ่น CPAP/BiPAP —</option>
                         {CPAP_MODELS.map(m=><option key={m} value={m}>{m}</option>)}
@@ -4215,11 +4305,49 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
                           style={{...IS,border:"1px solid #fca5a5"}}/>
                       </div>
                     </div>
+                    {/* Pressure / หมายเหตุ */}
+                    <div style={{marginTop:8}}>
+                      <div style={{fontSize:10,color:"#7c3aed",fontWeight:600,marginBottom:3}}>แรงดัน / Pressure / หมายเหตุ</div>
+                      <input value={tr.note||""} onChange={e=>updTr(a.id,i,"note",e.target.value)} placeholder="เช่น APAP 6-12 cmH₂O, ปรับ Auto, ใช้ได้ดี..."
+                        style={{...IS,border:"1px solid #ddd6fe"}}/>
+                    </div>
+                    {/* PDF ผลการทดลอง per trial */}
+                    <div style={{marginTop:8}}>
+                      <div style={{fontSize:10,color:"#dc2626",fontWeight:600,marginBottom:5,display:"flex",alignItems:"center",gap:4}}>
+                        <i className="ti ti-file-type-pdf" style={{fontSize:12}}></i>แนบผลการทดลองรุ่นที่ {i+1} (PDF)
+                      </div>
+                      {tr.pdfDataUrl ? (
+                        <div style={{padding:"7px 11px",background:"#f0fdf4",borderRadius:9,border:"1px solid #86efac",display:"flex",alignItems:"center",gap:8}}>
+                          <i className="ti ti-file-check" style={{fontSize:16,color:"#059669",flexShrink:0}}></i>
+                          <span style={{fontSize:11,fontWeight:600,color:"#166534",flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tr.pdfFileName||"ผลทดลอง.pdf"}</span>
+                          <button onClick={()=>{ const w=window.open("","_blank"); w.document.write(`<html><body style="margin:0;background:#333"><iframe src="${tr.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`); w.document.close(); }}
+                            style={{padding:"4px 10px",fontSize:11,fontWeight:700,borderRadius:7,background:"#059669",color:"white",border:"none",cursor:"pointer",flexShrink:0}}>
+                            <i className="ti ti-printer" style={{marginRight:3,fontSize:10}}></i>Print
+                          </button>
+                          <button onClick={()=>updTrObj(a.id,i,{pdfDataUrl:"",pdfFileName:""})}
+                            style={{padding:"4px 8px",fontSize:11,borderRadius:7,border:"1px solid #fecaca",background:"white",color:"#dc2626",cursor:"pointer",flexShrink:0}}>ลบ</button>
+                        </div>
+                      ) : (
+                        <label style={{display:"flex",alignItems:"center",gap:7,padding:"8px 11px",borderRadius:9,border:"1.5px dashed #fca5a5",background:"#fff5f5",cursor:"pointer"}}>
+                          <i className="ti ti-upload" style={{fontSize:14,color:"#dc2626",flexShrink:0}}></i>
+                          <span style={{fontSize:11,color:"#dc2626",fontWeight:500}}>แนบ PDF ผลทดลองรุ่นนี้ (รพ. จะ Print ให้หมอ)</span>
+                          <input type="file" accept=".pdf,application/pdf" style={{display:"none"}} onChange={e=>{
+                            const file=e.target.files?.[0]; if(!file) return;
+                            const reader=new FileReader();
+                            reader.onload=ev=>{
+                              // single update for both fields — prevents race condition
+                              updTrObj(a.id,i,{pdfDataUrl:ev.target.result, pdfFileName:file.name});
+                            };
+                            reader.readAsDataURL(file); e.target.value="";
+                          }}/>
+                        </label>
+                      )}
+                    </div>
                   </div>
                 ))}
                 {trials.length<3 && (
-                  <button onClick={()=>{const t=[...(a.cpapTrials||[]),{id:"tr"+Date.now(),model:"",trialDate:today,returnDate:"",serialNo:"",dn:"",maskModel:"",maskOther:"",maskSize:"",note:""}];upd(a.id,{cpapTrials:t});}}
-                    style={{padding:"9px",fontSize:12,fontWeight:600,borderRadius:10,border:"1.5px dashed #a78bfa",background:"transparent",color:"#7c3aed",cursor:"pointer",fontFamily:FONT}}>
+                  <button onClick={()=>addTrialSlot(a.id)}
+                    style={{padding:"9px",fontSize:12,fontWeight:700,borderRadius:10,border:"1.5px dashed #a78bfa",background:"transparent",color:"#7c3aed",cursor:"pointer",fontFamily:FONT,width:"100%"}}>
                     <i className="ti ti-plus" style={{marginRight:5}}></i>เพิ่มรุ่นทดลอง ({trials.length}/3)
                   </button>
                 )}
@@ -4255,48 +4383,9 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
           const purch=a.cpapPurchase||{};
           const billing=BILLING.find(b=>b.key===(purch.billingStatus||"pending"))||BILLING[0];
           const com=Math.round((purch.price||0)*(purch.commissionRate??2)/100);
-          return (
-            <div key={a.id} style={{background:T.card,border:"1.5px solid #86efac",borderRadius:14,overflow:"hidden"}}>
-              <div style={{display:"flex",alignItems:"center",gap:12,padding:"12px 16px",background:"#f0fdf4",borderBottom:"1px solid #e2e8f0"}}>
-                <div style={{width:40,height:40,borderRadius:11,background:c.bg,border:`1.5px solid ${c.dot}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:800,color:c.text,flexShrink:0}}>
-                  {(a.name||"?")[0]}
-                </div>
-                <div style={{flex:1}}>
-                  <div style={{fontSize:13,fontWeight:700,color:T.navy}}>{a.name}</div>
-                  <div style={{fontSize:11,color:T.faint}}>HN {a.hn} · {h?.name} · {fmtDate(purch.purchaseDate||a.date)}</div>
-                  <div style={{fontSize:12,color:"#059669",fontWeight:600,marginTop:2}}>{purch.model||"—"}</div>
-                </div>
-                <div style={{textAlign:"right",flexShrink:0}}>
-                  <div style={{fontSize:18,fontWeight:800,color:"#059669"}}>{(purch.price||0).toLocaleString()} ฿</div>
-                  {isAdmin&&<div style={{fontSize:11,color:"#7c3aed"}}>คอม {com.toLocaleString()} ฿</div>}
-                </div>
-              </div>
-              <div style={{padding:"12px 16px"}}>
-                {/* Info summary */}
-                <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:10,fontSize:11}}>
-                  {[["S/N",purch.serialNo||"—"],["DN",purch.dn||"—"],["Mask",purch.maskOther||purch.maskModel||"—"]].map(([k,v])=>(
-                    <div key={k} style={{padding:"8px 10px",background:T.surf,borderRadius:9,border:`0.5px solid ${T.line}`}}>
-                      <div style={{color:T.faint,marginBottom:2}}>{k}</div>
-                      <div style={{fontWeight:600,color:T.ink,fontFamily:k==="S/N"||k==="DN"?"monospace":"inherit"}}>{v}</div>
-                    </div>
-                  ))}
-                </div>
-                {/* Billing status */}
-                <div style={{fontSize:10,color:T.muted,fontWeight:600,marginBottom:6}}>สถานะใบแจ้งหนี้</div>
-                <div style={{display:"flex",gap:7}}>
-                  {BILLING.map(b=>{
-                    const on=(purch.billingStatus||"pending")===b.key;
-                    return (
-                      <button key={b.key} onClick={()=>updPu(a.id,"billingStatus",b.key)}
-                        style={{flex:1,padding:"8px 10px",fontSize:12,fontWeight:on?700:400,borderRadius:9,border:`${on?2:1}px solid ${b.color}`,background:on?b.bg:"white",color:on?b.color:"#64748b",cursor:"pointer",fontFamily:FONT}}>
-                        {b.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          );
+          return <PurchasedCard key={a.id} a={a} h={h} c={c} purch={purch} billing={billing} com={com} isAdmin={isAdmin} salesList={salesList}
+            onDecision={(id,dec)=>upd(id,{cpapDecision:dec})}
+            onPurchaseChange={(id,newPurch)=>setAppointments(p=>p.map(x=>x.id===id?{...x,cpapPurchase:newPurch}:x))}/>;
         })}
         {tab==="purchased" && byStatus("purchased").length===0 && (
           <div style={{textAlign:"center",padding:"40px",color:T.faint}}>
