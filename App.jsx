@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 
+
 const FONT = "'Sarabun', 'Inter', sans-serif";
 
 // ── Master Data ───────────────────────────────────────────────────────────────
@@ -217,94 +218,69 @@ function LoginScreen({ onLogin }) {
   return (
     <div style={{ minHeight:"100vh", display:"flex", fontFamily:FONT, background:T.bg }}>
 
-      {/* Left hero panel — inspired by 3N website */}
-      <div style={{ width:"48%", position:"relative", overflow:"hidden", flexShrink:0, display:"flex", flexDirection:"column", justifyContent:"flex-end" }}>
-        {/* Background gradient */}
-        <div style={{ position:"absolute", inset:0, background:"linear-gradient(135deg, #0c1445 0%, #0f2d6b 40%, #1a56c4 80%, #2563eb 100%)" }}/>
+      {/* Left hero panel — premium dark gradient, no image */}
+      <div style={{ width:"52%", position:"relative", overflow:"hidden", flexShrink:0, background:"linear-gradient(135deg,#060e2e 0%,#0d1f5c 40%,#0f3182 70%,#1a4fcf 100%)" }}>
 
-        {/* Abstract glow circles */}
-        <div style={{ position:"absolute", top:-80, right:-80, width:400, height:400, borderRadius:"50%", background:"radial-gradient(circle, rgba(59,130,246,.25) 0%, transparent 70%)" }}/>
-        <div style={{ position:"absolute", bottom:-60, left:-40, width:300, height:300, borderRadius:"50%", background:"radial-gradient(circle, rgba(37,99,235,.2) 0%, transparent 70%)" }}/>
+        {/* Animated glow blobs */}
+        <div style={{ position:"absolute", top:-120, right:-80, width:500, height:500, borderRadius:"50%", background:"radial-gradient(circle,rgba(59,130,246,.22) 0%,transparent 65%)", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", bottom:-80, left:-60, width:380, height:380, borderRadius:"50%", background:"radial-gradient(circle,rgba(99,102,241,.18) 0%,transparent 65%)", pointerEvents:"none" }}/>
+        <div style={{ position:"absolute", top:"45%", left:"35%", width:200, height:200, borderRadius:"50%", background:"radial-gradient(circle,rgba(96,165,250,.12) 0%,transparent 70%)", pointerEvents:"none" }}/>
+
+        {/* Grid dot pattern */}
+        <div style={{ position:"absolute", inset:0, backgroundImage:"radial-gradient(rgba(255,255,255,.05) 1px,transparent 1px)", backgroundSize:"28px 28px", pointerEvents:"none" }}/>
 
         {/* Content */}
-        <div style={{ position:"relative", zIndex:2, padding:"40px 44px", display:"flex", flexDirection:"column", height:"100%" }}>
+        <div style={{ position:"relative", zIndex:2, padding:"44px 48px", display:"flex", flexDirection:"column", height:"100%" }}>
 
-          {/* Top: Logo + brand */}
-          <div style={{ display:"flex", alignItems:"center", gap:14, marginBottom:"auto" }}>
-            <div style={{ width:48, height:48, borderRadius:14, overflow:"hidden", flexShrink:0, border:"1.5px solid rgba(255,255,255,.25)", position:"relative" }}>
-              <svg width="48" height="48" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                <rect width="200" height="200" fill="rgba(255,255,255,0.1)"/>
-                <text x="8" y="130" fontFamily="Arial Black,sans-serif" fontWeight="900" fontSize="105" fill="white">3N</text>
-                <path d="M118 148 L131 110 L143 130 L155 96 L170 148" stroke="#fbbf24" strokeWidth="11" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-              </svg>
-              <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,.45)", fontSize:7, color:"rgba(255,255,255,.75)", textAlign:"center", padding:"1px 0" }}>LOGO</div>
+          {/* Logo */}
+          <div style={{ display:"flex", alignItems:"center", gap:14 }}>
+            <div style={{ width:46, height:46, borderRadius:13, background:"rgba(255,255,255,.12)", backdropFilter:"blur(12px)", border:"1px solid rgba(255,255,255,.2)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+              <svg width="28" height="28" viewBox="0 0 200 200"><text x="4" y="135" fontFamily="Arial Black" fontWeight="900" fontSize="110" fill="white">3N</text></svg>
             </div>
             <div>
-              <div style={{ fontSize:18, fontWeight:800, color:"white", letterSpacing:"-0.02em" }}>3N Co., Ltd.</div>
-              <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", marginTop:1 }}>Sleep Healthcare & Respiratory Care</div>
+              <div style={{ fontSize:16, fontWeight:800, color:"white", letterSpacing:"-0.02em" }}>3N Co., Ltd.</div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,.5)", marginTop:1 }}>Sleep Healthcare & Respiratory Care</div>
             </div>
           </div>
 
-          {/* Middle: Hero content */}
-          <div style={{ paddingTop:48, paddingBottom:32 }}>
-            {/* Badge */}
-            <div style={{ display:"inline-flex", alignItems:"center", gap:7, padding:"6px 14px", borderRadius:20, background:"rgba(59,130,246,.3)", border:"1px solid rgba(99,179,247,.4)", marginBottom:22 }}>
+          {/* Hero text */}
+          <div style={{ flex:1, display:"flex", flexDirection:"column", justifyContent:"center", paddingTop:16 }}>
+            <div style={{ display:"inline-flex", alignItems:"center", gap:7, padding:"6px 14px", borderRadius:20, background:"rgba(59,130,246,.25)", border:"1px solid rgba(99,179,247,.35)", marginBottom:24, width:"fit-content" }}>
               <div style={{ width:7, height:7, borderRadius:"50%", background:"#60a5fa" }}/>
-              <span style={{ fontSize:11, fontWeight:700, color:"#93c5fd", letterSpacing:".08em", textTransform:"uppercase" }}>Professional Sleep Care System</span>
+              <span style={{ fontSize:11, fontWeight:700, color:"#93c5fd", letterSpacing:".07em", textTransform:"uppercase" }}>Smart Sleep Care System</span>
+            </div>
+            <div style={{ fontSize:40, fontWeight:900, color:"white", lineHeight:1.15, letterSpacing:"-0.035em", marginBottom:12 }}>
+              Better Sleep.<br/><span style={{ color:"#60a5fa" }}>Better Life.</span>
+            </div>
+            <div style={{ fontSize:14, color:"rgba(255,255,255,.55)", lineHeight:1.75, fontWeight:300, marginBottom:36 }}>
+              ระบบจัดการผู้ป่วย Sleep Test & CPAP<br/>ครบวงจร ตั้งแต่นัดหมาย → ผลออก → ทดลองเครื่อง
             </div>
 
-            {/* Headline */}
-            <div style={{ fontSize:36, fontWeight:800, color:"white", lineHeight:1.15, letterSpacing:"-0.03em", marginBottom:8 }}>
-              Wake Up Better.<br/>
-              <span style={{ color:"#60a5fa" }}>Perform Better.</span>
-            </div>
-            <div style={{ fontSize:14, color:"rgba(255,255,255,.6)", lineHeight:1.7, fontWeight:300, marginBottom:32 }}>
-              ระบบจัดการนัดหมายผู้ป่วย Sleep Test<br/>
-              ครบทุกขั้นตอน ตั้งแต่จองนัด → ผลออก → ทดลอง CPAP
-            </div>
-
-            {/* Stats row */}
-            <div style={{ display:"flex", gap:24, marginBottom:32 }}>
-              {[["9","โรงพยาบาล"],["6","Sleep Tech"],["∞","นัดหมาย"]].map(([n,l])=>(
+            {/* Stats */}
+            <div style={{ display:"flex", gap:32, marginBottom:36 }}>
+              {[["9+","โรงพยาบาล"],["6","Sleep Tech"],["100%","Digital"]].map(([n,l])=>(
                 <div key={l}>
-                  <div style={{ fontSize:26, fontWeight:800, color:"white", lineHeight:1 }}>{n}</div>
-                  <div style={{ fontSize:11, color:"rgba(255,255,255,.5)", marginTop:3 }}>{l}</div>
+                  <div style={{ fontSize:28, fontWeight:900, color:"white", lineHeight:1 }}>{n}</div>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,.45)", marginTop:4, fontWeight:400 }}>{l}</div>
                 </div>
               ))}
             </div>
 
             {/* Feature pills */}
             <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-              {["Sleep Test","CPAP / BiPAP","PSG System","Home Sleep Test","After-Sales"].map(f=>(
-                <span key={f} style={{ fontSize:11, padding:"5px 12px", borderRadius:20, background:"rgba(255,255,255,.1)", color:"rgba(255,255,255,.75)", fontWeight:500, border:"0.5px solid rgba(255,255,255,.18)" }}>{f}</span>
+              {["PSG Sleep Test","Home Sleep Test","CPAP / BiPAP","After-Sales Care","ResMed Partner"].map(f=>(
+                <span key={f} style={{ fontSize:11, padding:"5px 12px", borderRadius:20, background:"rgba(255,255,255,.08)", color:"rgba(255,255,255,.7)", fontWeight:500, border:"0.5px solid rgba(255,255,255,.15)" }}>{f}</span>
               ))}
             </div>
           </div>
 
-          {/* Bottom: Floating UI cards (inspired by website screenshot) */}
-          <div style={{ display:"flex", gap:10 }}>
-            {[
-              { icon:"ti-activity", label:"Sleep Quality", val:"85", unit:"Good", col:"#60a5fa" },
-              { icon:"ti-chart-bar", label:"Sleep Score", val:"Excellent", unit:"", col:"#34d399" },
-              { icon:"ti-wave-sine", label:"Sleep Apnea Risk", val:"Low", unit:"Moderate", col:"#fbbf24" },
-            ].map(({icon:ic,label,val,unit,col})=>(
-              <div key={label} style={{ flex:1, padding:"12px 13px", background:"rgba(255,255,255,.1)", borderRadius:14, border:"0.5px solid rgba(255,255,255,.15)", backdropFilter:"blur(10px)" }}>
-                <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
-                  <i className={`ti ${ic}`} style={{ fontSize:14, color:col }}></i>
-                  <span style={{ fontSize:10, color:"rgba(255,255,255,.6)", fontWeight:500 }}>{label}</span>
-                </div>
-                <div style={{ fontSize:18, fontWeight:800, color:"white", lineHeight:1 }}>{val}</div>
-                {unit && <div style={{ fontSize:10, color:col, marginTop:2 }}>{unit}</div>}
-                {/* Mini wave */}
-                <svg viewBox="0 0 60 16" style={{ width:"100%", marginTop:6, opacity:.6 }}>
-                  <path d="M0 8 Q8 2 16 8 Q24 14 32 8 Q40 2 48 8 Q56 14 60 8" stroke={col} strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                </svg>
-              </div>
-            ))}
-          </div>
-
-          <div style={{ marginTop:14, fontSize:10, color:"rgba(255,255,255,.25)", textAlign:"center" }}>
-            www.3nthailand.com · 3N Co., Ltd.
+          {/* Bottom — waveform decoration */}
+          <div style={{ marginTop:32 }}>
+            <svg viewBox="0 0 400 48" style={{ width:"100%", opacity:.3 }}>
+              <path d="M0 24 Q20 8 40 24 Q60 40 80 24 Q100 8 120 24 Q140 40 160 24 Q180 8 200 24 Q220 40 240 24 Q260 8 280 24 Q300 40 320 24 Q340 8 360 24 Q380 40 400 24" stroke="#60a5fa" strokeWidth="2" fill="none" strokeLinecap="round"/>
+              <path d="M0 24 Q30 4 60 24 Q90 44 120 24 Q150 4 180 24 Q210 44 240 24 Q270 4 300 24 Q330 44 360 24 Q390 4 400 24" stroke="#818cf8" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeDasharray="4 8"/>
+            </svg>
+            <div style={{ fontSize:10, color:"rgba(255,255,255,.2)", textAlign:"center", marginTop:10 }}>www.3nthailand.com</div>
           </div>
         </div>
       </div>
@@ -2314,63 +2290,61 @@ function AssignRow({ dateKey,techs,assigned,checked,canEdit,canCheckin,onToggleA
 function parseLineText(text, defaultHospId) {
   const lines = text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l.length>0);
 
-  const isHNLine = l => /^\d{6,12}$/.test(l) || /^\d[-/]\d{2}[-/]\d+/.test(l) || /^(hn|HN)[:\s]/i.test(l);
+  // isBlockStart: bare HN digits เท่านั้น (ไม่ใช่ "HN: xxx")
+  const isBlockStart = l => /^\d{6,12}$/.test(l) || /^\d[-/]\d{2,3}[-/]\d+/.test(l);
+  // isHNField: ทุก format สำหรับ extract
+  const isHNField = l => isBlockStart(l) || /^(hn|HN)\s*[:\-\s]\s*[\d\-]+/i.test(l);
+  // isNameStart: ชื่อนำ
+  const isNameStart = l => /^(น\.ส\.|นางสาว|นาย[\s$]|นาง[\s$]|ด\.ญ\.|เด็กหญิง|ด\.ช\.|เด็กชาย)/i.test(l);
+
   const blocks = [];
-  let cur = [];
+  let cur = [], curHasName = false;
   lines.forEach(l => {
-    if(cur.length && isHNLine(l)) { blocks.push([...cur]); cur=[]; }
+    // ตัด block ใหม่เมื่อ: พบ bare HN (เสมอ) หรือ พบชื่อใหม่หลังจากมีชื่อแล้ว
+    const brk = (isBlockStart(l) && cur.length>0) || (isNameStart(l) && curHasName && cur.length>0);
+    if(brk) { blocks.push([...cur]); cur=[]; curHasName=false; }
+    if(isNameStart(l)) curHasName=true;
     cur.push(l);
   });
   if(cur.length) blocks.push(cur);
 
   const today = new Date().toISOString().split("T")[0];
   const results = [];
-  const errors  = [];  // รายการที่มีปัญหา
 
   blocks.forEach((blines, bi) => {
     let hn="", name="", phone="", date="", diagnosis="";
-
     blines.forEach(l => {
-      // ── HN ──
-      if(!hn && isHNLine(l)) {
-        hn = l.replace(/^(hn|HN)[:\s]*/i,"").replace(/\//g,"-").trim();
-        return;
+      if(!hn && isHNField(l)) {
+        hn = l.replace(/^(hn|HN)\s*[:\-\s]\s*/i,"").replace(/\//g,"-").trim(); return;
       }
-      // ── Diagnosis / โรคประจำตัว ──
       if(!diagnosis && /(?:โรค|โรคประจำตัว|underlying|dx|diagnosis|ประวัติ)/i.test(l)) {
-        diagnosis = l.replace(/^(?:โรค|โรคประจำตัว|underlying|dx|diagnosis|ประวัติ)[:\s]*/i,"").trim();
-        if(!diagnosis) diagnosis = "—"; // keyword อยู่แต่ไม่มีข้อมูล
-        return;
+        diagnosis = l.replace(/^(?:โรค|โรคประจำตัว|underlying|dx|diagnosis|ประวัติ)[:\s]*/i,"").trim()||"—"; return;
       }
-      // ── Phone ──
       if(!phone) {
-        const phoneKw = l.match(/(?:โทร|tel|phone|เบอร์)[:\s]*([\d\-\+\s]{8,15})/i);
-        if(phoneKw) { phone = phoneKw[1].replace(/[-\s]/g,"").trim(); return; }
-        const barePhone = l.replace(/[-\s]/g,"");
-        if(/^(0\d{8,9})$/.test(barePhone)) { phone = barePhone; return; }
+        const kw = l.match(/(?:โทร|tel|phone|เบอร์|mobile)\s*[:\s]?\s*([\d\-\+\s]{8,15})/i);
+        if(kw) { phone=kw[1].replace(/[-\s]/g,"").trim(); return; }
+        const bare = l.replace(/[-\s]/g,"");
+        if(/^0\d{8,9}$/.test(bare)) { phone=bare; return; }
       }
-      // ── Date ──
-      if(!date && /(?:จอง|วันที่|นัด|date|วัน)/i.test(l)) {
-        const dm = l.match(/(\d{1,2})[\/\-](\d{1,2})(?:[\/\-](\d{2,4}))?/);
+      if(!date && /(?:จอง|วันที่|นัด|date|วัน|คิว)/i.test(l)) {
+        const dm = l.match(/(\d{1,2})[\/-\.](\d{1,2})(?:[\/-\.](\d{2,4}))?/);
         if(dm) {
           const d=parseInt(dm[1]), mo=parseInt(dm[2]);
-          let yr = dm[3] ? parseInt(dm[3]) : new Date().getFullYear()+543;
-          if(yr < 100) yr += 2500;
-          if(yr > 2400) yr -= 543;
-          if(yr < 2000 || yr > 2100) yr = new Date().getFullYear();
-          date = `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+          let yr=dm[3]?parseInt(dm[3]):new Date().getFullYear()+543;
+          if(yr<100) yr+=2500; if(yr>2400) yr-=543;
+          if(yr<2000||yr>2100) yr=new Date().getFullYear();
+          date=`${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
         }
         return;
       }
-      // ── Name ──
-      if(!name && /^(น\.ส\.|นางสาว|นาย|นาง|ด\.ญ\.|เด็กหญิง|ด\.ช\.|เด็กชาย|mr\.|ms\.|mrs\.|miss)/i.test(l)) { name=l; return; }
-      if(!name && !/^\d/.test(l) && l.length>=4 && l.length<=80 && !/^(ชื่อ|ช่อง|รพ|hospital|HN|โทร|เบอร์|tel|phone|date|วัน|จอง|นัด|โรค|dx)/i.test(l)) {
+      if(!name && isNameStart(l)) { name=l.trim(); return; }
+      if(!name && !/^\d/.test(l) && l.length>=4 && l.length<=80 &&
+        !/^(ชื่อ|รพ|hospital|HN|โทร|เบอร์|tel|phone|date|วัน|จอง|นัด|โรค|dx|hn)/i.test(l)) {
         name=l; return;
       }
     });
 
     if(!hn&&!name) return;
-
     // Validate phone — ต้อง 10 หลัก
     const phoneDigits = phone.replace(/\D/g,"");
     const phoneValid  = phoneDigits.length===10;
