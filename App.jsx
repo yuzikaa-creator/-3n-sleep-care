@@ -571,6 +571,8 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                   const isCancelled = a.status==="cancelled";
                   // ตรวจว่า HN เดิมนัดซ้ำในวันเดียวกัน
                   const isDuplicate = !isCancelled && appts.some((b,bi)=>bi!==idx && b.hn===a.hn && b.status!=="cancelled");
+                  // ตรวจว่ามี cpap_trial อยู่แล้วสำหรับ HN นี้ (ทั้งวันอื่นด้วย)
+                  const hasCpapBooked = appointments.some(x=>x.hn===a.hn&&x.apptType==="cpap_trial"&&x.status!=="cancelled");
                   return (
                     <ApptCard
                       key={a.id}
@@ -583,6 +585,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                       movingAppt={movingAppt}
                       isCancelled={isCancelled}
                       isDuplicate={isDuplicate}
+                      hasCpapBooked={hasCpapBooked}
                       onStartMove={()=>setMovingAppt(a)}
                       onUpdate={updated=>setAppointments(prev=>prev.map(x=>x.id===a.id?{...x,...updated}:x))}
                       onDelete={()=>setAppointments(prev=>prev.filter(x=>x.id!==a.id))}
@@ -1524,6 +1527,24 @@ function CpapTrialReadOnly({ appt }) {
                     {purchase.purchaseDate&& <><span style={{color:T.faint}}>วันซื้อ</span><span style={{color:"#166534",fontWeight:600}}>{fmtDate(purchase.purchaseDate)}</span></>}
                     {purchase.price>0     && <><span style={{color:T.faint}}>ราคา</span><span style={{fontSize:15,fontWeight:800,color:"#059669"}}>{(purchase.price).toLocaleString()} ฿</span></>}
                   </div>
+                  {/* Print trial result PDF */}
+                  {purchase.trialPdfDataUrl && (
+                    <div style={{ marginTop:10, padding:"8px 11px", background:"white", borderRadius:9, border:"0.5px solid #86efac", display:"flex", alignItems:"center", gap:9 }}>
+                      <i className="ti ti-file-check" style={{fontSize:18,color:"#059669",flexShrink:0}}></i>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:11,fontWeight:700,color:"#166534",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{purchase.trialPdfFileName||"ผลการทดลอง.pdf"}</div>
+                        <div style={{fontSize:10,color:"#059669"}}>ไฟล์ผลทดลอง — กด Print เพื่อให้หมออ่าน</div>
+                      </div>
+                      <button onClick={()=>{
+                        const w=window.open("","_blank");
+                        w.document.write(`<html><body style="margin:0;background:#333"><iframe src="${purchase.trialPdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+                        w.document.close();
+                      }}
+                        style={{padding:"7px 14px",fontSize:12,fontWeight:700,borderRadius:9,background:"#dc2626",color:"white",border:"none",cursor:"pointer",display:"flex",alignItems:"center",gap:5,flexShrink:0}}>
+                        <i className="ti ti-printer" style={{fontSize:13}}></i>Print PDF
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -1748,135 +1769,175 @@ function CpapTrialTracker({ appt, onUpdate, isAdmin=false, salesList=[] }) {
 }
 
 // ── Journey Progress Panel ────────────────────────────────────────────────────
-function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[] }) {
+function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[], hasCpapBooked=false }) {
   const [open, setOpen] = useState(false);
   const steps = journeySteps(appt.apptType||"sleep_test");
   const curIdx = steps.findIndex(s=>s.key===(appt.journeyStatus||"scheduled"));
 
-  // if last step is consulted and it's sleep_test → offer to book CPAP trial
-  const canBookCpap = (appt.apptType||"sleep_test")==="sleep_test" && (appt.journeyStatus==="consulted");
+  // Compute CPAP trial stage from data
+  const today  = new Date().toISOString().split("T")[0];
+  const cpapStatus = (() => {
+    if(appt.apptType!=="cpap_trial") return null;
+    const dec = appt.cpapDecision||"";
+    if(["purchased_after_trial","purchase_direct"].includes(dec)) return "purchased";
+    const trials = (appt.cpapTrials||[]).filter(t=>t.model);
+    if(!trials.length) return "waiting";
+    const allRet = trials.every(t=>t.returnDate&&t.returnDate<=today);
+    return allRet ? "waiting_buy" : "trialing";
+  })();
+
+  const CPAP_STAGES = [
+    { key:"waiting",     label:"รอทดลอง",        color:"#d97706", bg:"#fef9c3", icon:"ti-clock"                  },
+    { key:"trialing",    label:"กำลังทดลอง",      color:"#7c3aed", bg:"#ede9fe", icon:"ti-device-heart-monitor"   },
+    { key:"waiting_buy", label:"รอซื้อเครื่อง",   color:"#1e40af", bg:"#dbeafe", icon:"ti-shopping-cart"          },
+    { key:"purchased",   label:"ซื้อแล้ว",         color:"#059669", bg:"#d1fae5", icon:"ti-check-circle"          },
+  ];
+  const cpapStageIdx = cpapStatus ? CPAP_STAGES.findIndex(s=>s.key===cpapStatus) : 0;
+
+  const canBookCpap = (appt.apptType||"sleep_test")==="sleep_test" && appt.journeyStatus==="consulted";
 
   return (
     <div style={{ padding:"6px 11px 10px" }}>
-      {/* Journey progress bar */}
-      <div style={{ display:"flex", alignItems:"center", gap:0, marginBottom:8 }}>
-        {steps.map((s,i)=>{
-          const done = i<=curIdx;
-          const isActive = i===curIdx;
-          return (
-            <div key={s.key} style={{ display:"flex", alignItems:"center", flex: i<steps.length-1?1:"auto" }}>
-              <div
-                onClick={canEdit?()=>{ onUpdate({ journeyStatus:s.key }); }:undefined}
-                title={s.label}
-                style={{ width:28, height:28, borderRadius:"50%", background:done?s.color:"#e2e8f0", display:"flex", alignItems:"center", justifyContent:"center", cursor:canEdit?"pointer":"default", flexShrink:0, border:isActive?`3px solid ${s.color}`:"2px solid transparent", boxSizing:"border-box", transition:"all .2s" }}>
-                <i className={`ti ${s.icon}`} style={{ fontSize:12, color:done?"white":"#94a3b8" }}></i>
-              </div>
-              {i<steps.length-1 && (
-                <div style={{ flex:1, height:3, background:i<curIdx?steps[i+1].color:"#e2e8f0", borderRadius:2, margin:"0 3px", transition:"background .3s" }}></div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-      {/* Current status label */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
-        <span style={{ fontSize:11, color:steps[curIdx]?.color||T.muted, fontWeight:600 }}>
-          {steps[curIdx]?.label || "—"}
-        </span>
-        {canEdit && (
-          <button onClick={()=>setOpen(o=>!o)} style={{ fontSize:10, padding:"2px 9px", borderRadius:8, border:`0.5px solid ${T.line}`, background:open?T.blueL:T.card, color:open?T.blue:T.muted, cursor:"pointer" }}>
-            {open?"ปิด":"อัปเดต"}
-          </button>
-        )}
-      </div>
-
-      {/* Step picker */}
-      {open && canEdit && (
-        <div style={{ marginTop:8, display:"flex", flexDirection:"column", gap:5 }}>
-          {steps.map((s,i)=>{
-            const done = i<=curIdx;
-            return (
-              <div key={s.key} onClick={()=>{ onUpdate({ journeyStatus:s.key }); setOpen(false); }}
-                style={{ display:"flex", alignItems:"center", gap:9, padding:"8px 11px", borderRadius:10, cursor:"pointer", background:s.key===appt.journeyStatus?s.bg:T.card, border:`0.5px solid ${s.key===appt.journeyStatus?s.color:T.line}`, transition:"all .1s" }}>
-                <div style={{ width:24, height:24, borderRadius:"50%", background:done?s.color:"#e2e8f0", display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-                  <i className={`ti ${s.icon}`} style={{ fontSize:11, color:done?"white":"#94a3b8" }}></i>
+      {/* ── Sleep Test progress bar ── */}
+      {(appt.apptType||"sleep_test")==="sleep_test" && (
+        <>
+          <div style={{ display:"flex", alignItems:"center", gap:0, marginBottom:8 }}>
+            {steps.map((s,i)=>{
+              const done = i<=curIdx;
+              const isActive = i===curIdx;
+              return (
+                <div key={s.key} style={{ display:"flex", alignItems:"center", flex: i<steps.length-1?1:"auto" }}>
+                  <div
+                    onClick={canEdit?()=>{ onUpdate({ journeyStatus:s.key }); }:undefined}
+                    title={s.label}
+                    style={{ width:28,height:28,borderRadius:"50%",background:done?s.color:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",cursor:canEdit?"pointer":"default",flexShrink:0,border:isActive?`3px solid ${s.color}`:"2px solid transparent",boxSizing:"border-box",transition:"all .2s" }}>
+                    <i className={`ti ${s.icon}`} style={{ fontSize:12, color:done?"white":"#94a3b8" }}></i>
+                  </div>
+                  {i<steps.length-1 && (
+                    <div style={{ flex:1,height:3,background:i<curIdx?steps[i+1].color:"#e2e8f0",borderRadius:2,margin:"0 3px",transition:"background .3s" }}></div>
+                  )}
                 </div>
-                <span style={{ fontSize:12, fontWeight:s.key===appt.journeyStatus?700:400, color:s.key===appt.journeyStatus?s.color:T.ink }}>{s.label}</span>
-                {s.key===appt.journeyStatus && <i className="ti ti-check" style={{ fontSize:12, color:s.color, marginLeft:"auto" }}></i>}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <span style={{ fontSize:11, color:steps[curIdx]?.color||T.muted, fontWeight:600 }}>
+              {steps[curIdx]?.label || "—"}
+            </span>
+            {canEdit && (
+              <button onClick={()=>setOpen(o=>!o)} style={{ fontSize:10,padding:"2px 9px",borderRadius:8,border:`0.5px solid ${T.line}`,background:open?T.blueL:T.card,color:open?T.blue:T.muted,cursor:"pointer" }}>
+                {open?"ปิด":"อัปเดต"}
+              </button>
+            )}
+          </div>
+          {open && canEdit && (
+            <div style={{ marginTop:8, display:"flex", flexDirection:"column", gap:5 }}>
+              {steps.map((s,i)=>{
+                const done = i<=curIdx;
+                return (
+                  <div key={s.key} onClick={()=>{ onUpdate({ journeyStatus:s.key }); setOpen(false); }}
+                    style={{ display:"flex",alignItems:"center",gap:9,padding:"8px 11px",borderRadius:10,cursor:"pointer",background:s.key===appt.journeyStatus?s.bg:T.card,border:`0.5px solid ${s.key===appt.journeyStatus?s.color:T.line}`,transition:"all .1s" }}>
+                    <div style={{ width:24,height:24,borderRadius:"50%",background:done?s.color:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+                      <i className={`ti ${s.icon}`} style={{ fontSize:11, color:done?"white":"#94a3b8" }}></i>
+                    </div>
+                    <span style={{ fontSize:12,fontWeight:s.key===appt.journeyStatus?700:400,color:s.key===appt.journeyStatus?s.color:T.ink }}>{s.label}</span>
+                    {s.key===appt.journeyStatus && <i className="ti ti-check" style={{ fontSize:12,color:s.color,marginLeft:"auto" }}></i>}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* ── CPAP Trial progress bar ── */}
+      {appt.apptType==="cpap_trial" && cpapStatus && (
+        <div style={{ marginBottom:8 }}>
+          <div style={{ display:"flex", alignItems:"center", gap:0, marginBottom:6 }}>
+            {CPAP_STAGES.map((s,i)=>{
+              const done = i<=cpapStageIdx;
+              const isActive = i===cpapStageIdx;
+              return (
+                <div key={s.key} style={{ display:"flex", alignItems:"center", flex: i<CPAP_STAGES.length-1?1:"auto" }}>
+                  <div title={s.label}
+                    style={{ width:28,height:28,borderRadius:"50%",background:done?s.color:"#e2e8f0",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,border:isActive?`3px solid ${s.color}`:"2px solid transparent",boxSizing:"border-box",transition:"all .2s" }}>
+                    <i className={`ti ${s.icon}`} style={{ fontSize:12, color:done?"white":"#94a3b8" }}></i>
+                  </div>
+                  {i<CPAP_STAGES.length-1 && (
+                    <div style={{ flex:1,height:3,background:i<cpapStageIdx?CPAP_STAGES[i+1].color:"#e2e8f0",borderRadius:2,margin:"0 3px",transition:"background .3s" }}></div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <span style={{ fontSize:11, color:CPAP_STAGES[cpapStageIdx]?.color, fontWeight:600 }}>
+            {CPAP_STAGES[cpapStageIdx]?.label}
+          </span>
         </div>
       )}
 
-      {/* Sleep Report — Admin: กรอก/แก้ไข | Hospital: เห็น AHI + เปิด PDF */}
+      {/* Sleep Report section */}
       {(appt.apptType||"sleep_test")==="sleep_test" && (appt.journeyStatus==="result_ready"||appt.journeyStatus==="consulted"||appt.journeyStatus==="tested"||appt.journeyStatus==="waiting_result") && (
         <div style={{ marginTop:8 }}>
-          {/* Admin: กรอก / แก้ไข report */}
           {isAdmin && (
             <div style={{ display:"flex", gap:7, alignItems:"center" }}>
               <button onClick={()=>onUpdate({ _openReport:true })}
-                style={{ display:"flex", alignItems:"center", gap:6, padding:"8px 14px", fontSize:12, fontWeight:700, borderRadius:10, background:appt.sleepReport?.ahiLevel?"#059669":"#1d4ed8", color:"white", border:"none", cursor:"pointer", fontFamily:FONT }}>
+                style={{ display:"flex",alignItems:"center",gap:6,padding:"8px 14px",fontSize:12,fontWeight:700,borderRadius:10,background:appt.sleepReport?.ahiLevel?"#059669":"#1d4ed8",color:"white",border:"none",cursor:"pointer",fontFamily:FONT }}>
                 <i className={`ti ${appt.sleepReport?.ahiLevel?"ti-edit":"ti-file-plus"}`} style={{ fontSize:14 }}></i>
                 {appt.sleepReport?.ahiLevel ? "แก้ไข Sleep Report" : "กรอก Sleep Report"}
               </button>
               {appt.sleepReport?.ahiLevel && (
-                <span style={{ fontSize:11, color:"#059669", fontWeight:500, display:"flex", alignItems:"center", gap:4 }}>
+                <span style={{ fontSize:11,color:"#059669",fontWeight:500,display:"flex",alignItems:"center",gap:4 }}>
                   <i className="ti ti-check-circle" style={{ fontSize:13 }}></i>บันทึกแล้ว
                 </span>
               )}
             </div>
           )}
-
-          {/* Hospital: เห็น AHI level badge + ปุ่ม Print PDF */}
           {!isAdmin && appt.sleepReport?.ahiLevel && (() => {
             const lv = AHI_LEVELS.find(l=>l.key===appt.sleepReport.ahiLevel);
             const rep = appt.sleepReport;
             const openPdf = () => {
               if(!rep.pdfDataUrl) return;
               const w=window.open("","_blank");
-              w.document.write(`<!DOCTYPE html><html><head><title>${rep.pdfFileName||"Report"}</title><style>body{margin:0;background:#333}</style></head><body><iframe src="${rep.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
+              w.document.write(`<!DOCTYPE html><html><head><title>${rep.pdfFileName}</title><style>body{margin:0;background:#333}</style></head><body><iframe src="${rep.pdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`);
               w.document.close();
             };
             return (
-              <div style={{ padding:"12px 14px", background: lv?lv.bg:"#f1f5f9", borderRadius:12, border:`1.5px solid ${lv?lv.color:"#e2e8f0"}` }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom: rep.notes||rep.pdfDataUrl?10:0 }}>
+              <div style={{ padding:"12px 14px",background:lv?lv.bg:"#f1f5f9",borderRadius:12,border:`1.5px solid ${lv?lv.color:"#e2e8f0"}` }}>
+                <div style={{ display:"flex",alignItems:"center",gap:10,marginBottom:rep.notes||rep.pdfDataUrl?10:0 }}>
                   <div style={{ width:36,height:36,borderRadius:"50%",background:lv?lv.color:"#64748b",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
-                    <i className="ti ti-activity" style={{ fontSize:18, color:"white" }}></i>
+                    <i className="ti ti-activity" style={{ fontSize:18,color:"white" }}></i>
                   </div>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:lv?lv.color:"#334155" }}>
+                    <div style={{ fontSize:13,fontWeight:800,color:lv?lv.color:"#334155" }}>
                       {lv?.label||"ผลออกแล้ว"}
                     </div>
-                    <div style={{ fontSize:11, color:lv?lv.color:"#64748b", marginTop:1 }}>
+                    <div style={{ fontSize:11,color:lv?lv.color:"#64748b",marginTop:1 }}>
                       {rep.ahi ? `AHI = ${rep.ahi} events/hr` : lv?.desc||""}
                       {rep.doctorName ? ` · ${rep.doctorName}` : ""}
                     </div>
                   </div>
-                  {/* Print PDF button */}
                   {rep.pdfDataUrl ? (
                     <button onClick={openPdf}
-                      style={{ padding:"8px 14px", fontSize:12, fontWeight:700, borderRadius:9, background:"#dc2626", color:"white", border:"none", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", gap:6, flexShrink:0 }}>
+                      style={{ padding:"8px 14px",fontSize:12,fontWeight:700,borderRadius:9,background:"#dc2626",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:6,flexShrink:0 }}>
                       <i className="ti ti-printer" style={{ fontSize:14 }}></i> Print PDF
                     </button>
                   ) : (
-                    <span style={{ fontSize:10, color:"#94a3b8", padding:"6px 10px", borderRadius:8, border:"0.5px solid #e2e8f0", background:"white" }}>รอ PDF</span>
+                    <span style={{ fontSize:10,color:"#94a3b8",padding:"6px 10px",borderRadius:8,border:"0.5px solid #e2e8f0",background:"white" }}>รอ PDF</span>
                   )}
                 </div>
                 {rep.notes && (
-                  <div style={{ fontSize:12, color:lv?lv.color:"#475569", padding:"8px 10px", background:"rgba(255,255,255,.6)", borderRadius:8 }}>
-                    <i className="ti ti-notes" style={{ marginRight:5, fontSize:11 }}></i>{rep.notes}
+                  <div style={{ fontSize:12,color:lv?lv.color:"#475569",padding:"8px 10px",background:"rgba(255,255,255,.6)",borderRadius:8 }}>
+                    <i className="ti ti-notes" style={{ marginRight:5,fontSize:11 }}></i>{rep.notes}
                   </div>
                 )}
               </div>
             );
           })()}
-
-          {/* Hospital: ยังไม่มีผล */}
           {!isAdmin && !appt.sleepReport?.ahiLevel && (
-            <div style={{ padding:"9px 12px", background:"#f1f5f9", borderRadius:10, border:"0.5px solid #e2e8f0", display:"flex", alignItems:"center", gap:7 }}>
-              <i className="ti ti-clock" style={{ fontSize:14, color:T.muted }}></i>
-              <span style={{ fontSize:12, color:T.muted }}>รอผลการตรวจ — Admin กำลังดำเนินการ</span>
+            <div style={{ padding:"9px 12px",background:"#f1f5f9",borderRadius:10,border:"0.5px solid #e2e8f0",display:"flex",alignItems:"center",gap:7 }}>
+              <i className="ti ti-clock" style={{ fontSize:14,color:T.muted }}></i>
+              <span style={{ fontSize:12,color:T.muted }}>รอผลการตรวจ — Admin กำลังดำเนินการ</span>
             </div>
           )}
         </div>
@@ -1884,20 +1945,30 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[] }) 
 
       {/* Book CPAP trial prompt */}
       {canBookCpap && (
-        <div style={{ marginTop:10, padding:"10px 12px", background:"#f5f3ff", border:"1px solid #a78bfa", borderRadius:11, display:"flex", alignItems:"center", gap:10 }}>
-          <i className="ti ti-device-heart-monitor" style={{ fontSize:20, color:"#7c3aed", flexShrink:0 }}></i>
-          <div style={{ flex:1 }}>
-            <div style={{ fontSize:12, fontWeight:700, color:"#5b21b6" }}>ฟังผลแล้ว — นัดทดลอง CPAP?</div>
-            <div style={{ fontSize:11, color:"#7c3aed", marginTop:1 }}>สร้างนัดทดลองเครื่องให้ผู้ป่วยรายนี้</div>
+        hasCpapBooked ? (
+          <div style={{ marginTop:10,padding:"10px 12px",background:"#f0fdf4",border:"1px solid #86efac",borderRadius:11,display:"flex",alignItems:"center",gap:10 }}>
+            <i className="ti ti-check-circle" style={{ fontSize:18,color:"#059669",flexShrink:0 }}></i>
+            <div>
+              <div style={{ fontSize:12,fontWeight:700,color:"#059669" }}>ส่งรายชื่อแล้ว</div>
+              <div style={{ fontSize:11,color:"#059669",marginTop:1 }}>รอ Sales ติดต่อนัดทดลองเครื่อง</div>
+            </div>
           </div>
-          <button onClick={()=>onUpdate({ _bookCpapTrial:true })}
-            style={{ padding:"7px 13px", fontSize:11, fontWeight:700, borderRadius:9, background:"#7c3aed", color:"white", border:"none", cursor:"pointer", fontFamily:FONT, flexShrink:0 }}>
-            + นัดทดลอง
-          </button>
-        </div>
+        ) : (
+          <div style={{ marginTop:10,padding:"10px 12px",background:"#f5f3ff",border:"1px solid #a78bfa",borderRadius:11,display:"flex",alignItems:"center",gap:10 }}>
+            <i className="ti ti-device-heart-monitor" style={{ fontSize:20,color:"#7c3aed",flexShrink:0 }}></i>
+            <div style={{ flex:1 }}>
+              <div style={{ fontSize:12,fontWeight:700,color:"#5b21b6" }}>ฟังผลแล้ว — นัดทดลอง CPAP?</div>
+              <div style={{ fontSize:11,color:"#7c3aed",marginTop:1 }}>สร้างนัดทดลองเครื่องให้ผู้ป่วยรายนี้</div>
+            </div>
+            <button onClick={()=>onUpdate({ _bookCpapTrial:true })}
+              style={{ padding:"7px 13px",fontSize:11,fontWeight:700,borderRadius:9,background:"#7c3aed",color:"white",border:"none",cursor:"pointer",fontFamily:FONT,flexShrink:0 }}>
+              + นัดทดลอง
+            </button>
+          </div>
+        )
       )}
 
-      {/* CPAP Trial section */}
+      {/* CPAP Trial data section */}
       {appt.apptType==="cpap_trial" && (
         canEdit && isAdmin
           ? <CpapTrialTracker appt={appt} onUpdate={onUpdate} isAdmin={isAdmin} salesList={salesList} />
@@ -1907,10 +1978,11 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, salesList=[] }) 
   );
 }
 
+
 // ── Appointment Card (edit + reschedule + cancel) ─────────────────────────────
 const CANCEL_REASONS = ["ผู้ป่วยติดธุระ","ผู้ป่วยไม่สบาย","ผู้ป่วยขอเลื่อน","รพ. ขอเลื่อน","อุปกรณ์ไม่พร้อม","อื่นๆ"];
 
-function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[], isDuplicate=false }) {
+function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[], isDuplicate=false, hasCpapBooked=false }) {
   const [mode, setMode]               = useState(null);
   const [showReport, setShowReport]   = useState(false);
   const [form, setForm]               = useState({ name:a.name, phone:a.phone, hn:a.hn, hospId:a.hospId, note:a.note||"", paymentType:a.paymentType||"" });
@@ -2033,7 +2105,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, moving
       {/* Journey progress — only if not cancelled */}
       {!isCancelled && (
         <div style={{ borderTop:`0.5px solid ${T.line}` }}>
-          <JourneyPanel appt={a} canEdit={canEdit} onUpdate={handleJourneyUpdate} isAdmin={isAdmin} salesList={salesList} />
+          <JourneyPanel appt={a} canEdit={canEdit} onUpdate={handleJourneyUpdate} isAdmin={isAdmin} salesList={salesList} hasCpapBooked={hasCpapBooked} />
         </div>
       )}
 
@@ -3691,6 +3763,39 @@ function PurchaseCard({ a, hospitals, isAdmin, salesList=[], onDecision, onPurch
             {isAdmin&&<span style={{fontSize:12,fontWeight:700,color:"#7c3aed"}}>คอม: {com.toLocaleString()} ฿</span>}
           </div>
         )}
+        {/* ── Trial Result PDF — Sales แนบ, รพ. Print ── */}
+        <div style={{marginTop:4}}>
+          <div style={{fontSize:11,color:"#64748b",fontWeight:600,marginBottom:6,display:"flex",alignItems:"center",gap:5}}>
+            <i className="ti ti-file-type-pdf" style={{fontSize:14,color:"#dc2626"}}></i>
+            แนบผลการทดลอง PDF (รพ. จะ Print ให้หมอได้)
+          </div>
+          {form.trialPdfDataUrl ? (
+            <div style={{padding:"9px 12px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac",display:"flex",alignItems:"center",gap:9}}>
+              <i className="ti ti-file-check" style={{fontSize:20,color:"#059669",flexShrink:0}}></i>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:11,fontWeight:700,color:"#166534",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{form.trialPdfFileName}</div>
+                <div style={{fontSize:10,color:"#059669",marginTop:1}}>แนบแล้ว ✓</div>
+              </div>
+              <button onClick={()=>{ const w=window.open("","_blank"); w.document.write(`<html><body style="margin:0;background:#333"><iframe src="${form.trialPdfDataUrl}" style="width:100vw;height:100vh;border:none;"></iframe></body></html>`); w.document.close(); }}
+                style={{padding:"5px 11px",fontSize:11,fontWeight:700,borderRadius:8,background:"#059669",color:"white",border:"none",cursor:"pointer",flexShrink:0}}>
+                <i className="ti ti-printer" style={{marginRight:4}}></i>Print
+              </button>
+              <button onClick={()=>commit("trialPdfDataUrl","")}
+                style={{padding:"5px 9px",fontSize:11,borderRadius:8,border:"1px solid #fecaca",background:"white",color:"#dc2626",cursor:"pointer",flexShrink:0}}>ลบ</button>
+            </div>
+          ) : (
+            <label style={{display:"flex",alignItems:"center",gap:9,padding:"11px 14px",borderRadius:10,border:"1.5px dashed #cbd5e1",background:"#f8fafc",cursor:"pointer"}}>
+              <i className="ti ti-upload" style={{fontSize:18,color:"#94a3b8"}}></i>
+              <span style={{fontSize:11,color:"#64748b"}}>คลิกเพื่อแนบไฟล์ PDF ผลทดลอง</span>
+              <input type="file" accept=".pdf,application/pdf" style={{display:"none"}} onChange={e=>{
+                const file=e.target.files?.[0]; if(!file) return;
+                const reader=new FileReader();
+                reader.onload=ev=>{ const next={...form,trialPdfDataUrl:ev.target.result,trialPdfFileName:file.name}; setForm(next); onPurchaseChange(a.id,next); };
+                reader.readAsDataURL(file); e.target.value="";
+              }}/>
+            </label>
+          )}
+        </div>
       </div>
     </div>
   );
