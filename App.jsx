@@ -1206,6 +1206,176 @@ function exportToExcel(appts, hospitals, techs, assignments, checkins, techRates
   exportToXLS(lines[0], lines.slice(1), `3n-data-${new Date().toISOString().slice(0,10)}`);
 }
 
+// ── CPAP Criteria Modal ──────────────────────────────────────────────────────
+function CpapCriteriaModal({ onClose }) {
+  const [section, setSection] = useState("eligibility");
+  const tabs = [
+    { id:"eligibility", label:"เงื่อนไขผู้ป่วย",   icon:"ti-user-check"       },
+    { id:"rates",       label:"อัตราการเบิกจ่าย", icon:"ti-currency-baht"    },
+    { id:"device",      label:"คุณสมบัติเครื่อง",  icon:"ti-device-heart-monitor" },
+  ];
+  return (
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
+      style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(5,15,50,0.85)",backdropFilter:"blur(8px)",WebkitBackdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:FONT}}>
+      <div style={{width:"100%",maxWidth:620,maxHeight:"92vh",background:"#ffffff",borderRadius:20,overflow:"hidden",display:"flex",flexDirection:"column",boxShadow:"0 40px 100px rgba(0,0,0,.55)"}}>
+
+        {/* Header */}
+        <div style={{padding:"16px 20px",background:"linear-gradient(135deg,#0c1445,#7c3aed)",flexShrink:0}}>
+          <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:12}}>
+            <div>
+              <div style={{fontSize:14,fontWeight:800,color:"white",display:"flex",alignItems:"center",gap:8}}>
+                <i className="ti ti-file-certificate" style={{fontSize:16}}></i>
+                หลักเกณฑ์การเบิกจ่าย CPAP — ประกันสังคม
+              </div>
+              <div style={{fontSize:10,color:"rgba(255,255,255,.6)",marginTop:2}}>
+                ประกาศคณะกรรมการการแพทย์ฯ ลงวันที่ ๑๖ มิถุนายน พ.ศ. ๒๕๖๙
+              </div>
+            </div>
+            <button onClick={onClose} style={{width:30,height:30,borderRadius:8,background:"rgba(255,255,255,.15)",border:"none",color:"white",cursor:"pointer",fontSize:18,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          {/* Tabs */}
+          <div style={{display:"flex",gap:6}}>
+            {tabs.map(t=>(
+              <button key={t.id} onClick={()=>setSection(t.id)}
+                style={{padding:"6px 13px",fontSize:11,fontWeight:600,borderRadius:20,border:"none",cursor:"pointer",fontFamily:FONT,display:"flex",alignItems:"center",gap:5,
+                  background:section===t.id?"white":"rgba(255,255,255,.15)",
+                  color:section===t.id?"#7c3aed":"rgba(255,255,255,.8)"}}>
+                <i className={`ti ${t.icon}`} style={{fontSize:12}}></i>{t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{flex:1,overflowY:"auto",minHeight:0,padding:"18px 20px",display:"flex",flexDirection:"column",gap:12}}>
+
+          {/* ── Tab 1: เงื่อนไขผู้ป่วย ── */}
+          {section==="eligibility" && (<>
+            <div style={{padding:"10px 14px",background:"#ede9fe",borderRadius:10,border:"0.5px solid #a78bfa",fontSize:12,color:"#5b21b6",lineHeight:1.7}}>
+              <i className="ti ti-info-circle" style={{marginRight:6,fontSize:13}}></i>
+              ผู้ป่วยต้องผ่าน <strong>เงื่อนไขข้อใดข้อหนึ่ง</strong> และผ่านการทดลองใช้เครื่อง PAP
+              เฉลี่ยอย่างน้อย <strong>4 ชม./คืน ≥ 1–2 สัปดาห์</strong> ในเครื่องแรก
+            </div>
+            {[
+              {no:"๑", color:"#7c3aed", bg:"#ede9fe", border:"#a78bfa",
+                title:"Severe OSA", badge:"AHI ≥ 30 ครั้ง/ชม.",
+                desc:"ระดับความรุนแรงมาก (AHI ≥ 30 ครั้ง/ชม.)"},
+              {no:"๒", color:"#dc2626", bg:"#fee2e2", border:"#fca5a5",
+                title:"Moderate OSA + โรคร่วม", badge:"AHI 15–29 ครั้ง/ชม.",
+                desc:"ระดับปานกลาง (AHI 15–29 ครั้ง/ชม.) ร่วมกับโรคใดโรคหนึ่ง:",
+                bullets:["Stroke / โรคสมองขาดเลือด","Myocardial infarction / กล้ามเนื้อหัวใจขาดเลือด","ภาวะหัวใจล้มเหลว","Refractory HT: SBP/DBP ≥ 160/90 mmHg ขณะรับยาลดความดัน ≥ 3 กลุ่ม"]},
+              {no:"๓", color:"#d97706", bg:"#fef9c3", border:"#fde047",
+                title:"Mild OSA + อาชีพเสี่ยง", badge:"AHI 5–14 ครั้ง/ชม.",
+                desc:"ระดับน้อย (AHI 5–14 ครั้ง/ชม.) ประกอบอาชีพเสี่ยงต่ออุบัติเหตุจากการง่วงนอน เช่น พนักงานขับรถ นักบิน ฯลฯ"},
+            ].map(item=>(
+              <div key={item.no} style={{padding:"12px 16px",background:item.bg,borderRadius:12,border:`1.5px solid ${item.border}`}}>
+                <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
+                  <div style={{width:30,height:30,borderRadius:8,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                    <span style={{fontSize:13,fontWeight:800,color:"white"}}>{item.no}</span>
+                  </div>
+                  <div>
+                    <div style={{fontSize:13,fontWeight:700,color:item.color}}>{item.title}</div>
+                    <span style={{fontSize:10,padding:"1px 8px",borderRadius:20,background:item.color,color:"white",fontWeight:600}}>{item.badge}</span>
+                  </div>
+                </div>
+                <div style={{fontSize:12,color:item.color,lineHeight:1.7,opacity:.9}}>{item.desc}</div>
+                {item.bullets&&<ul style={{margin:"6px 0 0 4px",padding:"0 0 0 16px",fontSize:12,color:item.color,lineHeight:1.8,opacity:.85}}>{item.bullets.map((b,i)=><li key={i}>{b}</li>)}</ul>}
+              </div>
+            ))}
+            <div style={{padding:"10px 14px",background:"#f0f9ff",borderRadius:10,border:"0.5px solid #bae6fd",fontSize:11,color:"#0369a1",lineHeight:1.7}}>
+              <strong>เงื่อนไขการต่ออายุ:</strong> ใช้เครื่องเฉลี่ย ≥ 4 ชม./วัน ≥ 70% ของระยะเวลา
+              อย่างน้อย 3 เดือน พร้อมเอกสารยืนยัน (ข้อ ๒ ในตาราง)
+            </div>
+          </>)}
+
+          {/* ── Tab 2: อัตราการเบิกจ่าย ── */}
+          {section==="rates" && (<>
+            <div style={{padding:"10px 14px",background:"#f0fdf4",borderRadius:10,border:"0.5px solid #86efac",fontSize:12,color:"#166534",lineHeight:1.7,marginBottom:4}}>
+              <i className="ti ti-currency-baht" style={{marginRight:6,fontSize:13}}></i>
+              อัตราที่สำนักงานประกันสังคมกำหนด — สถานพยาบาลเบิกได้ไม่เกินอัตราต่อไปนี้
+            </div>
+            {[
+              {label:"PSG ชนิดที่ ๑", sub:"มีเจ้าหน้าที่เฝ้าติดตามขณะตรวจทั้งคืน", price:"7,000", color:"#1e40af", bg:"#dbeafe", border:"#93c5fd", icon:"ti-stethoscope"},
+              {label:"PSG ชนิดที่ ๒", sub:"การตรวจวัดเหมือนชนิดที่ ๑ เว้นแต่ไม่มีเจ้าหน้าที่เฝ้า", price:"6,000", color:"#7c3aed", bg:"#ede9fe", border:"#a78bfa", icon:"ti-stethoscope"},
+              {label:"เครื่อง PAP + อุปกรณ์เสริม (รหัส ๓๐๑๒)", sub:"ต่อชุด — ใช้ร่วมกับหน้ากากครอบจมูกหรือปาก", price:"20,000", color:"#059669", bg:"#d1fae5", border:"#6ee7b7", icon:"ti-device-heart-monitor"},
+              {label:"หน้ากากครอบจมูก/ปาก (รหัส ๓๐๑๓)", sub:"ต่อชิ้น (ครั้งที่ ๒ เป็นต้นไป) — ใช้อยู่ชำรุด/ใช้งานไม่ได้ ≤ 1 ชิ้น/ปี", price:"4,000", color:"#d97706", bg:"#fef9c3", border:"#fde047", icon:"ti-shield"},
+            ].map((r,i)=>(
+              <div key={i} style={{display:"flex",alignItems:"center",gap:14,padding:"13px 16px",background:r.bg,borderRadius:12,border:`1.5px solid ${r.border}`}}>
+                <div style={{width:38,height:38,borderRadius:10,background:r.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <i className={`ti ${r.icon}`} style={{fontSize:18,color:"white"}}></i>
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:r.color}}>{r.label}</div>
+                  <div style={{fontSize:11,color:r.color,opacity:.8,marginTop:2,lineHeight:1.5}}>{r.sub}</div>
+                </div>
+                <div style={{textAlign:"right",flexShrink:0}}>
+                  <div style={{fontSize:18,fontWeight:800,color:r.color}}>{r.price}</div>
+                  <div style={{fontSize:10,color:r.color,opacity:.7}}>บาท</div>
+                </div>
+              </div>
+            ))}
+            <div style={{padding:"10px 14px",background:"#fff7ed",borderRadius:10,border:"0.5px solid #fed7aa",fontSize:11,color:"#92400e",lineHeight:1.7}}>
+              <i className="ti ti-alert-triangle" style={{marginRight:6,fontSize:12}}></i>
+              <strong>หมายเหตุ:</strong> ค่ากรองอากาศ (Filter), กระดาษกรอง และแผ่นกรองฟองน้ำ
+              รวมอยู่ในค่าบริการของสถานพยาบาลแล้ว ไม่เบิกแยก
+            </div>
+          </>)}
+
+          {/* ── Tab 3: คุณสมบัติเครื่อง ── */}
+          {section==="device" && (<>
+            <div style={{fontSize:12,fontWeight:700,color:T.navy,marginBottom:4}}>คุณสมบัติเครื่องอัดอากาศแรงดันบวก (PAP)</div>
+            {[
+              "สถานพยาบาลต้องจัดหาเครื่องที่มีการรับประกันตัวเครื่อง ≥ 5 ปี",
+              "ต้องเป็นเครื่องที่ผ่านการรับรองคุณภาพมาตรฐานจากสำนักงาน อย.",
+              "เป็นเครื่องอัดอากาศแรงดันบวก ระดับแรงดัน 1 ระดับ (CPAP) หรือ 2 ระดับ (BiPAP) หรือแบบอัตโนมัติ (Auto)",
+              "สามารถคำนวณและออกบันทึกการใช้เครื่องขณะให้รักษาด้วยแรงดันบวกเป็นร้อยละของจำนวนวันที่ใช้เฉลี่ย ≥ 4 ชม./วัน ต่อเนื่อง ≥ 1 ปี",
+              "บริษัทที่จำหน่ายต้องมีระบบติดตามผลและให้ความรู้แก่ผู้ประกันตน (PAP Education)",
+            ].map((txt,i)=>(
+              <div key={i} style={{display:"flex",gap:10,padding:"9px 12px",background:"#f8fafc",borderRadius:9,border:"0.5px solid #e2e8f0"}}>
+                <div style={{width:22,height:22,borderRadius:6,background:"#7c3aed",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
+                  <span style={{fontSize:11,fontWeight:700,color:"white"}}>{i+1}</span>
+                </div>
+                <div style={{fontSize:12,color:T.ink,lineHeight:1.7}}>{txt}</div>
+              </div>
+            ))}
+            <div style={{fontSize:12,fontWeight:700,color:T.navy,marginTop:4,marginBottom:4}}>คุณสมบัติแพทย์ผู้สั่งใช้เครื่อง</div>
+            {["อายุรแพทย์/กุมารแพทย์โรคระบบการหายใจและภาวะวิกฤตฯ สาขาประสาทวิทยา",
+              "แพทย์ผู้เชี่ยวชาญโสต ศอ นาสิก อายุรแพทย์สาขาประสาทวิทยา","จิตแพทย์การนอนหลับ",
+            ].map((txt,i)=>(
+              <div key={i} style={{display:"flex",gap:10,padding:"8px 12px",background:"#faf5ff",borderRadius:9,border:"0.5px solid #ddd6fe"}}>
+                <i className="ti ti-stethoscope" style={{fontSize:14,color:"#7c3aed",flexShrink:0,marginTop:2}}></i>
+                <div style={{fontSize:12,color:"#5b21b6",lineHeight:1.6}}>{txt}</div>
+              </div>
+            ))}
+          </>)}
+
+        </div>
+
+        {/* Footer */}
+        <div style={{padding:"11px 20px",borderTop:"0.5px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"#f8fafc"}}>
+          <span style={{fontSize:10,color:T.faint}}>ประกาศ ณ วันที่ ๑๖ มิถุนายน พ.ศ. ๒๕๖๙ • นายสุรเดช วลีอิทธิกุล</span>
+          <button onClick={onClose} style={{padding:"8px 20px",fontSize:13,fontWeight:700,borderRadius:10,background:"#7c3aed",color:"white",border:"none",cursor:"pointer",fontFamily:FONT}}>ปิด</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── CpapCriteriaBtn — ปุ่มเล็กๆ ใช้ซ้ำได้ทุกที่ ────────────────────────────
+function CpapCriteriaBtn({ style={} }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button onClick={()=>setOpen(true)}
+        style={{display:"flex",alignItems:"center",gap:5,padding:"5px 11px",fontSize:11,fontWeight:600,borderRadius:20,border:"1.5px solid #a78bfa",background:"#ede9fe",color:"#7c3aed",cursor:"pointer",fontFamily:FONT,whiteSpace:"nowrap",...style}}>
+        <i className="ti ti-file-certificate" style={{fontSize:12}}></i>
+        เงื่อนไข CPAP
+      </button>
+      {open && <CpapCriteriaModal onClose={()=>setOpen(false)} />}
+    </>
+  );
+}
+
 // ── Sleep Report Modal ────────────────────────────────────────────────────────
 const AHI_LEVELS = [
   { key:"normal",        label:"Normal",                        desc:"Less than 5 events per hour",                    color:"#059669", bg:"#d1fae5", range:"AHI < 5"   },
@@ -1302,6 +1472,7 @@ function SleepReportModal({ appt, hosp, hospitals=[], onClose, onSave }) {
             <div style={{ fontSize:12, fontWeight:700, color:"#111827", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
               <i className="ti ti-activity" style={{ fontSize:14, color:T.blue }}></i>
               AHI Level — ระดับความรุนแรง
+              <CpapCriteriaBtn style={{marginLeft:"auto"}} />
               {lvl && <span style={{ marginLeft:"auto", fontSize:11, padding:"2px 10px", borderRadius:10, background:lvl.color, color:"white", fontWeight:600 }}>เลือกแล้ว: {lvl.label}</span>}
             </div>
             <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
@@ -1655,6 +1826,7 @@ function CpapTrialTracker({ appt, onUpdate, isAdmin=false, salesList=[] }) {
       <div style={{ fontSize:11, fontWeight:700, color:"#5b21b6", marginBottom:10, ...R, gap:6 }}>
         <i className="ti ti-device-heart-monitor" style={{ fontSize:14 }}></i>
         บันทึกการทดลอง CPAP
+        <CpapCriteriaBtn style={{marginLeft:"auto"}} />
       </div>
 
       {/* Trial entries */}
@@ -4831,6 +5003,7 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
           <i className="ti ti-device-heart-monitor" style={{fontSize:17,color:"#7c3aed"}}></i>
           <span style={{fontSize:14,fontWeight:800,color:T.navy}}>CPAP Sales</span>
           <span style={{fontSize:12,color:T.muted}}>{pool.length} รายการ</span>
+          <CpapCriteriaBtn style={{marginLeft:8}} />
           <div style={{marginLeft:"auto",display:"flex",gap:8}}>
             {/* Add patient — Sales, Admin, CPAP-only hospital can add */}
             {(isAdmin || user.role==="sales" || isCpapOnlyHosp) && (
@@ -5152,6 +5325,9 @@ function SalesPatientView({ user, appointments, hospitals, setAppointments, sale
         )}
 
         {/* ── WAITING BUY TAB — รอซื้อเครื่อง ── */}
+        {tab==="waiting_buy" && byStatus("waiting_buy").length>0 && (
+          <div style={{display:"flex",justifyContent:"flex-end",marginBottom:4}}><CpapCriteriaBtn /></div>
+        )}
         {tab==="waiting_buy" && byStatus("waiting_buy").map(a=>(
           <PurchaseCard key={a.id} a={a} hospitals={hospitals} isAdmin={isAdmin} salesList={salesList}
             onDecision={(id,dec)=>upd(id,{cpapDecision:dec})}
@@ -6252,6 +6428,165 @@ function AdminDashboard({ user, appointments, hospitals, techs, assignments, tec
   );
 }
 
+// ── CpapInfoPage — หน้าเต็มเงื่อนไข CPAP (แสดงใน sidebar tab) ─────────────
+function CpapInfoPage() {
+  const [section, setSection] = useState("eligibility");
+  const tabs = [
+    { id:"eligibility", label:"เงื่อนไขผู้ป่วย",   icon:"ti-user-check"       },
+    { id:"rates",       label:"อัตราการเบิกจ่าย", icon:"ti-currency-baht"    },
+    { id:"device",      label:"คุณสมบัติเครื่อง",  icon:"ti-device-heart-monitor" },
+  ];
+  return (
+    <div style={{flex:1,overflowY:"auto",minHeight:0,padding:"20px 28px",fontFamily:FONT,background:T.bg}}>
+
+      {/* Hero */}
+      <div style={{background:"linear-gradient(135deg,#0c1445,#7c3aed)",borderRadius:16,padding:"20px 24px",marginBottom:20,display:"flex",alignItems:"center",gap:16}}>
+        <div style={{width:52,height:52,borderRadius:14,background:"rgba(255,255,255,.15)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+          <i className="ti ti-file-certificate" style={{fontSize:26,color:"white"}}></i>
+        </div>
+        <div>
+          <div style={{fontSize:16,fontWeight:800,color:"white"}}>หลักเกณฑ์การเบิกจ่าย CPAP — ประกันสังคม</div>
+          <div style={{fontSize:12,color:"rgba(255,255,255,.65)",marginTop:4}}>
+            ประกาศคณะกรรมการการแพทย์ตามพระราชบัญญัติประกันสังคม
+            ลงวันที่ ๑๖ มิถุนายน พ.ศ. ๒๕๖๙ • นายสุรเดช วลีอิทธิกุล
+          </div>
+        </div>
+      </div>
+
+      {/* Tab bar */}
+      <div style={{display:"flex",gap:8,marginBottom:18}}>
+        {tabs.map(t=>{
+          const on = section===t.id;
+          return (
+            <button key={t.id} onClick={()=>setSection(t.id)}
+              style={{display:"flex",alignItems:"center",gap:7,padding:"9px 18px",fontSize:13,fontWeight:on?700:500,borderRadius:10,border:on?"2px solid #7c3aed":"1px solid #e2e8f0",background:on?"#ede9fe":"white",color:on?"#7c3aed":T.muted,cursor:"pointer",fontFamily:FONT,transition:"all .12s"}}>
+              <i className={`ti ${t.icon}`} style={{fontSize:15}}></i>{t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* ── Tab 1 ── */}
+      {section==="eligibility" && (
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{padding:"12px 16px",background:"#ede9fe",borderRadius:12,border:"1px solid #a78bfa",fontSize:13,color:"#5b21b6",lineHeight:1.7}}>
+            <i className="ti ti-info-circle" style={{marginRight:8,fontSize:14}}></i>
+            ผู้ป่วยต้องผ่าน <strong>เงื่อนไขข้อใดข้อหนึ่ง</strong> และผ่านการทดลองใช้เครื่อง PAP เฉลี่ยอย่างน้อย
+            <strong> 4 ชั่วโมง/คืน เป็นระยะเวลา ≥ 1–2 สัปดาห์</strong> (เครื่องแรก) หรือ ≥ 4 สัปดาห์ (เครื่องถัดไป)
+          </div>
+
+          {[
+            {no:"๑", color:"#7c3aed", bg:"#ede9fe", border:"#a78bfa",
+              title:"Severe OSA", badge:"AHI ≥ 30 ครั้ง/ชม.",
+              desc:"มีระดับความรุนแรงของโรคหยุดหายใจขณะหลับจากการอุดกั้นระดับมาก (AHI ≥ 30 ครั้ง/ชม.)"},
+            {no:"๒", color:"#dc2626", bg:"#fee2e2", border:"#fca5a5",
+              title:"Moderate OSA + โรคร่วม", badge:"AHI 15–29 ครั้ง/ชม.",
+              desc:"ระดับปานกลาง (AHI 15–29 ครั้ง/ชม.) ร่วมกับโรคใดโรคหนึ่ง:",
+              bullets:["Stroke / โรคสมองขาดเลือด","Myocardial infarction / กล้ามเนื้อหัวใจขาดเลือด","ภาวะหัวใจล้มเหลว","Refractory HT: SBP/DBP ≥ 160/90 mmHg ขณะรับยาลดความดันโลหิต ≥ 3 กลุ่ม"]},
+            {no:"๓", color:"#d97706", bg:"#fef9c3", border:"#fde047",
+              title:"Mild OSA + อาชีพเสี่ยง", badge:"AHI 5–14 ครั้ง/ชม.",
+              desc:"ระดับน้อย (AHI 5–14 ครั้ง/ชม.) ประกอบอาชีพเสี่ยงต่อการเกิดอุบัติเหตุจากการง่วงนอน เช่น พนักงานขับรถ นักบิน ฯลฯ"},
+          ].map(item=>(
+            <div key={item.no} style={{padding:"16px 18px",background:item.bg,borderRadius:14,border:`1.5px solid ${item.border}`}}>
+              <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+                <div style={{width:36,height:36,borderRadius:10,background:item.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                  <span style={{fontSize:16,fontWeight:800,color:"white"}}>{item.no}</span>
+                </div>
+                <div>
+                  <div style={{fontSize:14,fontWeight:700,color:item.color}}>{item.title}</div>
+                  <span style={{fontSize:11,padding:"2px 10px",borderRadius:20,background:item.color,color:"white",fontWeight:600}}>{item.badge}</span>
+                </div>
+              </div>
+              <div style={{fontSize:13,color:item.color,lineHeight:1.7}}>{item.desc}</div>
+              {item.bullets&&<ul style={{margin:"8px 0 0",padding:"0 0 0 20px",fontSize:13,color:item.color,lineHeight:1.9}}>{item.bullets.map((b,i)=><li key={i}>{b}</li>)}</ul>}
+            </div>
+          ))}
+
+          <div style={{padding:"12px 16px",background:"#f0f9ff",borderRadius:12,border:"1px solid #bae6fd",fontSize:12,color:"#0369a1",lineHeight:1.8}}>
+            <div style={{fontWeight:700,marginBottom:4}}>📋 เงื่อนไขการต่ออายุ (ข้อ ๒ ในตาราง)</div>
+            ใช้เครื่องเฉลี่ย <strong>≥ 4 ชม./วัน ≥ 70% ของระยะเวลา</strong> อย่างน้อย 3 เดือน
+            พร้อมเอกสารยืนยันจากเครื่อง
+          </div>
+        </div>
+      )}
+
+      {/* ── Tab 2 ── */}
+      {section==="rates" && (
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{padding:"12px 16px",background:"#f0fdf4",borderRadius:12,border:"1px solid #86efac",fontSize:13,color:"#166534",lineHeight:1.7}}>
+            <i className="ti ti-currency-baht" style={{marginRight:8,fontSize:14}}></i>
+            อัตราที่สำนักงานประกันสังคมกำหนด — สถานพยาบาลเบิกได้ <strong>ไม่เกิน</strong>อัตราต่อไปนี้
+          </div>
+          {[
+            {code:"–",    label:"PSG ชนิดที่ ๑", sub:"มีเจ้าหน้าที่เฝ้าติดตามขณะตรวจทั้งคืน", price:"7,000 บาท", color:"#1e40af", bg:"#dbeafe", border:"#93c5fd", icon:"ti-stethoscope"},
+            {code:"–",    label:"PSG ชนิดที่ ๒", sub:"ไม่มีเจ้าหน้าที่เฝ้าติดตาม", price:"6,000 บาท", color:"#7c3aed", bg:"#ede9fe", border:"#a78bfa", icon:"ti-stethoscope"},
+            {code:"๓๐๑๒", label:"เครื่อง PAP + อุปกรณ์เสริม", sub:"ต่อชุด — รวมตัวเครื่อง ท่อต่อ อุปกรณ์ครบถ้วน พร้อมใช้งาน", price:"20,000 บาท", color:"#059669", bg:"#d1fae5", border:"#6ee7b7", icon:"ti-device-heart-monitor"},
+            {code:"๓๐๑๓", label:"หน้ากากครอบจมูก/ปาก", sub:"ต่อชิ้น (ครั้งที่ ๒ เป็นต้นไป — ใช้อยู่ชำรุด/ใช้งานไม่ได้ ≤ 1 ชิ้น/ปี)", price:"4,000 บาท", color:"#d97706", bg:"#fef9c3", border:"#fde047", icon:"ti-shield"},
+          ].map((r,i)=>(
+            <div key={i} style={{display:"flex",alignItems:"center",gap:16,padding:"16px 18px",background:r.bg,borderRadius:14,border:`1.5px solid ${r.border}`}}>
+              <div style={{width:44,height:44,borderRadius:12,background:r.color,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <i className={`ti ${r.icon}`} style={{fontSize:20,color:"white"}}></i>
+              </div>
+              <div style={{flex:1}}>
+                {r.code!=="–" && <div style={{fontSize:10,color:r.color,fontWeight:600,marginBottom:2}}>รหัส {r.code}</div>}
+                <div style={{fontSize:14,fontWeight:700,color:r.color}}>{r.label}</div>
+                <div style={{fontSize:12,color:r.color,opacity:.8,marginTop:2,lineHeight:1.5}}>{r.sub}</div>
+              </div>
+              <div style={{textAlign:"right",flexShrink:0}}>
+                <div style={{fontSize:20,fontWeight:800,color:r.color}}>{r.price.split(" ")[0]}</div>
+                <div style={{fontSize:11,color:r.color,opacity:.7}}>บาท</div>
+              </div>
+            </div>
+          ))}
+          <div style={{padding:"12px 16px",background:"#fff7ed",borderRadius:12,border:"1px solid #fed7aa",fontSize:12,color:"#92400e",lineHeight:1.7}}>
+            <i className="ti ti-alert-triangle" style={{marginRight:6,fontSize:13,color:"#d97706"}}></i>
+            <strong>หมายเหตุ:</strong> ค่ากรองอากาศ (Filter), กระดาษกรอง และแผ่นกรองฟองน้ำ
+            รวมอยู่ในค่าบริการของสถานพยาบาลแล้ว ไม่เบิกแยก
+          </div>
+        </div>
+      )}
+
+      {/* ── Tab 3 ── */}
+      {section==="device" && (
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{fontSize:14,fontWeight:700,color:T.navy}}>คุณสมบัติเครื่องอัดอากาศแรงดันบวก (PAP)</div>
+          {[
+            "สถานพยาบาลต้องจัดหาเครื่องที่มีการรับประกันตัวเครื่อง ≥ 5 ปี หากชำรุดสถานพยาบาลต้องดำเนินการซ่อม/เปลี่ยนเครื่องให้ผู้ประกันตน",
+            "ต้องเป็นเครื่องที่ผ่านการรับรองคุณภาพมาตรฐานจากสำนักงานคณะกรรมการอาหารและยา (อย.)",
+            "เป็นเครื่องอัดอากาศแรงดันบวก ระดับแรงดัน 1 ระดับ (CPAP) หรือ 2 ระดับ (BiPAP) หรือแบบอัตโนมัติ (Auto CPAP/APAP)",
+            "สามารถคำนวณและออกบันทึกการใช้เครื่องขณะให้รักษาด้วยแรงดันบวกเป็นร้อยละของจำนวนวันที่ใช้เฉลี่ย ≥ 4 ชม./วัน ต่อเนื่อง ≥ 1 ปี",
+            "บริษัทที่จำหน่ายเครื่องต้องมีระบบติดตามผลและให้ความรู้แก่ผู้ประกันตน (PAP Education)",
+          ].map((txt,i)=>(
+            <div key={i} style={{display:"flex",gap:12,padding:"12px 16px",background:"#f8fafc",borderRadius:12,border:"1px solid #e2e8f0"}}>
+              <div style={{width:28,height:28,borderRadius:8,background:"#7c3aed",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,marginTop:1}}>
+                <span style={{fontSize:13,fontWeight:700,color:"white"}}>{i+1}</span>
+              </div>
+              <div style={{fontSize:13,color:T.ink,lineHeight:1.7}}>{txt}</div>
+            </div>
+          ))}
+          <div style={{fontSize:14,fontWeight:700,color:T.navy,marginTop:4}}>คุณสมบัติแพทย์ผู้สั่งใช้เครื่อง PAP</div>
+          {[
+            "อายุรแพทย์/กุมารแพทย์โรคระบบการหายใจและภาวะวิกฤตฯ สาขาประสาทวิทยา",
+            "แพทย์ผู้เชี่ยวชาญโสต ศอ นาสิก อายุรแพทย์สาขาประสาทวิทยา",
+            "จิตแพทย์การนอนหลับ",
+          ].map((txt,i)=>(
+            <div key={i} style={{display:"flex",gap:12,padding:"10px 16px",background:"#faf5ff",borderRadius:10,border:"0.5px solid #ddd6fe"}}>
+              <i className="ti ti-stethoscope" style={{fontSize:16,color:"#7c3aed",flexShrink:0,marginTop:2}}></i>
+              <div style={{fontSize:13,color:"#5b21b6",lineHeight:1.6}}>{txt}</div>
+            </div>
+          ))}
+          <div style={{padding:"12px 16px",background:"#f0fdf4",borderRadius:12,border:"1px solid #86efac",fontSize:12,color:"#166534",lineHeight:1.7}}>
+            <i className="ti ti-shield-check" style={{marginRight:6,fontSize:13}}></i>
+            <strong>กรณีไม่มีแพทย์เฉพาะทาง:</strong> แพทย์สาขาใกล้เคียงสามารถส่งตรวจได้ตามความเหมาะสม
+            (อายุรแพทย์โรคระบบการหายใจฯ, กุมารแพทย์โรคระบบการหายใจฯ, โสต ศอ นาสิก)
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 // ── App ───────────────────────────────────────────────────────────────────────
 export default function App() {
   // ── Load Google Fonts safely after mount ──
@@ -6333,6 +6668,8 @@ export default function App() {
     ...((isAdmin || isTech || (isHospital && !isCpapOnly)) ? [{ id:"summary", label:"รายเดือน", icon:"ti-layout-list" }] : []),
     // ค้นหา — ทุก role
     { id:"search",    label:"ค้นหา",           icon:"ti-search"            },
+    // เงื่อนไข CPAP — ทุก role เห็น
+    { id:"cpapinfo",  label:"เงื่อนไข CPAP",   icon:"ti-file-certificate"  },
     // CPAP Sales — Admin, Sales, CPAP-only รพ.
     ...(isSales||isAdmin||(isHospital&&isCpapOnly) ? [{ id:"cpapsales", label:"CPAP Sales", icon:"ti-device-heart-monitor"}] : []),
     // รายงาน — ไม่ใช่ CPAP-only รพ. (CPAP-only ไม่มี PSG report)
@@ -6443,7 +6780,7 @@ export default function App() {
         <div style={{ padding:"14px 24px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
             <div style={{ fontSize:20, fontWeight:800, color:T.navy, letterSpacing:"-0.02em" }}>
-              {tab==="dashboard"?"Dashboard — ภาพรวม 3N Sleep Care":tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="techcal"?"ปฏิทิน Sleep Technician":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
+              {tab==="dashboard"?"Dashboard — ภาพรวม 3N Sleep Care":tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapinfo"?"เงื่อนไขการเบิกจ่าย CPAP — ประกันสังคม":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="techcal"?"ปฏิทิน Sleep Technician":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
             </div>
             <div style={{ fontSize:13, color:T.muted, marginTop:2 }}>
               {user.role==="admin"?"3N Admin — เข้าถึงทุก รพ.":user.role==="tech"?"Sleep Tech — ดูตารางและยืนยันเวร":`${hospitals.find(h=>h.id===user.hospId)?.name||""}`}
@@ -6466,6 +6803,7 @@ export default function App() {
           {tab==="paste"     && <PasteView         user={user} hospitals={hospitals} setAppointments={setApptsSave} />}
           {tab==="summary"   && <MonthlySummary    user={user} appointments={appts} setAppointments={setApptsSave} hospitals={hospitals} techs={techs} assignments={assignments} setAssignments={setAssignSave} checkins={checkins} setCheckins={setCheckinSave} dayBlocks={dayBlocks} setDayBlocks={setBlocksSave} companyHolidays={companyHolidays} setCompanyHolidays={setCompanyHolidays} salesList={salesList} />}
           {tab==="search"    && <SearchView        user={user} appointments={appts} hospitals={hospitals} />}
+          {tab==="cpapinfo"  && <CpapInfoPage />}
           {tab==="cpapsales" && <SalesPatientView  user={user} appointments={appts} hospitals={hospitals} setAppointments={setApptsSave} salesList={salesList} isCpapOnlyHosp={isCpapOnly} />}
           {tab==="report"    && <ReportView        user={user} appointments={appts} hospitals={hospitals} techs={techs} assignments={assignments} techRates={techRates} />}
           {tab==="sales"     && <SalesView         user={user} appointments={appts} hospitals={hospitals} salesList={salesList} setAppointments={setApptsSave} />}
