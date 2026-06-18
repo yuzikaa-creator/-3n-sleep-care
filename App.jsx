@@ -60,8 +60,8 @@ const INIT_TECHS = [
 
 const INIT_USERS = [
   { id:"admin",  name:"3N Admin",              role:"admin",    hospId:null  },
-  { id:"tech",   name:"Sleep Tech 3N",          role:"tech",     hospId:null  },
-  { id:"sales",  name:"Sales 3N",               role:"sales",    hospId:null  },
+  { id:"tech",   name:"3N Sleep Technician",          role:"tech",     hospId:null  },
+  { id:"sales",  name:"3N Sales / ฝ่ายขาย",               role:"sales",    hospId:null  },
   // รพ. Sleep Test + CPAP
   { id:"h1",     name:"รพ. บางปะกอก 8",         role:"hospital", hospId:"h1"  },
   { id:"h4",     name:"รพ. ราษฎร์บูรณะ",        role:"hospital", hospId:"h4"  },
@@ -566,7 +566,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                   border: isHoliday?`1.5px solid #fed7aa`: block?`1.5px solid #a78bfa`: isToday?`2px solid ${T.blue}`: isClickable?`1.5px dashed ${full?"#ef4444":T.blue}`: di%2===0 ? "0.5px solid #e2e8f0" : "0.5px solid #bfdbfe",
                   borderRadius:12, padding:"12px 14px",
                   cursor:isClickable?"pointer":"default",
-                  opacity:isPast&&!isToday?.55:1,
+                  
                   transition:"all .1s",
                   boxShadow: isToday?"0 0 0 2px #3b82f620":di%2===1?"inset 3px 0 0 #3b82f6":"none"
                 }}>
