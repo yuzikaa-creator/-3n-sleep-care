@@ -6,9 +6,28 @@ const FONT = "'Sarabun', 'Inter', sans-serif";
 // ── PDF helper — ใช้ <a> แทน window.open เพื่อหลีกเลี่ยง popup blocker ──────────
 function openPdfUrl(url, name="document.pdf") {
   if(!url) return;
-  const a = document.createElement("a");
-  a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  try {
+    // base64 dataURL → Blob → objectURL (Chrome blocks data: URLs in new tab)
+    if(url.startsWith("data:")) {
+      const [header, b64] = url.split(",");
+      const mime = header.match(/:(.*?);/)?.[1] || "application/pdf";
+      const bytes = atob(b64);
+      const arr = new Uint8Array(bytes.length);
+      for(let i=0; i<bytes.length; i++) arr[i] = bytes.charCodeAt(i);
+      const blob = new Blob([arr], { type: mime });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+    } else {
+      const a = document.createElement("a");
+      a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    }
+  } catch(e) {
+    console.error("openPdfUrl error:", e);
+  }
 }
 
 // ── Master Data ───────────────────────────────────────────────────────────────
@@ -2409,16 +2428,21 @@ function parseLineText(text, defaultHospId) {
 
 // ── Paste View ────────────────────────────────────────────────────────────────
 function PasteView({ user, hospitals, setAppointments }) {
+  const textareaRef = useRef(null);
   const [text,    setText]   = useState("");
   const [parsed,  setParsed] = useState([]);
   const [saved,   setSaved]  = useState(false);
   const [error,   setError]  = useState("");
 
+  // อ่านค่าจาก ref โดยตรงเพื่อป้องกัน controlled-input bug
+  const getTextValue = () => textareaRef.current?.value ?? text;
+
   const parse = () => {
-    if(!text.trim()) return;
+    const val = getTextValue().trim();
+    if(!val) return;
     setError(""); setParsed([]);
     try {
-      const results = parseLineText(text.trim(), user.hospId||hospitals[0]?.id);
+      const results = parseLineText(val, user.hospId||hospitals[0]?.id);
       if(!results||results.length===0) {
         setError("ไม่พบข้อมูล — ตรวจสอบว่าข้อความมีรหัส HN (เลข) ชื่อ และโทรศัพท์");
       } else {
@@ -2432,7 +2456,7 @@ function PasteView({ user, hospitals, setAppointments }) {
   const save = () => {
     setAppointments(p=>[...p,...parsed]);
     setSaved(true);
-    setTimeout(()=>{ setSaved(false); setParsed([]); setText(""); }, 2000);
+    setTimeout(()=>{ setSaved(false); setParsed([]); setText(""); if(textareaRef.current) textareaRef.current.value=""; }, 2000);
   };
 
   const updateParsed = (id, upd) => setParsed(p=>p.map(x=>x.id===id?{...x,...upd}:x));
@@ -2504,14 +2528,15 @@ function PasteView({ user, hospitals, setAppointments }) {
 
         {/* Textarea */}
         <textarea
-          value={text}
+          ref={textareaRef}
+          defaultValue={text}
           onChange={e=>setText(e.target.value)}
           placeholder={"วางข้อความจาก Line ที่นี่...\n\nตัวอย่าง:\n12349999\nน.ส.มีนา มืนม\nโทร0812345000\nจองวันที่1/7/69\nโรค DM, HT"}
           style={{ width:"100%", minHeight:140, height:140, display:"block", padding:"11px 13px", fontSize:12, fontFamily:"monospace", border:`1px solid ${T.line}`, borderRadius:10, background:"white", color:T.ink, resize:"vertical", outline:"none", lineHeight:1.9, boxSizing:"border-box" }}
         />
 
         <div style={{ marginTop:11 }}>
-          <Btn variant="primary" onClick={parse} disabled={!text.trim()}>
+          <Btn variant="primary" onClick={parse}>
             <i className="ti ti-file-search" style={{ fontSize:14 }}></i>
             แปลงข้อความ
           </Btn>
