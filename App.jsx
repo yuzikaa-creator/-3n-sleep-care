@@ -7062,8 +7062,14 @@ export default function App() {
               <div style={{ position:"absolute", bottom:0, left:0, right:0, background:"rgba(0,0,0,.45)", fontSize:7, color:"rgba(255,255,255,.7)", textAlign:"center", padding:"2px 0", fontFamily:"inherit", letterSpacing:".02em" }}>LOGO</div>
             </div>
             <div>
-              <div style={{ fontSize:15, fontWeight:800, color:"white", letterSpacing:"-0.02em" }}>3N Sleep Care</div>
-              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginTop:2 }}>Sleep Healthcare & Respiratory Care</div>
+              <div style={{ fontSize:15, fontWeight:800, color:"white", letterSpacing:"-0.02em" }}>
+                {isHospital
+                  ? (hospitals.find(h=>h.id===user.hospId)?.name || "3N Sleep Care")
+                  : "3N Sleep Care"}
+              </div>
+              <div style={{ fontSize:10, color:"rgba(255,255,255,.4)", marginTop:2 }}>
+                {isHospital ? "ระบบการนัดหมายตรวจการนอนหลับ" : "Sleep Healthcare & Respiratory Care"}
+              </div>
             </div>
           </div>
         </div>
