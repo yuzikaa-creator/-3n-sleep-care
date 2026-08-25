@@ -33,15 +33,15 @@ function openPdfUrl(url, name="document.pdf") {
 // ── Master Data ───────────────────────────────────────────────────────────────
 const INIT_HOSPITALS = [
   // รพ. ที่ทำ Sleep Test + CPAP
-  { id:"h1", name:"รพ. บางปะกอก 8",              short:"BPK 8",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h2", name:"รพ. บางปะกอก 3",              short:"BPK 3",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h3", name:"รพ. บางปะกอก สมุทรปราการ",    short:"BPK สมปก.",   city:"สมุทรปราการ", type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h4", name:"รพ. ราษฎร์บูรณะ",             short:"ราษฎร์บูรณะ", city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h5", name:"รพ. สมิติเวช ศรีนครินทร์",    short:"สมิติเวช",    city:"กรุงเทพฯ",    type:"private_noins", cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h6", name:"รพ. โอเวอร์บรูค เชียงราย",    short:"โอเวอร์บรุ๊ค", city:"เชียงราย",   type:"private_noins", cap:1, psgPrice:5800, cpapOnly:false },
-  { id:"h7", name:"รพ. ราชพิพัฒน์",              short:"ราชพิพัฒน์",  city:"กรุงเทพฯ",    type:"government",    cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h8", name:"รพ. กรุงเทพ เชียงราย",         short:"กรุงเทพ ชร.", city:"เชียงราย",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false },
-  { id:"h9", name:"รพ. ดีบุก ภูเก็ต",             short:"ดีบุก",       city:"ภูเก็ต",      type:"private_noins", cap:1, psgPrice:5800, cpapOnly:false },
+  { id:"h1", name:"รพ. บางปะกอก 8",              short:"BPK 8",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h2", name:"รพ. บางปะกอก 3",              short:"BPK 3",       city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h3", name:"รพ. บางปะกอก สมุทรปราการ",    short:"BPK สมปก.",   city:"สมุทรปราการ", type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h4", name:"รพ. ราษฎร์บูรณะ",             short:"ราษฎร์บูรณะ", city:"กรุงเทพฯ",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h5", name:"รพ. สมิติเวช ศรีนครินทร์",    short:"สมิติเวช",    city:"กรุงเทพฯ",    type:"private_noins", cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h6", name:"รพ. โอเวอร์บรูค เชียงราย",    short:"โอเวอร์บรุ๊ค", city:"เชียงราย",   type:"private_noins", cap:1, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h7", name:"รพ. ราชพิพัฒน์",              short:"ราชพิพัฒน์",  city:"กรุงเทพฯ",    type:"government",    cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h8", name:"รพ. กรุงเทพ เชียงราย",         short:"กรุงเทพ ชร.", city:"เชียงราย",    type:"private_ins",   cap:2, psgPrice:5800, cpapOnly:false, pin:"" },
+  { id:"h9", name:"รพ. ดีบุก ภูเก็ต",             short:"ดีบุก",       city:"ภูเก็ต",      type:"private_noins", cap:1, psgPrice:5800, cpapOnly:false, pin:"" },
   // รพ. ที่ขาย CPAP อย่างเดียว (ไม่ทำ Sleep Test)
   { id:"hc1", name:"รพ. จุฬาลงกรณ์",              short:"จุฬาฯ",       city:"กรุงเทพฯ",    type:"government",    cap:0, psgPrice:0,    cpapOnly:true  },
   { id:"hc2", name:"รพ. วิภาราม",                 short:"วิภาราม",     city:"กรุงเทพฯ",    type:"private_ins",   cap:0, psgPrice:0,    cpapOnly:true  },
@@ -59,9 +59,9 @@ const INIT_TECHS = [
 ];
 
 const INIT_USERS = [
-  { id:"admin",  name:"3N Admin",              role:"admin",    hospId:null  },
-  { id:"tech",   name:"3N Sleep Technician",          role:"tech",     hospId:null  },
-  { id:"sales",  name:"3N Sales / ฝ่ายขาย",               role:"sales",    hospId:null  },
+  { id:"admin",  name:"3N Admin",           role:"admin",  hospId:null, pin:"330011"  },
+  { id:"tech",   name:"3N Sleep Technician",role:"tech",   hospId:null, pin:"330022"  },
+  { id:"sales",  name:"3N Sales / ฝ่ายขาย", role:"sales",  hospId:null, pin:"330033"  },
   // รพ. Sleep Test + CPAP
   { id:"h1",     name:"รพ. บางปะกอก 8",         role:"hospital", hospId:"h1"  },
   { id:"h4",     name:"รพ. ราษฎร์บูรณะ",        role:"hospital", hospId:"h4"  },
@@ -90,6 +90,15 @@ const SAMPLE_CHECKINS = {
   "2026-06-10":  ["st1","st4"],
   "2026-06-12":  ["st3"],
   "2026-06-17":  ["st1"],
+};
+
+// assignments backward-compatible helpers
+// รองรับทั้ง old format ["techId"] และ new format [{id,hospId}]
+const assignEntry  = (e) => typeof e === "string" ? { id:e, hospId:null } : e;
+const assignIds    = (arr=[]) => arr.map(e=>assignEntry(e).id);
+const assignHospId = (arr=[], techId) => {
+  const e = arr.map(assignEntry).find(x=>x.id===techId);
+  return e?.hospId||null;
 };
 
 const HOSP_TYPE_LABEL = { private_ins:"Private (มีประกัน)", private_noins:"Private (ไม่มีประกัน)", government:"รัฐบาล" };
@@ -233,9 +242,12 @@ const IllustrationCalendar = () => (
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
-  const [sel, setSel] = useState(null);
-  const [tab, setTab] = useState("staff");
-  const [q,   setQ]   = useState("");
+  const [sel,       setSel]       = useState(null);
+  const [tab,       setTab]       = useState("staff");
+  const [q,         setQ]         = useState("");
+  const [pinInput,  setPinInput]  = useState("");
+  const [pinError,  setPinError]  = useState(false);
+  const [showPin,   setShowPin]   = useState(false);
 
   const staff = INIT_USERS.filter(u=>u.role!=="hospital");
   // Generate hospital users dynamically from current hospitals list
@@ -246,6 +258,7 @@ function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
     hospId: h.id,
     cpapOnly: h.cpapOnly,
     short: h.short,
+    pin: h.pin||"",
   }));
   const hosps = hospUsers;
   const filteredH = hosps.filter(u=>!q||u.name.toLowerCase().includes(q.toLowerCase()));
@@ -258,7 +271,7 @@ function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
     const on = sel===u.id;
     const col = roleColor(u.role);
     return (
-      <div key={u.id} onClick={()=>setSel(u.id)}
+      <div key={u.id} onClick={()=>{ setSel(u.id); setPinInput(""); setPinError(false); }}
         style={{ padding:"11px 14px", borderRadius:12, cursor:"pointer",
           border:`1.5px solid ${on?col:"#e2e8f0"}`, background:on?`${col}0d`:"white",
           display:"flex", alignItems:"center", gap:11, transition:"all .12s",
@@ -367,15 +380,65 @@ function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
             </>
           )}
 
+          {/* PIN input — ทั้ง staff และ รพ. */}
+          {(() => {
+            const selUser = sel ? (INIT_USERS.find(x=>x.id===sel) || hospUsers.find(x=>x.id===sel)) : null;
+            const selHosp = selUser?.role==="hospital" ? hospitals.find(h=>h.id===selUser.hospId) : null;
+            // staff ใช้ pin จาก INIT_USERS, รพ. ใช้ pin จาก hospitals
+            const userPin = selUser?.role==="hospital" ? selHosp?.pin : selUser?.pin;
+            const needPin = userPin && userPin.length>=4;
+            const pinOwnerName = selUser?.role==="hospital" ? selHosp?.name : selUser?.name;
+            return needPin ? (
+              <div style={{ marginTop:14, display:"flex", flexDirection:"column", gap:8 }}>
+                <div style={{ fontSize:12, fontWeight:600, color:T.navy, display:"flex", alignItems:"center", gap:6 }}>
+                  <i className="ti ti-lock" style={{ fontSize:14, color:"#7c3aed" }}></i>
+                  กรอก PIN เพื่อเข้าใช้งาน ({pinOwnerName})
+                </div>
+                <div style={{ position:"relative" }}>
+                  <input
+                    type={showPin?"text":"password"}
+                    value={pinInput}
+                    onChange={e=>{ setPinInput(e.target.value.slice(0,20)); setPinError(false); }}
+                    onKeyDown={e=>{ if(e.key==="Enter" && pinInput.length>=4) {
+                      if(pinInput===userPin){ onLogin(selUser); }
+                      else { setPinError(true); setPinInput(""); }
+                    }}}
+                    placeholder="กรอก PIN"
+                    maxLength={20}
+                    style={{ width:"100%", padding:"12px 42px 12px 14px", fontSize:18, letterSpacing:8, border:`2px solid ${pinError?"#fca5a5":pinInput.length>=4?"#7c3aed":"#e2e8f0"}`, borderRadius:12, outline:"none", fontFamily:"monospace", boxSizing:"border-box", background:pinError?"#fef2f2":"white", color:T.navy, textAlign:"center" }}
+                  />
+                  <button onClick={()=>setShowPin(v=>!v)}
+                    style={{ position:"absolute", right:12, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:T.muted, fontSize:16 }}>
+                    <i className={`ti ${showPin?"ti-eye-off":"ti-eye"}`}></i>
+                  </button>
+                </div>
+                {pinError && (
+                  <div style={{ display:"flex", alignItems:"center", gap:6, fontSize:12, color:"#dc2626", padding:"8px 12px", background:"#fef2f2", borderRadius:8, border:"0.5px solid #fecaca" }}>
+                    <i className="ti ti-alert-triangle" style={{ fontSize:13 }}></i>
+                    PIN ไม่ถูกต้อง กรุณาลองใหม่
+                  </div>
+                )}
+              </div>
+            ) : null;
+          })()}
+
           {/* Login button */}
           <button onClick={()=>{
               if(!sel) return;
-              // ค้นใน INIT_USERS (admin/tech/sales) ก่อน ถ้าไม่เจอ → ค้นใน hospUsers (ทุก รพ.)
               const u = INIT_USERS.find(x=>x.id===sel) || hospUsers.find(x=>x.id===sel);
-              if(u) onLogin(u);
+              if(!u) return;
+              // ตรวจ PIN ถ้าเป็น รพ. ที่มี PIN
+              // ตรวจ PIN — staff ใช้ u.pin, รพ. ใช้ hospitals pin
+              const uPin = u.role==="hospital"
+                ? (hospitals.find(x=>x.id===u.hospId)?.pin || "")
+                : (u.pin || "");
+              if(uPin && uPin.length>=4) {
+                if(pinInput!==uPin) { setPinError(true); setPinInput(""); return; }
+              }
+              onLogin(u);
             }}
             disabled={!sel}
-            style={{ marginTop:18, width:"100%", padding:"15px", fontSize:15, fontWeight:700, borderRadius:13, background:sel?"#1d4ed8":"#e2e8f0", color:sel?"white":"#94a3b8", border:"none", cursor:sel?"pointer":"not-allowed", fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:8, boxShadow:sel?"0 4px 18px rgba(29,78,216,.3)":"none", transition:"all .15s" }}>
+            style={{ marginTop:14, width:"100%", padding:"15px", fontSize:15, fontWeight:700, borderRadius:13, background:sel?"#1d4ed8":"#e2e8f0", color:sel?"white":"#94a3b8", border:"none", cursor:sel?"pointer":"not-allowed", fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:8, boxShadow:sel?"0 4px 18px rgba(29,78,216,.3)":"none", transition:"all .15s" }}>
             <i className="ti ti-login" style={{ fontSize:17 }}></i>
             เข้าสู่ระบบ
           </button>
@@ -474,15 +537,15 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
     const d   = i+1;
     const key = mkds(year,month,d);
     const appts = visible.filter(a => a.date===key && (filterHosp==="all" || a.hospId===filterHosp));
-    const allAppts = visible.filter(a => a.date===key); // for capacity check
-    const assigned = assignments[key] || [];
+    const allAppts = visible.filter(a => a.date===key); // for capacity check (ไม่ filter รพ.)
+    const assigned = assignIds(assignments[key] || []);
     const checked  = checkins[key]    || [];
     const dow = new Date(year,month,d).getDay();
     const isSun = dow===0;
     const isToday = d===today.getDate() && month===today.getMonth() && year===today.getFullYear();
     const isPast = new Date(year,month,d) < new Date(new Date().toDateString());
-    // capacity = max of all hospital caps for appointments that day
-    const activeAppts = allAppts.filter(a=>a.status!=="cancelled");
+    // activeAppts ใช้ appts (filtered by รพ.) เพื่อให้ counter/progress ถูกต้องตาม filter
+    const activeAppts = appts.filter(a=>a.status!=="cancelled");
     const cap = activeAppts.length>0 ? activeAppts.reduce((mx,a) => { const h=hospitals.find(x=>x.id===a.hospId); return Math.max(mx, h?.cap||2); }, 0) : (allAppts[0] ? (hospitals.find(x=>x.id===allAppts[0].hospId)?.cap||2) : 2);
     const full = activeAppts.length >= cap;
     const block = dayBlocks[key] || null;
@@ -494,11 +557,21 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
     setMovingAppt(null);
   };
 
-  const toggleAssign = (key,techId) => {
-    setAssignments(prev => { const cur=prev[key]||[]; return { ...prev,[key]:cur.includes(techId)?cur.filter(x=>x!==techId):[...cur,techId] }; });
+  const toggleAssign = (key,techId,hospId=null) => {
+    setAssignments(prev => {
+      const cur = prev[key]||[];
+      const ids = assignIds(cur);
+      if(ids.includes(techId)) {
+        // ลบออก
+        return { ...prev,[key]:cur.filter(e=>assignEntry(e).id!==techId) };
+      } else {
+        // เพิ่มใหม่ พร้อม hospId
+        return { ...prev,[key]:[...cur,{id:techId,hospId}] };
+      }
+    });
   };
   const toggleCheckin = (key,techId) => {
-    setCheckins(prev => { const cur=prev[key]||[]; return { ...prev,[key]:cur.includes(techId)?cur.filter(x=>x!==techId):[...cur,techId] }; });
+    setCheckins(prev => { const cur=prev[key]||[]; return { ...prev,[key]:assignIds(cur).includes(techId)?cur.filter(x=>x!==techId):[...cur,techId] }; });
   };
 
   // monthly stats
@@ -513,8 +586,9 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
       {/* LEFT: day list */}
       <div style={{ flex:1,...FL,overflow:"hidden" }}>
         {/* Topbar */}
-        <div style={{ padding:"16px 22px",borderBottom:`1px solid ${T.line}`,background:T.card,...R,justifyContent:"space-between",flexShrink:0 }}>
-          <div style={{ ...R,gap:14 }}>
+        <div style={{ borderBottom:`1px solid ${T.line}`,background:T.card,flexShrink:0 }}>
+          {/* Row 1: เดือน + ปุ่มเลื่อน */}
+          <div style={{ padding:"12px 18px 8px",...R,justifyContent:"space-between" }}>
             <div style={{ fontSize:22,fontWeight:800,color:T.navy,letterSpacing:"-0.02em" }}>
               {TMF[month]} <span style={{ color:T.faint,fontWeight:400,fontSize:18 }}>{year+543}</span>
             </div>
@@ -523,16 +597,26 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
               <button onClick={next} style={{ width:34,height:34,border:`1px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.muted,cursor:"pointer",fontSize:17,...R,justifyContent:"center" }}>›</button>
             </div>
           </div>
-
-          {/* Hospital filter */}
-          <div style={{ ...R,gap:5,flexWrap:"wrap" }}>
+          {/* Row 2: Hospital filter — แถวแยก คลิกได้แน่นอน */}
+          <div style={{ padding:"0 18px 10px",display:"flex",flexWrap:"wrap",gap:6 }}>
             {(user.role!=="hospital"
-              ? [{id:"all",short:"ทั้งหมด"},...hospitals.filter(h=>!h.cpapOnly)]  // ไม่แสดง CPAP-only
+              ? [{id:"all",short:"ทั้งหมด"},...hospitals.filter(h=>!h.cpapOnly)]
               : hospitals.filter(h=>h.id===user.hospId)
             ).map(h=>{
               const on = filterHosp===h.id;
               const c  = h.id!=="all" ? hc(h.id,hospitals) : null;
-              return <div key={h.id} onClick={()=>setFilterHosp(h.id)} style={{ padding:"4px 11px",fontSize:11,borderRadius:20,cursor:"pointer",fontWeight:on?600:400,border:on?`1.5px solid ${c?c.dot:T.blue}`:`0.5px solid ${T.line}`,background:on?(c?c.bg:T.blueL):T.card,color:on?(c?c.text:T.blue):T.muted,transition:"all .1s" }}>{h.short}</div>;
+              return (
+                <button key={h.id}
+                  onClick={()=>setFilterHosp(on && h.id!=="all" ? "all" : h.id)}
+                  style={{ padding:"5px 13px",fontSize:12,borderRadius:20,cursor:"pointer",fontFamily:FONT,
+                    fontWeight:on?700:400,
+                    border:on?`2px solid ${c?c.dot:T.blue}`:`1px solid ${T.line}`,
+                    background:on?(c?c.bg:T.blueL):T.card,
+                    color:on?(c?c.text:T.blue):T.muted,
+                    transition:"all .15s" }}>
+                  {h.short}
+                </button>
+              );
             })}
           </div>
         </div>
@@ -551,6 +635,8 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
         {/* Day list */}
         <div style={{ flex:1,overflowY:"auto",minHeight:0,padding:"12px 16px",...FL,gap:6 }}>
           {days.map(({ d,key,appts,allAppts,activeAppts,assigned,checked,isSun,isToday,isPast,full,cap,block }, di) => {
+            // ซ่อนวันว่างเมื่อ filter เป็น รพ. ใดรพ. หนึ่ง (ไม่ใช่ "ทั้งหมด")
+            if(filterHosp!=="all" && appts.length===0 && !assigned.length) return null;
             const dow = new Date(year,month,d).getDay();
             const dayLabel = DAYS[dow];
             const isClickable = movingAppt && !isPast;
@@ -697,7 +783,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 
                 {/* Assign tech row — hide if blocked */}
                 {!block && (user.role!=="hospital") && (assigned.length>0||appts.length>0) && (
-                  <AssignRow key={key} dateKey={key} techs={techs} assigned={assigned} checked={checked} canEdit={user.role==="admin"} canCheckin={user.role==="admin"} onToggleAssign={id=>toggleAssign(key,id)} onToggleCheckin={id=>toggleCheckin(key,id)} />
+                  <AssignRow key={key} dateKey={key} techs={techs} assigned={assigned} checked={checked} canEdit={user.role==="admin"} canCheckin={user.role==="admin"} onToggleAssign={(id)=>{ const h=activeAppts[0]?.hospId||allAppts[0]?.hospId||null; toggleAssign(key,id,h); }} onToggleCheckin={id=>toggleCheckin(key,id)} />
                 )}
               </div>
             );
@@ -1210,9 +1296,10 @@ function exportToExcel(appts, hospitals, techs, assignments, checkins, techRates
 function CpapCriteriaModal({ onClose }) {
   const [section, setSection] = useState("eligibility");
   const tabs = [
-    { id:"eligibility", label:"เงื่อนไขผู้ป่วย",   icon:"ti-user-check"       },
-    { id:"rates",       label:"อัตราการเบิกจ่าย", icon:"ti-currency-baht"    },
+    { id:"eligibility", label:"เงื่อนไขผู้ป่วย",   icon:"ti-user-check"           },
+    { id:"rates",       label:"อัตราการเบิกจ่าย", icon:"ti-currency-baht"        },
     { id:"device",      label:"คุณสมบัติเครื่อง",  icon:"ti-device-heart-monitor" },
+    { id:"warranty",    label:"การรับประกัน",       icon:"ti-shield-check"         },
   ];
   return (
     <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
@@ -1263,10 +1350,7 @@ function CpapCriteriaModal({ onClose }) {
               {no:"๒", color:"#dc2626", bg:"#fee2e2", border:"#fca5a5",
                 title:"Moderate OSA + โรคร่วม", badge:"AHI 15–29 ครั้ง/ชม.",
                 desc:"ระดับปานกลาง (AHI 15–29 ครั้ง/ชม.) ร่วมกับโรคใดโรคหนึ่ง:",
-                bullets:["Stroke / โรคสมองขาดเลือด","Myocardial infarction / กล้ามเนื้อหัวใจขาดเลือด","ภาวะหัวใจล้มเหลว","Refractory HT: SBP/DBP ≥ 160/90 mmHg ขณะรับยาลดความดัน ≥ 3 กลุ่ม"]},
-              {no:"๓", color:"#d97706", bg:"#fef9c3", border:"#fde047",
-                title:"Mild OSA + อาชีพเสี่ยง", badge:"AHI 5–14 ครั้ง/ชม.",
-                desc:"ระดับน้อย (AHI 5–14 ครั้ง/ชม.) ประกอบอาชีพเสี่ยงต่ออุบัติเหตุจากการง่วงนอน เช่น พนักงานขับรถ นักบิน ฯลฯ"},
+                bullets:["Stroke / โรคสมองขาดเลือด","Myocardial infarction / กล้ามเนื้อหัวใจขาดเลือด","ภาวะหัวใจล้มเหลว","Refractory HT: SBP/DBP ≥ 140/90 mmHg ขณะรับยาลดความดันโลหิต ≥ 3 กลุ่ม"]},
             ].map(item=>(
               <div key={item.no} style={{padding:"12px 16px",background:item.bg,borderRadius:12,border:`1.5px solid ${item.border}`}}>
                 <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:6}}>
@@ -1351,6 +1435,48 @@ function CpapCriteriaModal({ onClose }) {
 
         </div>
 
+          {/* ── Tab 4: การรับประกัน ── */}
+          {section==="warranty" && (<>
+            <div style={{padding:"10px 14px",background:"#f0fdf4",borderRadius:10,border:"0.5px solid #86efac",fontSize:12,color:"#166534",lineHeight:1.7}}>
+              <i className="ti ti-shield-check" style={{marginRight:6,fontSize:13}}></i>
+              <strong>บริษัท สามเอ็น จำกัด</strong> รับประกันตัวเครื่อง CPAP/BiPAP <strong>5 ปี</strong> ภายใต้เงื่อนไขต่อไปนี้
+            </div>
+            {[
+              {icon:"ti-check",color:"#059669",bg:"#d1fae5",border:"#6ee7b7",title:"ครอบคลุม",items:[
+                "ความบกพร่องจากกระบวนการผลิต หรือชิ้นส่วนภายในเครื่องผิดปกติ",
+                "เฉพาะตัวเครื่องอัดอากาศแรงดันบวก (ไม่รวม Humidifier, ท่อลม, หน้ากาก, filter)",
+                "การใช้งานเฉลี่ยไม่เกิน 12 ชม./วัน เพื่อรักษา OSA",
+              ]},
+              {icon:"ti-x",color:"#dc2626",bg:"#fee2e2",border:"#fca5a5",title:"ไม่ครอบคลุม",items:[
+                "การเสื่อมสภาพตามอายุการใช้งาน (เสียงลม, เสียงจากการหายใจ)",
+                "น้ำเข้าเครื่อง, ตกหล่น, แมลงหรือสิ่งแปลกปลอมเข้า",
+                "ใช้อุปกรณ์ไม่ได้มาตรฐานผู้ผลิต หรือใช้งานผิดวัตถุประสงค์",
+                "แกะ ดัดแปลง หรือซ่อมโดยผู้ไม่ได้รับอนุญาต",
+                "โอนสิทธิ์ให้บุคคลอื่น (การรับประกันเป็นสิทธิ์เฉพาะตัวผู้ป่วย)",
+                "เหตุสุดวิสัย: ไฟฟ้ากระชาก น้ำท่วม ฟ้าผ่า อัคคีภัย",
+              ]},
+              {icon:"ti-tool",color:"#d97706",bg:"#fef9c3",border:"#fde047",title:"เงื่อนไขสำคัญ",items:[
+                "ต้องนำเครื่องตรวจเช็ค/บำรุงรักษาอย่างน้อย ปีละ 1 ครั้ง (หากไม่ทำ → สิ้นสุดการรับประกัน)",
+                "ต้องติดตามผลการรักษากับสถานพยาบาลที่ใช้สิทธิ์ต่อเนื่อง",
+                "เครื่องต้องมีข้อมูลการใช้งาน (Usage Data) ที่ตรวจสอบได้",
+                "ผู้รับบริการต้องแสดงหลักฐานยืนยันตัวตนเมื่อนำเครื่องเข้ารับบริการ",
+              ]},
+            ].map((sec,i)=>(
+              <div key={i} style={{padding:"12px 14px",background:sec.bg,borderRadius:12,border:`1px solid ${sec.border}`}}>
+                <div style={{fontSize:12,fontWeight:700,color:sec.color,display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
+                  <i className={`ti ${sec.icon}`} style={{fontSize:13}}></i>{sec.title}
+                </div>
+                <ul style={{margin:0,padding:"0 0 0 16px",fontSize:12,color:sec.color,lineHeight:1.9,opacity:.9}}>
+                  {sec.items.map((it,j)=><li key={j}>{it}</li>)}
+                </ul>
+              </div>
+            ))}
+            <div style={{padding:"10px 14px",background:"#f8fafc",borderRadius:10,border:"0.5px solid #e2e8f0",fontSize:11,color:"#64748b",lineHeight:1.7}}>
+              <i className="ti ti-info-circle" style={{marginRight:6,fontSize:12}}></i>
+              การรับประกันครอบคลุมเฉพาะการตรวจสอบ ซ่อม หรือเปลี่ยนชิ้นส่วน <strong>ไม่รวม</strong> ค่าเดินทาง ค่าขนส่ง ค่าเช่าเครื่องทดแทน หรือความเสียหายทางอ้อม
+            </div>
+          </>)}
+
         {/* Footer */}
         <div style={{padding:"11px 20px",borderTop:"0.5px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"space-between",flexShrink:0,background:"#f8fafc"}}>
           <span style={{fontSize:10,color:T.faint}}>ประกาศ ณ วันที่ ๑๖ มิถุนายน พ.ศ. ๒๕๖๙ • นายสุรเดช วลีอิทธิกุล</span>
@@ -1362,7 +1488,7 @@ function CpapCriteriaModal({ onClose }) {
 }
 
 // ── CpapCriteriaBtn — ปุ่มเล็กๆ ใช้ซ้ำได้ทุกที่ ────────────────────────────
-function CpapCriteriaBtn({ style={} }) {
+function CpapCriteriaBtn({ style }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -2197,6 +2323,108 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, isTech=false, sa
 // ── Appointment Card (edit + reschedule + cancel) ─────────────────────────────
 const CANCEL_REASONS = ["ผู้ป่วยติดธุระ","ผู้ป่วยไม่สบาย","ผู้ป่วยขอเลื่อน","รพ. ขอเลื่อน","อุปกรณ์ไม่พร้อม","อื่นๆ"];
 
+// ── HospActionModal — เลื่อนนัด / ยกเลิก สำหรับ รพ. ────────────────────────────
+function HospActionModal({ appt, onClose, onReschedule, onCancel }) {
+  const [mode, setMode]       = useState(null);
+  const [newDate, setNewDate] = useState(appt.date||"");
+  const [reason, setReason]   = useState("");
+
+  const submitReschedule = () => {
+    if(!newDate) return;
+    onReschedule(newDate, reason.trim());
+    onClose();
+  };
+  const submitCancel = () => {
+    onCancel(reason.trim());
+    onClose();
+  };
+
+  return (
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
+      style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(5,15,50,0.7)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:FONT}}>
+      <div style={{width:"100%",maxWidth:420,background:"#fff",borderRadius:18,overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.45)"}}>
+        <div style={{padding:"16px 20px",borderBottom:"0.5px solid #e2e8f0",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div>
+            <div style={{fontSize:14,fontWeight:700,color:"#0f172a"}}>{appt.name}</div>
+            <div style={{fontSize:11,color:"#64748b",marginTop:2}}>HN {appt.hn} · นัด {appt.date?.split("-").reverse().join("/")||"-"}</div>
+          </div>
+          <button onClick={onClose} style={{width:28,height:28,borderRadius:8,background:"#f1f5f9",border:"none",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center",color:"#64748b"}}>×</button>
+        </div>
+        <div style={{padding:"16px 20px",display:"flex",flexDirection:"column",gap:12}}>
+          {!mode && (<>
+            <div style={{fontSize:12,color:"#64748b",marginBottom:4}}>ต้องการดำเนินการอะไร?</div>
+            <button onClick={()=>setMode("reschedule")}
+              style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderRadius:12,border:"1.5px solid #bfdbfe",background:"#eff6ff",cursor:"pointer",fontFamily:FONT,textAlign:"left",width:"100%"}}>
+              <div style={{width:36,height:36,borderRadius:10,background:"#2563eb",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <i className="ti ti-calendar-event" style={{fontSize:18,color:"white"}}></i>
+              </div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:"#1d4ed8"}}>เลื่อนนัดหมาย</div>
+                <div style={{fontSize:11,color:"#3b82f6",marginTop:2}}>เลือกวันใหม่พร้อมระบุเหตุผล</div>
+              </div>
+            </button>
+            <button onClick={()=>setMode("cancel")}
+              style={{display:"flex",alignItems:"center",gap:12,padding:"14px 16px",borderRadius:12,border:"1.5px solid #fecaca",background:"#fef2f2",cursor:"pointer",fontFamily:FONT,textAlign:"left",width:"100%"}}>
+              <div style={{width:36,height:36,borderRadius:10,background:"#dc2626",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <i className="ti ti-calendar-x" style={{fontSize:18,color:"white"}}></i>
+              </div>
+              <div>
+                <div style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>ยกเลิกนัดหมาย</div>
+                <div style={{fontSize:11,color:"#ef4444",marginTop:2}}>ระบุเหตุผลการยกเลิก</div>
+              </div>
+            </button>
+          </>)}
+          {mode==="reschedule" && (<>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+              <button onClick={()=>setMode(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#64748b",fontSize:18,padding:0,lineHeight:1}}>‹</button>
+              <span style={{fontSize:13,fontWeight:700,color:"#1d4ed8"}}>เลื่อนนัดหมาย</span>
+            </div>
+            <div>
+              <div style={{fontSize:11,fontWeight:600,color:"#374151",marginBottom:5}}>วันนัดใหม่ <span style={{color:"#dc2626"}}>*</span></div>
+              <input type="date" value={newDate} onChange={e=>setNewDate(e.target.value)} min={new Date().toISOString().split("T")[0]}
+                style={{width:"100%",padding:"9px 12px",borderRadius:9,border:"1px solid #d1d5db",fontSize:13,fontFamily:FONT,boxSizing:"border-box",outline:"none"}}/>
+            </div>
+            <div>
+              <div style={{fontSize:11,fontWeight:600,color:"#374151",marginBottom:5}}>เหตุผลการเลื่อนนัด</div>
+              <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="เช่น ผู้ป่วยติดธุระ, รพ.ขอเลื่อน, ห้องเต็ม..."
+                style={{width:"100%",minHeight:75,padding:"9px 12px",borderRadius:9,border:"1px solid #d1d5db",fontSize:12,fontFamily:FONT,resize:"vertical",boxSizing:"border-box",outline:"none"}}/>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid #d1d5db",background:"white",color:"#64748b",cursor:"pointer",fontSize:13,fontFamily:FONT}}>ยกเลิก</button>
+              <button onClick={submitReschedule} disabled={!newDate}
+                style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:newDate?"#2563eb":"#93c5fd",color:"white",cursor:newDate?"pointer":"not-allowed",fontSize:13,fontWeight:700,fontFamily:FONT}}>
+                <i className="ti ti-calendar-check" style={{marginRight:6,fontSize:13}}></i>ยืนยันเลื่อนนัด
+              </button>
+            </div>
+          </>)}
+          {mode==="cancel" && (<>
+            <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:2}}>
+              <button onClick={()=>setMode(null)} style={{background:"none",border:"none",cursor:"pointer",color:"#64748b",fontSize:18,padding:0,lineHeight:1}}>‹</button>
+              <span style={{fontSize:13,fontWeight:700,color:"#dc2626"}}>ยกเลิกนัดหมาย</span>
+            </div>
+            <div style={{padding:"10px 14px",background:"#fef9c3",borderRadius:10,border:"0.5px solid #fde047",fontSize:12,color:"#854d0e"}}>
+              <i className="ti ti-alert-triangle" style={{marginRight:6}}></i>
+              นัดหมายของ <strong>{appt.name}</strong> จะถูกยกเลิก กรุณาระบุเหตุผล
+            </div>
+            <div>
+              <div style={{fontSize:11,fontWeight:600,color:"#374151",marginBottom:5}}>เหตุผลการยกเลิก <span style={{color:"#dc2626"}}>*</span></div>
+              <textarea value={reason} onChange={e=>setReason(e.target.value)} placeholder="เช่น ผู้ป่วยไม่สะดวก, อาการดีขึ้น, เปลี่ยนแผนการรักษา..."
+                style={{width:"100%",minHeight:75,padding:"9px 12px",borderRadius:9,border:"1px solid #fca5a5",fontSize:12,fontFamily:FONT,resize:"vertical",boxSizing:"border-box",outline:"none"}}/>
+            </div>
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={onClose} style={{flex:1,padding:"10px",borderRadius:10,border:"1px solid #d1d5db",background:"white",color:"#64748b",cursor:"pointer",fontSize:13,fontFamily:FONT}}>ไม่ยกเลิก</button>
+              <button onClick={submitCancel} disabled={!reason.trim()}
+                style={{flex:2,padding:"10px",borderRadius:10,border:"none",background:reason.trim()?"#dc2626":"#fca5a5",color:"white",cursor:reason.trim()?"pointer":"not-allowed",fontSize:13,fontWeight:700,fontFamily:FONT}}>
+                <i className="ti ti-calendar-x" style={{marginRight:6,fontSize:13}}></i>ยืนยันยกเลิกนัด
+              </button>
+            </div>
+          </>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech=false, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[], isDuplicate=false, hasCpapBooked=false, allAppts=[] }) {
   const [mode, setMode]               = useState(null);
   const [showReport, setShowReport]   = useState(false);
@@ -2206,6 +2434,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
   const [reschedNote, setReschedNote] = useState("");
   const [cancelReason, setCancelReason] = useState("");
   const [customReason, setCustomReason] = useState("");
+  const [hospAction, setHospAction]     = useState(false);
 
   const openAction = (e) => { e.stopPropagation(); setMode(mode==="action"?null:"action"); setActionTab("reschedule"); setReschedDate(""); setReschedNote(""); setCancelReason(""); setCustomReason(""); };
   const saveEdit = () => { onUpdate({ ...form }); setMode(null); };
@@ -2231,8 +2460,16 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
   const isRescheduled = a.status==="rescheduled";
   const apptType = a.apptType || "sleep_test";
 
+  const handleHospReschedule = (newDate, reason) => {
+    onUpdate({ date:newDate, rescheduleReason:reason||"เลื่อนนัดโดย รพ.", rescheduledAt:new Date().toISOString(), rescheduledBy:"hospital", status:"active" });
+  };
+  const handleHospCancel = (reason) => {
+    onUpdate({ status:"cancelled", cancelReason:reason||"ยกเลิกโดย รพ.", cancelledAt:new Date().toISOString() });
+  };
+
   return (
     <>
+    {hospAction && <HospActionModal appt={a} onClose={()=>setHospAction(false)} onReschedule={handleHospReschedule} onCancel={handleHospCancel} />}
     {showReport && (
       <SleepReportModal
         appt={a} hosp={h} hospitals={hospitals}
@@ -2313,18 +2550,21 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
                     </div>
                   )
                   : (
-                    <button onClick={e=>{e.stopPropagation();
-                      if(isAdmin){
-                        openAction(e);
-                      } else {
-                        if(window.confirm(`ยกเลิกนัด "${a.name}"?`)){
-                          onUpdate({ status:"cancelled", cancelReason:"ยกเลิกโดย รพ.", cancelledAt:new Date().toISOString() });
-                        }
-                      }
-                    }}
-                      style={{ padding:"5px 10px",fontSize:11,fontWeight:600,border:`0.5px solid #fecaca`,borderRadius:8,background:mode==="action"?"#fef2f2":T.card,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
-                      <i className="ti ti-calendar-x" style={{ fontSize:12 }}></i>ยกเลิก
-                    </button>
+                    <div style={{display:"flex",gap:5}}>
+                      {/* ปุ่มเลื่อนนัด — รพ. และ Admin */}
+                      {!isAdmin && (
+                        <button onClick={e=>{e.stopPropagation();setHospAction(true);}}
+                          style={{ padding:"5px 10px",fontSize:11,fontWeight:600,border:`0.5px solid #bfdbfe`,borderRadius:8,background:T.card,color:"#1d4ed8",cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
+                          <i className="ti ti-calendar-event" style={{ fontSize:12 }}></i>เลื่อน/ยกเลิก
+                        </button>
+                      )}
+                      {isAdmin && (
+                        <button onClick={e=>{e.stopPropagation();openAction(e);}}
+                          style={{ padding:"5px 10px",fontSize:11,fontWeight:600,border:`0.5px solid #fecaca`,borderRadius:8,background:mode==="action"?"#fef2f2":T.card,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
+                          <i className="ti ti-calendar-x" style={{ fontSize:12 }}></i>ยกเลิก
+                        </button>
+                      )}
+                    </div>
                   )
               )}
             </div>
@@ -2820,6 +3060,8 @@ function PasteView({ user, hospitals, setAppointments }) {
 function ManageHospitals({ hospitals,setHospitals }) {
   const [adding,setAdding] = useState(false);
   const [editPriceId, setEditPriceId] = useState(null);
+  const [editPinId,   setEditPinId]   = useState(null);
+  const [pinVal,      setPinVal]       = useState("");
   const [priceVal, setPriceVal] = useState(5800);
   const [form,setForm] = useState({ name:"",short:"",city:"",type:"private_ins",cap:2,psgPrice:5800,cpapOnly:false });
   const setF = upd => setForm(f=>({...f,...upd}));
@@ -3076,7 +3318,15 @@ function ManageHospitals({ hospitals,setHospitals }) {
                     <i className="ti ti-building-hospital" style={{ fontSize:16,color:c.text }}></i>
                   </div>
                   <div style={{ flex:1 }}>
-                    <div style={{ fontSize:13,fontWeight:600,color:T.ink }}>{h.name}</div>
+                    <div style={{ fontSize:13,fontWeight:600,color:T.ink,display:"flex",alignItems:"center",gap:8 }}>
+                      {h.name}
+                      {h.pin
+                        ? <span style={{ fontSize:10,fontWeight:700,color:"#7c3aed",background:"#ede9fe",padding:"2px 8px",borderRadius:6,display:"flex",alignItems:"center",gap:3 }}>
+                            <i className="ti ti-lock" style={{fontSize:10}}></i>PIN ✓
+                          </span>
+                        : <span style={{ fontSize:10,color:"#94a3b8",background:"#f1f5f9",padding:"2px 8px",borderRadius:6 }}>ไม่มี PIN</span>
+                      }
+                    </div>
                     <div style={{ fontSize:11,color:T.faint,display:"flex",alignItems:"center",gap:8 }}>
                       {h.city&&`${h.city} · `}{HOSP_TYPE_LABEL[h.type]} · cap {h.cap}/วัน
                       {h.contractEnd && (()=>{ const st=contractStatus(h); return st?<span style={{ fontSize:10,fontWeight:700,color:st.color,background:st.bg,padding:"1px 7px",borderRadius:6 }}>{st.label}</span>:null; })()}
@@ -3109,6 +3359,49 @@ function ManageHospitals({ hospitals,setHospitals }) {
                     </div>
                     <Btn variant="primary" small onClick={()=>savePrice(h.id)}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn>
                     <Btn variant="outline" small onClick={()=>setEditPriceId(null)}>ยกเลิก</Btn>
+                  </div>
+                )}
+                {/* PIN button row — แยกออกมาให้เห็นชัด */}
+                <div style={{ padding:"8px 14px",borderTop:"0.5px solid #f1f5f9",display:"flex",alignItems:"center",gap:8,background:"#fafbff" }}>
+                  <i className="ti ti-lock" style={{ fontSize:12,color:"#7c3aed" }}></i>
+                  <span style={{ fontSize:11,color:"#64748b",flex:1 }}>
+                    PIN Login:{" "}
+                    <strong style={{ color:"#7c3aed" }}>{h.pin ? "●".repeat(h.pin.length)+" (ตั้งแล้ว)" : "ยังไม่ตั้ง — รพ. เข้าได้เลยโดยไม่ต้อง PIN"}</strong>
+                  </span>
+                  <button onClick={()=>{ setEditPinId(editPinId===h.id?null:h.id); setPinVal(h.pin||""); setEditPriceId(null); }}
+                    style={{ padding:"5px 14px",fontSize:11,fontWeight:700,border:`1.5px solid ${editPinId===h.id?"#7c3aed":"#a78bfa"}`,borderRadius:8,background:editPinId===h.id?"#7c3aed":"#ede9fe",color:editPinId===h.id?"white":"#7c3aed",cursor:"pointer",display:"flex",alignItems:"center",gap:5,fontFamily:FONT }}>
+                    <i className="ti ti-lock" style={{fontSize:12}}></i>
+                    {h.pin ? "เปลี่ยน PIN" : "ตั้ง PIN"}
+                  </button>
+                  {h.pin && (
+                    <button onClick={()=>{ setHospitals(p=>p.map(x=>x.id===h.id?{...x,pin:""}:x)); }}
+                      style={{ padding:"5px 10px",fontSize:11,fontWeight:600,border:"1px solid #fecaca",borderRadius:8,background:"white",color:"#dc2626",cursor:"pointer",display:"flex",alignItems:"center",gap:4,fontFamily:FONT }}>
+                      <i className="ti ti-lock-open" style={{fontSize:12}}></i>ลบ PIN
+                    </button>
+                  )}
+                </div>
+                {editPinId===h.id && (
+                  <div style={{ padding:"12px 14px",borderTop:"0.5px solid #ddd6fe",background:"#faf5ff",...R,gap:10,alignItems:"flex-end" }}>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:11,fontWeight:600,color:"#7c3aed",marginBottom:5 }}>
+                        PIN เข้าสู่ระบบ (4-6 หลัก) — เว้นว่าง = ไม่ต้อง PIN
+                      </div>
+                      <input
+                        type="text" inputMode="numeric" maxLength={6}
+                        value={pinVal}
+                        onChange={e=>setPinVal(e.target.value.replace(/\D/g,"").slice(0,6))}
+                        placeholder="เช่น 1234"
+                        style={{ width:"100%",padding:"9px 12px",fontSize:22,fontWeight:700,letterSpacing:10,border:"1.5px solid #a78bfa",borderRadius:9,outline:"none",background:"white",color:"#7c3aed",fontFamily:"monospace",boxSizing:"border-box",textAlign:"center" }}
+                      />
+                    </div>
+                    <Btn variant="purple" small onClick={()=>{
+                      if(pinVal && pinVal.length<4) return;
+                      setHospitals(p=>p.map(x=>x.id===h.id?{...x,pin:pinVal}:x));
+                      setEditPinId(null);
+                    }}>
+                      <i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก PIN
+                    </Btn>
+                    <Btn variant="outline" small onClick={()=>setEditPinId(null)}>ยกเลิก</Btn>
                   </div>
                 )}
               </div>
@@ -3622,28 +3915,28 @@ function TechCalendarView({ user, techs, appointments, hospitals, assignments })
             const isToday = dateKey===todayStr;
             const isSun   = ci%7===0;
             const isSat   = ci%7===6;
-            const dayTechs= (assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
+            const dayTechs= assignIds(assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
             const dayAppts= appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
 
-            // สร้าง chips: แต่ละ รพ. × แต่ละ tech → chip 1 อัน
-            const hospIds = [...new Set(dayAppts.map(a=>a.hospId))];
+            // อ่าน hospId ของแต่ละ tech จาก assignments โดยตรง (new format {id,hospId})
+            // fallback: ใช้ รพ. หลักของวันจาก appointments
+            const hospCount = {};
+            dayAppts.forEach(a=>{ hospCount[a.hospId]=(hospCount[a.hospId]||0)+1; });
+            const dayMainHospId = Object.keys(hospCount).sort((a,b)=>hospCount[b]-hospCount[a])[0]||null;
+
             const chips = [];
-            if(dayTechs.length>0 && hospIds.length>0) {
-              hospIds.forEach(hid=>{
-                const hosp = hospitals.find(h=>h.id===hid);
-                const hi   = hospitals.findIndex(h=>h.id===hid);
-                const c    = CPOOL[hi%CPOOL.length];
-                dayTechs.forEach(t=>{
-                  chips.push({ key:`${hid}-${t.id}`, label:`${hosp?.short||"?"} ${t.nick||t.name.split(" ")[0]}`, bg:c.bg, col:c.text, dot:c.dot });
-                });
-              });
-            } else if(dayTechs.length>0) {
-              // มี tech แต่ไม่มีนัด — แสดง tech เฉยๆ
-              dayTechs.forEach((t,ti)=>{
-                const c=TPOOL[ti%TPOOL.length];
-                chips.push({ key:t.id, label:t.nick||t.name.split(" ")[0], bg:c.bg, col:c.text, dot:c.dot });
-              });
-            }
+            (assignments[dateKey]||[]).forEach((entry,ti)=>{
+              const e    = assignEntry(entry);
+              const t    = techs.find(x=>x.id===e.id);
+              if(!t) return;
+              // hospId: จาก assignment entry ก่อน ถ้าไม่มีใช้ รพ. หลักของวัน
+              const hospId = e.hospId || dayMainHospId;
+              const hosp   = hospId ? hospitals.find(h=>h.id===hospId) : null;
+              const hi     = hospId ? hospitals.findIndex(h=>h.id===hospId) : ti;
+              const c      = hosp ? CPOOL[hi%CPOOL.length] : TPOOL[ti%TPOOL.length];
+              const nick   = t.nick||t.name.split(" ")[0];
+              chips.push({ key:t.id, label: hosp ? `${nick} ${hosp.short}` : nick, bg:c.bg, col:c.text, dot:c.dot });
+            });
 
             const showChips = chips.slice(0,4);
             const extra     = chips.length - showChips.length;
@@ -3729,7 +4022,7 @@ function TechScheduleView({ user, techs, appointments, hospitals, assignments, c
             const isSun   = ci%7===0;
             const isSat   = ci%7===6;
             const dayAppts= appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
-            const dayTechs= (assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
+            const dayTechs= assignIds(assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
 
             return (
               <div key={dateKey} style={{ minHeight:76, borderRadius:8, padding:"4px 4px 5px",
@@ -3801,7 +4094,7 @@ function TechScheduleView({ user, techs, appointments, hospitals, assignments, c
   const toggleCheckin = (dateKey, techId) => {
     setCheckins(prev=>{
       const cur=prev[dateKey]||[];
-      const nxt=cur.includes(techId)?cur.filter(x=>x!==techId):[...cur,techId];
+      const nxt=assignIds(cur).includes(techId)?cur.filter(x=>x!==techId):[...cur,techId];
       return {...prev,[dateKey]:nxt};
     });
   };
@@ -3824,7 +4117,7 @@ function TechScheduleView({ user, techs, appointments, hospitals, assignments, c
         const isSun   = d.getDay()===0;
         const isTod   = dateKey===todayStr;
         const isPast  = d < new Date(today.toDateString());
-        const dayTechs= (assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
+        const dayTechs= assignIds(assignments[dateKey]||[]).map(id=>techs.find(t=>t.id===id)).filter(Boolean);
         const dayAppts= appointments.filter(a=>a.date===dateKey&&a.status!=="cancelled");
         const allOk   = dayTechs.every(t=>(checkins[dateKey]||[]).includes(t.id));
 
@@ -6432,9 +6725,10 @@ function AdminDashboard({ user, appointments, hospitals, techs, assignments, tec
 function CpapInfoPage() {
   const [section, setSection] = useState("eligibility");
   const tabs = [
-    { id:"eligibility", label:"เงื่อนไขผู้ป่วย",   icon:"ti-user-check"       },
-    { id:"rates",       label:"อัตราการเบิกจ่าย", icon:"ti-currency-baht"    },
+    { id:"eligibility", label:"เงื่อนไขผู้ป่วย",   icon:"ti-user-check"           },
+    { id:"rates",       label:"อัตราการเบิกจ่าย", icon:"ti-currency-baht"        },
     { id:"device",      label:"คุณสมบัติเครื่อง",  icon:"ti-device-heart-monitor" },
+    { id:"warranty",    label:"การรับประกัน",       icon:"ti-shield-check"         },
   ];
   return (
     <div style={{flex:1,overflowY:"auto",minHeight:0,padding:"20px 28px",fontFamily:FONT,background:T.bg}}>
@@ -6482,10 +6776,7 @@ function CpapInfoPage() {
             {no:"๒", color:"#dc2626", bg:"#fee2e2", border:"#fca5a5",
               title:"Moderate OSA + โรคร่วม", badge:"AHI 15–29 ครั้ง/ชม.",
               desc:"ระดับปานกลาง (AHI 15–29 ครั้ง/ชม.) ร่วมกับโรคใดโรคหนึ่ง:",
-              bullets:["Stroke / โรคสมองขาดเลือด","Myocardial infarction / กล้ามเนื้อหัวใจขาดเลือด","ภาวะหัวใจล้มเหลว","Refractory HT: SBP/DBP ≥ 160/90 mmHg ขณะรับยาลดความดันโลหิต ≥ 3 กลุ่ม"]},
-            {no:"๓", color:"#d97706", bg:"#fef9c3", border:"#fde047",
-              title:"Mild OSA + อาชีพเสี่ยง", badge:"AHI 5–14 ครั้ง/ชม.",
-              desc:"ระดับน้อย (AHI 5–14 ครั้ง/ชม.) ประกอบอาชีพเสี่ยงต่อการเกิดอุบัติเหตุจากการง่วงนอน เช่น พนักงานขับรถ นักบิน ฯลฯ"},
+              bullets:["Stroke / โรคสมองขาดเลือด","Myocardial infarction / กล้ามเนื้อหัวใจขาดเลือด","ภาวะหัวใจล้มเหลว","Refractory HT: SBP/DBP ≥ 140/90 mmHg ขณะรับยาลดความดันโลหิต ≥ 3 กลุ่ม"]},
           ].map(item=>(
             <div key={item.no} style={{padding:"16px 18px",background:item.bg,borderRadius:14,border:`1.5px solid ${item.border}`}}>
               <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
@@ -6583,6 +6874,66 @@ function CpapInfoPage() {
         </div>
       )}
 
+      {/* ── Tab 4: การรับประกัน ── */}
+      {section==="warranty" && (
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <div style={{padding:"14px 18px",background:"#f0fdf4",borderRadius:14,border:"1px solid #86efac",display:"flex",alignItems:"center",gap:14}}>
+            <div style={{width:48,height:48,borderRadius:12,background:"#059669",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+              <i className="ti ti-shield-check" style={{fontSize:24,color:"white"}}></i>
+            </div>
+            <div>
+              <div style={{fontSize:14,fontWeight:700,color:"#065f46"}}>บริษัท สามเอ็น จำกัด รับประกันเครื่อง CPAP/BiPAP</div>
+              <div style={{fontSize:13,color:"#059669",marginTop:2}}>ระยะเวลา <strong>5 ปี</strong> นับจากวันส่งมอบเครื่อง</div>
+            </div>
+          </div>
+
+          {[
+            {icon:"ti-circle-check",color:"#059669",bg:"#d1fae5",border:"#6ee7b7",title:"ขอบเขตที่ครอบคลุม",items:[
+              "ความบกพร่องจากกระบวนการผลิต หรือชิ้นส่วนภายในผิดปกติ",
+              "เฉพาะตัวเครื่องอัดอากาศแรงดันบวก ไม่รวม Humidifier, ท่อลม, หน้ากาก, filter",
+              "การใช้งานเฉลี่ยไม่เกิน 12 ชม./วัน เพื่อรักษาภาวะหยุดหายใจขณะหลับ",
+            ]},
+            {icon:"ti-circle-x",color:"#dc2626",bg:"#fee2e2",border:"#fca5a5",title:"ขอบเขตที่ไม่ครอบคลุม",items:[
+              "การเสื่อมสภาพตามอายุ เช่น เสียงลม เสียงจากการหายใจ",
+              "น้ำหรือของเหลวเข้าเครื่อง / เครื่องตกหล่นหรือถูกกระแทก",
+              "แมลง ฝุ่น หรือสิ่งแปลกปลอมเข้าเครื่อง",
+              "ใช้อุปกรณ์ไม่ได้มาตรฐานผู้ผลิต หรือผิดวัตถุประสงค์",
+              "แกะ ดัดแปลง หรือซ่อมโดยผู้ไม่ได้รับอนุญาต",
+              "โอนสิทธิ์ให้บุคคลอื่น (สิทธิ์เฉพาะตัวผู้ป่วย)",
+              "เหตุสุดวิสัย: ไฟฟ้ากระชาก น้ำท่วม ฟ้าผ่า อัคคีภัย",
+            ]},
+            {icon:"ti-alert-triangle",color:"#d97706",bg:"#fef9c3",border:"#fde047",title:"เงื่อนไขสำคัญที่ต้องปฏิบัติ",items:[
+              "นำเครื่องตรวจเช็ค/บำรุงรักษาอย่างน้อย ปีละ 1 ครั้ง (หากไม่ทำ → สิ้นสุดการรับประกันทันที)",
+              "ติดตามผลการรักษากับสถานพยาบาลที่ใช้สิทธิ์ต่อเนื่อง",
+              "เครื่องต้องมีข้อมูลการใช้งาน (Usage Data) ที่ตรวจสอบได้",
+              "แสดงหลักฐานยืนยันตัวตนทุกครั้งที่นำเครื่องเข้ารับบริการ",
+              "ใช้งานอุปกรณ์ตามมาตรฐานผู้ผลิตเท่านั้น",
+            ]},
+          ].map((sec,i)=>(
+            <div key={i} style={{padding:"16px 18px",background:sec.bg,borderRadius:14,border:`1.5px solid ${sec.border}`}}>
+              <div style={{fontSize:14,fontWeight:700,color:sec.color,display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                <i className={`ti ${sec.icon}`} style={{fontSize:16}}></i>{sec.title}
+              </div>
+              <ul style={{margin:0,padding:"0 0 0 18px",fontSize:13,color:sec.color,lineHeight:2,opacity:.9}}>
+                {sec.items.map((it,j)=><li key={j}>{it}</li>)}
+              </ul>
+            </div>
+          ))}
+
+          <div style={{padding:"14px 18px",background:"#f8fafc",borderRadius:12,border:"1px solid #e2e8f0",fontSize:12,color:"#475569",lineHeight:1.8}}>
+            <div style={{fontWeight:700,color:"#334155",marginBottom:6}}>ขอบเขตการให้บริการตามการรับประกัน</div>
+            การรับประกันครอบคลุมเฉพาะการ<strong>ตรวจสอบ ซ่อมแซม หรือเปลี่ยนชิ้นส่วน</strong>เท่านั้น
+            <strong> ไม่รวม</strong> ค่าเดินทาง ค่าขนส่งเครื่อง ค่าเช่าเครื่องทดแทน หรือความเสียหายทางอ้อมใดๆ
+            เว้นแต่มีข้อตกลงเป็นลายลักษณ์อักษรกับสถานพยาบาล
+          </div>
+          <div style={{padding:"12px 16px",background:"#eff6ff",borderRadius:12,border:"1px solid #bfdbfe",fontSize:12,color:"#1e40af",lineHeight:1.7}}>
+            <i className="ti ti-info-circle" style={{marginRight:6,fontSize:13}}></i>
+            <strong>สำหรับสถานพยาบาล:</strong> กรุณาแจ้งและอธิบายหลักเกณฑ์การรับประกันแก่ผู้ประกันตน
+            <strong>ก่อนส่งมอบเครื่อง</strong> เมื่อแจ้งแล้วถือว่าผู้ประกันตนได้รับทราบและยอมรับเงื่อนไขแล้ว
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -6604,7 +6955,7 @@ export default function App() {
   const [user,setUser]           = useState(null);
   const [tab,setTab]             = useState("summary");
   const [appts,setAppts]         = useState(saved?.appts      || []);
-  const [hospitals,setHospitals] = useState(saved?.hospitals  || INIT_HOSPITALS);
+  const [hospitals,setHospitals] = useState((saved?.hospitals || INIT_HOSPITALS).map(h=>({pin:"",...h})));
   const [techs,setTechs]         = useState(saved?.techs      || INIT_TECHS);
   const [assignments,setAssign]  = useState(saved?.assignments|| SAMPLE_ASSIGNMENTS);
   const [checkins,setCheckins]   = useState(saved?.checkins   || SAMPLE_CHECKINS);
@@ -6641,7 +6992,7 @@ export default function App() {
   // ── Import handler ──
   const handleImport = (data) => {
     setAppts(data.appts || []);
-    setHospitals(data.hospitals || INIT_HOSPITALS);
+    setHospitals((data.hospitals || INIT_HOSPITALS).map(h=>({pin:"",...h})));
     setTechs(data.techs || INIT_TECHS);
     setAssign(data.assignments || {});
     setCheckins(data.checkins || {});
@@ -6663,7 +7014,7 @@ export default function App() {
   const tabs = [
     // Paste — Sleep Test รพ. เท่านั้น (ไม่ใช่ CPAP-only)
     ...(isAdmin ? [{ id:"dashboard", label:"Dashboard", icon:"ti-dashboard" }] : []),
-    ...((isAdmin || (isHospital && !isCpapOnly)) ? [{ id:"paste",    label:"วางจาก Line",    icon:"ti-brand-line"        }] : []),
+
     // รายเดือน — Sleep Test รพ. เท่านั้น
     ...((isAdmin || isTech || (isHospital && !isCpapOnly)) ? [{ id:"summary", label:"รายเดือน", icon:"ti-layout-list" }] : []),
     // ค้นหา — ทุก role
@@ -6780,7 +7131,7 @@ export default function App() {
         <div style={{ padding:"14px 24px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
             <div style={{ fontSize:20, fontWeight:800, color:T.navy, letterSpacing:"-0.02em" }}>
-              {tab==="dashboard"?"Dashboard — ภาพรวม 3N Sleep Care":tab==="paste"?"วางนัดหมายจาก Line":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapinfo"?"เงื่อนไขการเบิกจ่าย CPAP — ประกันสังคม":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="techcal"?"ปฏิทิน Sleep Technician":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
+              {tab==="dashboard"?"Dashboard — ภาพรวม 3N Sleep Care":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapinfo"?"เงื่อนไขการเบิกจ่าย CPAP — ประกันสังคม":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="techcal"?"ปฏิทิน Sleep Technician":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
             </div>
             <div style={{ fontSize:13, color:T.muted, marginTop:2 }}>
               {user.role==="admin"?"3N Admin — เข้าถึงทุก รพ.":user.role==="tech"?"Sleep Tech — ดูตารางและยืนยันเวร":`${hospitals.find(h=>h.id===user.hospId)?.name||""}`}
@@ -6800,7 +7151,6 @@ export default function App() {
         </div>
         <div style={{ flex:1, display:"flex", flexDirection:"column", minHeight:0, overflow:"hidden" }}>
           {tab==="dashboard"  && <AdminDashboard    user={user} appointments={appts} hospitals={hospitals} techs={techs} assignments={assignments} techRates={techRates} onNavigate={setTab} />}
-          {tab==="paste"     && <PasteView         user={user} hospitals={hospitals} setAppointments={setApptsSave} />}
           {tab==="summary"   && <MonthlySummary    user={user} appointments={appts} setAppointments={setApptsSave} hospitals={hospitals} techs={techs} assignments={assignments} setAssignments={setAssignSave} checkins={checkins} setCheckins={setCheckinSave} dayBlocks={dayBlocks} setDayBlocks={setBlocksSave} companyHolidays={companyHolidays} setCompanyHolidays={setCompanyHolidays} salesList={salesList} />}
           {tab==="search"    && <SearchView        user={user} appointments={appts} hospitals={hospitals} />}
           {tab==="cpapinfo"  && <CpapInfoPage />}
