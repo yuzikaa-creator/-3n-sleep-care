@@ -520,7 +520,8 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
   const [year,  setYear]  = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
   const [movingAppt, setMovingAppt] = useState(null);
-  const [filterHosp, setFilterHosp] = useState("all");
+  const [filterHosp,   setFilterHosp]   = useState("all");
+  const [showExcelImport, setShowExcelImport] = useState(false);
 
   const toggleHoliday = (dateKey) => {
     setCompanyHolidays(prev => prev.includes(dateKey) ? prev.filter(d=>d!==dateKey) : [...prev, dateKey]);
@@ -585,8 +586,167 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
   const totalShifts = Object.entries(assignments).filter(([k])=>k.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)).reduce((s,[,v])=>s+v.length,0);
   const totalOk     = Object.entries(checkins).filter(([k])=>k.startsWith(`${year}-${String(month+1).padStart(2,"0")}`)).reduce((s,[,v])=>s+v.length,0);
 
+  // ── Excel download template ──
+  const downloadTemplate = () => {
+    const hosp = hospitals.find(h=>h.id===user.hospId);
+    const headers = ["HN","ชื่อ-นามสกุล","เบอร์โทร","วันนัดหมาย (DD/MM/YYYY)","ประเภทการตรวจ","สิทธิ์การรักษา","โรคประจำตัว"];
+    const note1   = ["","","","","full_night = ตรวจทั้งคืน","social_security = ประกันสังคม",""];
+    const note2   = ["","","","","split_night = แบ่งครึ่งคืน","self_pay = เงินสด",""];
+    const note3   = ["","","","","titration = ปรับแรงดัน CPAP","civil_servant = ข้าราชการ",""];
+    const note4   = ["","","","","","health_insurance = ประกันสุขภาพ",""];
+    const blank   = ["","","","","","",""];
+    const ex1 = ["HN 1000001","นายสมชาย ใจดี","0812345678","01/09/2569","full_night","social_security","DM, HT"];
+    const ex2 = ["HN 1000002","นางสมหญิง รักดี","0898765432","03/09/2569","full_night","self_pay",""];
+    const ex3 = ["HN 1000003","น.ส.มณีรัตน์ สวยงาม","0871234567","05/09/2569","split_night","civil_servant","Obesity"];
+    const ex4 = ["HN 1000004","นายประสิทธิ์ มั่นคง","0841234567","08/09/2569","titration","health_insurance","DM"];
+    const csvContent = [headers, note1, note2, note3, note4, blank, ex1, ex2, ex3, ex4].map(r=>r.join(",")).join("\n");
+    const bom = "﻿"; // UTF-8 BOM สำหรับ Excel ภาษาไทย
+    const blob = new Blob([bom+csvContent], {type:"text/csv;charset=utf-8"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `template_นัดหมาย_${hosp?.short||"รพ"}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+  };
+
+  // ── Excel import ──
+  const importExcel = (file) => {
+    const isXlsx = /\.xlsx?$/i.test(file.name);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        let rows = [];
+        if(isXlsx) {
+          const XLSX = window._XLSX || window.XLSX;
+          if(!XLSX) { alert("กำลังโหลด SheetJS กรุณารอสักครู่แล้วลองใหม่"); return; }
+          const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
+          const ws = wb.Sheets[wb.SheetNames[0]];
+          rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+        } else {
+          // CSV — decode UTF-8 with BOM support
+          const arr = new Uint8Array(e.target.result);
+          const text = new TextDecoder("utf-8").decode(arr).replace(/^﻿/,"");
+          rows = text.split(/\r?\n/)
+            .filter(l=>l.trim())
+            .map(line=>line.split(",").map(c=>c.trim().replace(/^"|"$/g,"")));
+        }
+        // กรองเอาเฉพาะ data rows (ข้าม header + note rows)
+        const dataRows = rows.slice(1).filter(r=>{
+          const hn = String(r[0]||"").trim();
+          const nm = String(r[1]||"").trim();
+          return nm && hn && !hn.startsWith("*(") && hn.toLowerCase()!=="hn";
+        });
+        const newAppts = [];
+        dataRows.forEach((cols, i) => {
+          const [hn, name, phone, dateStr, testType, payType, diagnosis] = cols.map(c=>String(c||"").trim());
+          if(!hn && !name) return;
+          // parse date DD/MM/YYYY หรือ DD/MM/YY (พ.ศ.)
+          let date = "";
+          if(dateStr) {
+            const dm = dateStr.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+            if(dm) {
+              let d=parseInt(dm[1]), mo=parseInt(dm[2]), yr=parseInt(dm[3]);
+              if(yr<100) yr += (yr>=43?2500:2600);
+              if(yr>2400) yr-=543;
+              if(yr<2000||yr>2100) yr=new Date().getFullYear();
+              date = `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+            }
+          }
+          const phoneClean = phone?.replace(/\D/g,"") || "";
+          const validTypes = ["full_night","split_night","titration","home_sleep_test"];
+          const validPay   = ["social_security","self_pay","civil_servant","health_insurance","state_enterprise","direct_billing"];
+          newAppts.push({
+            id: `xl_${Date.now()}_${i}_${Math.random().toString(36).slice(2,6)}`,
+            hn: hn||"—",
+            name: name||"ไม่ระบุ",
+            phone: phoneClean,
+            phoneError: phoneClean.length!==10 ? `เบอร์ไม่ครบ 10 หลัก` : "",
+            date: date || new Date().toISOString().split("T")[0],
+            hospId: user.hospId,
+            status: "active",
+            apptType: "sleep_test",
+            sleepTestType: validTypes.includes(testType) ? testType : "full_night",
+            paymentType: validPay.includes(payType) ? payType : "social_security",
+            journeyStatus: "scheduled",
+            note: diagnosis ? `โรคประจำตัว: ${diagnosis}` : "",
+            diagnosis: diagnosis||"",
+            cancelReason:"", cancelledAt:null,
+          });
+        });
+        if(newAppts.length > 0) {
+          setAppointments(prev=>[...prev,...newAppts]);
+          alert(`✅ นำเข้าสำเร็จ ${newAppts.length} รายการ`);
+          setShowExcelImport(false);
+        } else {
+          alert("❌ ไม่พบข้อมูลในไฟล์ กรุณาตรวจสอบ format");
+        }
+      } catch(err) {
+        alert("❌ เกิดข้อผิดพลาด: " + err.message);
+      }
+    };
+    if(isXlsx) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsArrayBuffer(file);
+    }
+  };
+
   return (
     <div style={{ display:"flex",height:"100%",overflow:"hidden" }}>
+    {showExcelImport && (
+      <div onClick={e=>{if(e.target===e.currentTarget)setShowExcelImport(false);}}
+        style={{position:"fixed",inset:0,zIndex:9999,background:"rgba(5,15,50,0.7)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:FONT}}>
+        <div style={{width:"100%",maxWidth:500,background:"white",borderRadius:18,overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.4)"}}>
+          <div style={{padding:"16px 20px",background:"linear-gradient(135deg,#065f46,#059669)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+            <div style={{fontSize:15,fontWeight:800,color:"white",display:"flex",alignItems:"center",gap:8}}>
+              <i className="ti ti-table-import" style={{fontSize:17}}></i>
+              นำเข้านัดหมายจาก Excel / CSV
+            </div>
+            <button onClick={()=>setShowExcelImport(false)} style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,.2)",border:"none",color:"white",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+          </div>
+          <div style={{padding:"20px 22px",display:"flex",flexDirection:"column",gap:14}}>
+            {/* Step 1 */}
+            <div style={{padding:"14px 16px",background:"#eff6ff",borderRadius:12,border:"1px solid #bfdbfe"}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#1d4ed8",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:22,height:22,borderRadius:6,background:"#1d4ed8",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800}}>1</span>
+                ดาวน์โหลด Template
+              </div>
+              <div style={{fontSize:12,color:"#374151",marginBottom:10,lineHeight:1.6}}>
+                ดาวน์โหลดไฟล์ Template (.csv) แล้วกรอกข้อมูลผู้ป่วยใน Excel หรือ Google Sheets
+                <br/>คอลัมน์: HN · ชื่อ · เบอร์ · วันนัด · ประเภท · สิทธิ์ · โรคประจำตัว
+              </div>
+              <button onClick={downloadTemplate}
+                style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",fontSize:12,fontWeight:700,borderRadius:9,border:"1.5px solid #3b82f6",background:"white",color:"#1d4ed8",cursor:"pointer",fontFamily:FONT}}>
+                <i className="ti ti-download" style={{fontSize:13}}></i>
+                ดาวน์โหลด Template.csv
+              </button>
+            </div>
+            {/* Step 2 */}
+            <div style={{padding:"14px 16px",background:"#f0fdf4",borderRadius:12,border:"1px solid #86efac"}}>
+              <div style={{fontSize:12,fontWeight:700,color:"#166534",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                <span style={{width:22,height:22,borderRadius:6,background:"#059669",color:"white",display:"flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:800}}>2</span>
+                Upload ไฟล์ที่กรอกแล้ว
+              </div>
+              <div style={{fontSize:12,color:"#374151",marginBottom:10}}>
+                Save เป็น .csv แล้ว upload กลับเข้าระบบ
+              </div>
+              <label style={{display:"flex",alignItems:"center",gap:6,padding:"8px 16px",fontSize:12,fontWeight:700,borderRadius:9,border:"1.5px solid #22c55e",background:"white",color:"#166534",cursor:"pointer",fontFamily:FONT,width:"fit-content"}}>
+                <i className="ti ti-upload" style={{fontSize:13}}></i>
+                เลือกไฟล์ Excel / CSV
+                <input type="file" accept=".csv,.xlsx,.xls" onChange={e=>{if(e.target.files[0]) importExcel(e.target.files[0]);}} style={{display:"none"}}/>
+              </label>
+            </div>
+            {/* Format hint */}
+            <div style={{padding:"10px 14px",background:"#fef9c3",borderRadius:10,border:"0.5px solid #fde047",fontSize:11,color:"#854d0e",lineHeight:1.7}}>
+              <i className="ti ti-info-circle" style={{marginRight:6}}></i>
+              <strong>รองรับไฟล์:</strong> .xlsx, .xls (Excel) และ .csv<br/>
+              <strong>รูปแบบวันที่:</strong> DD/MM/YYYY (พ.ศ.) เช่น 25/08/2569<br/>
+              <strong>ประเภทตรวจ:</strong> full_night / split_night / titration<br/>
+              <strong>สิทธิ์:</strong> social_security / self_pay / civil_servant / health_insurance
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
 
       {/* LEFT: day list */}
       <div style={{ flex:1,...FL,overflow:"hidden" }}>
@@ -597,7 +757,15 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             <div style={{ fontSize:22,fontWeight:800,color:T.navy,letterSpacing:"-0.02em" }}>
               {TMF[month]} <span style={{ color:T.faint,fontWeight:400,fontSize:18 }}>{year+543}</span>
             </div>
-            <div style={{ ...R,gap:3 }}>
+            <div style={{ ...R,gap:6 }}>
+              {/* ปุ่ม Excel Import/Export — เฉพาะ hospital */}
+              {user.role==="hospital" && (
+                <button onClick={()=>setShowExcelImport(true)}
+                  style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 14px",fontSize:12,fontWeight:700,borderRadius:9,border:"1.5px solid #86efac",background:"#f0fdf4",color:"#166534",cursor:"pointer",fontFamily:FONT }}>
+                  <i className="ti ti-table-import" style={{fontSize:14}}></i>
+                  นำเข้า Excel
+                </button>
+              )}
               <button onClick={prev} style={{ width:34,height:34,border:`1px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.muted,cursor:"pointer",fontSize:17,...R,justifyContent:"center" }}>‹</button>
               <button onClick={next} style={{ width:34,height:34,border:`1px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.muted,cursor:"pointer",fontSize:17,...R,justifyContent:"center" }}>›</button>
             </div>
@@ -7039,6 +7207,16 @@ export default function App() {
   const [salesList,setSalesList] = useState(saved?.salesList  || INIT_SALES);
   const [staffPins, setStaffPins] = useState(saved?.staffPins || { admin:"330011", tech:"330022", sales:"330033" });
   const [lastSaved, setLastSaved]= useState(saved ? new Date().toISOString() : null);
+
+  // โหลด SheetJS สำหรับ Excel import
+  useEffect(()=>{
+    if(!window._XLSX) {
+      const s = document.createElement("script");
+      s.src = "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js";
+      s.onload = () => { window._XLSX = window.XLSX; };
+      document.head.appendChild(s);
+    }
+  }, []);
 
   // ── useRef เก็บค่าล่าสุดทุก state เพื่อแก้ stale closure ใน saveToLocal ──
   const stateRef = useRef({});
