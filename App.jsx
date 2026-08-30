@@ -637,23 +637,64 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
         });
         const newAppts = [];
         dataRows.forEach((cols, i) => {
-          const [hn, name, phone, dateStr, testType, payType, diagnosis] = cols.map(c=>String(c||"").trim());
+          // รองรับทั้ง format template (HN,ชื่อ,เบอร์,วันนัด,ประเภท,สิทธิ์,โรค)
+          // และ format รพ. จริง (ลำดับ,วันส่ง,HN,ชื่อ,สิทธิ์,เบอร์,วันนัด,...)
+          let hn, name, phone, dateStr, testType, payType, diagnosis;
+          const isHospFormat = cols.length>=7 && /^\d+$/.test(String(cols[0]||"").trim());
+          if(isHospFormat) {
+            // format รพ.: col0=ลำดับ, col2=HN, col3=ชื่อ, col4=สิทธิ์, col5=เบอร์, col6=วันนัด
+            hn       = String(cols[2]||"").trim();
+            name     = String(cols[3]||"").trim();
+            phone    = String(cols[5]||"").trim();
+            dateStr  = String(cols[6]||"").trim();
+            testType = "full_night";
+            payType  = String(cols[4]||"").trim();
+            diagnosis = String(cols[11]||"").trim();
+          } else {
+            // format template: HN,ชื่อ,เบอร์,วันนัด,ประเภท,สิทธิ์,โรค
+            [hn, name, phone, dateStr, testType, payType, diagnosis] = cols.map(c=>String(c||"").trim());
+          }
           if(!hn && !name) return;
-          // parse date DD/MM/YYYY หรือ DD/MM/YY (พ.ศ.)
+
+          // แปลงสิทธิ์ภาษาไทย → code
+          const payMap = {
+            "ประกันสังคม":"social_security","ประกันสุขภาพ":"health_insurance",
+            "ข้าราชการ":"civil_servant","กรม":"civil_servant","ราชการ":"civil_servant",
+            "เงินสด":"self_pay","cash":"self_pay","self_pay":"self_pay",
+            "รัฐวิสาหกิจ":"state_enterprise","บริษัท":"direct_billing",
+            "social_security":"social_security","civil_servant":"civil_servant",
+            "health_insurance":"health_insurance","state_enterprise":"state_enterprise",
+          };
+          const payCode = payMap[payType] || payMap[Object.keys(payMap).find(k=>payType?.includes(k))] || "social_security";
+
+          // parse date — รองรับ string "d/m/yyyy" และ datetime object ที่ SheetJS แปลงมา
           let date = "";
-          if(dateStr) {
-            const dm = dateStr.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
+          const parseDateStr = (s) => {
+            if(!s) return "";
+            s = String(s).trim();
+            // SheetJS datetime: ISO string "2026-08-03T00:00:00.000Z"
+            if(s.includes("T") || s.match(/^\d{4}-\d{2}-\d{2}/)) {
+              const dt = new Date(s);
+              if(!isNaN(dt)) {
+                let yr = dt.getUTCFullYear();
+                if(yr > 2400) yr -= 543; // ถ้า SheetJS ส่ง พ.ศ. มา
+                return `${yr}-${String(dt.getUTCMonth()+1).padStart(2,"0")}-${String(dt.getUTCDate()).padStart(2,"0")}`;
+              }
+            }
+            // string d/m/yyyy หรือ d/m/yy
+            const dm = s.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
             if(dm) {
               let d=parseInt(dm[1]), mo=parseInt(dm[2]), yr=parseInt(dm[3]);
               if(yr<100) yr += (yr>=43?2500:2600);
               if(yr>2400) yr-=543;
-              if(yr<2000||yr>2100) yr=new Date().getFullYear();
-              date = `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+              if(yr>=2000&&yr<=2100) return `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
             }
-          }
+            return "";
+          };
+          date = parseDateStr(dateStr);
+
           const phoneClean = phone?.replace(/\D/g,"") || "";
           const validTypes = ["full_night","split_night","titration","home_sleep_test"];
-          const validPay   = ["social_security","self_pay","civil_servant","health_insurance","state_enterprise","direct_billing"];
           newAppts.push({
             id: `xl_${Date.now()}_${i}_${Math.random().toString(36).slice(2,6)}`,
             hn: hn||"—",
@@ -665,7 +706,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             status: "active",
             apptType: "sleep_test",
             sleepTestType: validTypes.includes(testType) ? testType : "full_night",
-            paymentType: validPay.includes(payType) ? payType : "social_security",
+            paymentType: payCode,
             journeyStatus: "scheduled",
             note: diagnosis ? `โรคประจำตัว: ${diagnosis}` : "",
             diagnosis: diagnosis||"",
