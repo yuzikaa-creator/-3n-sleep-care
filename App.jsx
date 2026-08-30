@@ -508,6 +508,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
   const [movingAppt, setMovingAppt] = useState(null);
   const [filterHosp,   setFilterHosp]   = useState("all");
   const [showExcelImport, setShowExcelImport] = useState(false);
+  const [lastImportIds,  setLastImportIds]  = useState([]);
 
   const toggleHoliday = (dateKey) => {
     setCompanyHolidays(prev => prev.includes(dateKey) ? prev.filter(d=>d!==dateKey) : [...prev, dateKey]);
@@ -620,9 +621,22 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
         if(isXlsx) {
           const XLSX = window._XLSX || window.XLSX;
           if(!XLSX) { alert("กำลังโหลด SheetJS กรุณารอสักครู่แล้วลองใหม่"); return; }
-          const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array"});
+          const wb = XLSX.read(new Uint8Array(e.target.result), {type:"array", cellDates:true, raw:false});
           const ws = wb.Sheets[wb.SheetNames[0]];
-          rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:""});
+          // format วันที่เป็น DD/MM/YYYY (พ.ศ.) เพื่อ parse ได้ถูกต้อง
+          const dateEncoder = (v) => {
+            if(v instanceof Date) {
+              let yr = v.getFullYear();
+              // Excel เก็บปี ค.ศ. แต่ไฟล์ รพ. อาจเป็น พ.ศ. → SheetJS อ่าน serial เป็น ค.ศ. เสมอ
+              // ปี ค.ศ. 2026 = พ.ศ. 2569 → ถ้า yr < 2400 คือ ค.ศ. แล้ว
+              const m = String(v.getMonth()+1).padStart(2,"0");
+              const d = String(v.getDate()).padStart(2,"0");
+              return `${d}/${m}/${yr}`;
+            }
+            return v;
+          };
+          rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:"", raw:false})
+            .map(row => row.map(cell => cell instanceof Date ? dateEncoder(cell) : cell));
         } else {
           // CSV — decode UTF-8 with BOM support
           const arr = new Uint8Array(e.target.result);
@@ -631,29 +645,35 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             .filter(l=>l.trim())
             .map(line=>line.split(",").map(c=>c.trim().replace(/^"|"$/g,"")));
         }
-        // กรองเอาเฉพาะ data rows (ข้าม header + note rows)
+        // ตรวจ header row เพื่อ detect format อัตโนมัติ
+        const headerRow = rows[0] ? rows[0].map(c=>String(c||"").trim()) : [];
+        const isHospFileFormat = headerRow.some(h=>["ลำดับ","รายชื่อ-นามสกุล","วันที่นัดหมาย","วันที่ส่งชื่อ"].includes(h));
+
+        // กรองเอาเฉพาะ data rows
         const dataRows = rows.slice(1).filter(r=>{
-          const hn = String(r[0]||"").trim();
-          const nm = String(r[1]||"").trim();
-          return nm && hn && !hn.startsWith("*(") && hn.toLowerCase()!=="hn";
+          if(!r || r.every(c=>!String(c||"").trim())) return false;
+          const col0 = String(r[0]||"").trim();
+          if(isHospFileFormat) {
+            // format รพ.: ต้องมี ลำดับ (ตัวเลข) ใน col0
+            return /^\d+$/.test(col0);
+          }
+          // template: ข้าม header/note rows
+          return col0 && !col0.startsWith("---") && !col0.startsWith("*(") && col0.toLowerCase()!=="hn";
         });
         const newAppts = [];
         dataRows.forEach((cols, i) => {
-          // รองรับทั้ง format template (HN,ชื่อ,เบอร์,วันนัด,ประเภท,สิทธิ์,โรค)
-          // และ format รพ. จริง (ลำดับ,วันส่ง,HN,ชื่อ,สิทธิ์,เบอร์,วันนัด,...)
           let hn, name, phone, dateStr, testType, payType, diagnosis;
-          const isHospFormat = cols.length>=7 && /^\d+$/.test(String(cols[0]||"").trim());
-          if(isHospFormat) {
-            // format รพ.: col0=ลำดับ, col2=HN, col3=ชื่อ, col4=สิทธิ์, col5=เบอร์, col6=วันนัด
-            hn       = String(cols[2]||"").trim();
-            name     = String(cols[3]||"").trim();
-            phone    = String(cols[5]||"").trim();
-            dateStr  = String(cols[6]||"").trim();
-            testType = "full_night";
-            payType  = String(cols[4]||"").trim();
-            diagnosis = String(cols[11]||"").trim();
+          if(isHospFileFormat) {
+            // format รพ. BPK8: ลำดับ(0),วันส่ง(1),HN(2),ชื่อ(3),สิทธิ์(4),เบอร์(5),วันนัด(6),ยานอนหลับ(7)
+            hn        = String(cols[2]||"").trim();
+            name      = String(cols[3]||"").trim();
+            phone     = String(cols[5]||"").trim();
+            dateStr   = String(cols[6]||"").trim();
+            testType  = "full_night";
+            payType   = String(cols[4]||"").trim();
+            diagnosis = ""; // ไม่มีในไฟล์รพ.
           } else {
-            // format template: HN,ชื่อ,เบอร์,วันนัด,ประเภท,สิทธิ์,โรค
+            // template: HN,ชื่อ,เบอร์,วันนัด,ประเภท,สิทธิ์,โรค,ยานอนหลับ
             [hn, name, phone, dateStr, testType, payType, diagnosis] = cols.map(c=>String(c||"").trim());
           }
           if(!hn && !name) return;
@@ -683,13 +703,14 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                 return `${yr}-${String(dt.getUTCMonth()+1).padStart(2,"0")}-${String(dt.getUTCDate()).padStart(2,"0")}`;
               }
             }
-            // string d/m/yyyy หรือ d/m/yy
+            // string d/m/yyyy หรือ d/m/yy (รองรับทั้ง พ.ศ. และ ค.ศ.)
             const dm = s.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
             if(dm) {
               let d=parseInt(dm[1]), mo=parseInt(dm[2]), yr=parseInt(dm[3]);
               if(yr<100) yr += (yr>=43?2500:2600);
-              if(yr>2400) yr-=543;
-              if(yr>=2000&&yr<=2100) return `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+              if(yr>2400) yr-=543; // พ.ศ. → ค.ศ.
+              // ถ้าเป็นปี ค.ศ. 2025-2030 → ใช้ได้เลย
+              if(yr>=2024&&yr<=2100) return `${yr}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
             }
             return "";
           };
@@ -697,10 +718,10 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 
           const phoneClean = phone?.replace(/\D/g,"") || "";
           const validTypes = ["full_night","split_night","titration","home_sleep_test"];
-          // อ่าน sleepMed จาก cols — format รพ. col[7], template col[7]
-          const sleepMedRaw = String(cols[7]||"").trim();
-          const sleepMed = ["ใช่","yes","true","1","TRUE"].includes(sleepMedRaw.toLowerCase()||sleepMedRaw) ? true
-                         : ["ไม่ใช่","no","false","0","FALSE"].includes(sleepMedRaw.toLowerCase()||sleepMedRaw) ? false
+          // อ่าน sleepMed — รพ. format: col[7], template: col[7]
+          const sleepMedRaw = String(cols[7]||"").trim().toLowerCase();
+          const sleepMed = ["ใช่","yes","true","1"].includes(sleepMedRaw) ? true
+                         : ["ไม่ใช่","no","false","0"].includes(sleepMedRaw) ? false
                          : null; // ไม่ระบุ
           newAppts.push({
             id: `xl_${Date.now()}_${i}_${Math.random().toString(36).slice(2,6)}`,
@@ -745,8 +766,9 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             if(!proceed) return;
           }
           setAppointments(prev=>[...prev,...newAppts]);
+          setLastImportIds(newAppts.map(a=>a.id));
           const overMsg = overCap.length > 0 ? `\n⚠️ ${overCap.length} วันเกิน capacity` : "";
-          alert(`✅ นำเข้าสำเร็จ ${newAppts.length} รายการ${overMsg}`);
+          alert(`✅ นำเข้าสำเร็จ ${newAppts.length} รายการ${overMsg}\n\nกด "ลบที่นำเข้าล่าสุด" เพื่อยกเลิกได้`);
           setShowExcelImport(false);
         } else {
           alert("❌ ไม่พบข้อมูลในไฟล์ กรุณาตรวจสอบ format");
@@ -832,13 +854,25 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             </div>
             <div style={{ ...R,gap:6 }}>
               {/* ปุ่ม Excel Import/Export — เฉพาะ hospital */}
-              {user.role==="hospital" && (
+              {user.role==="hospital" && (<>
                 <button onClick={()=>setShowExcelImport(true)}
                   style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 14px",fontSize:12,fontWeight:700,borderRadius:9,border:"1.5px solid #86efac",background:"#f0fdf4",color:"#166534",cursor:"pointer",fontFamily:FONT }}>
                   <i className="ti ti-table-import" style={{fontSize:14}}></i>
                   นำเข้า Excel
                 </button>
-              )}
+                {lastImportIds.length>0 && (
+                  <button onClick={()=>{
+                    if(window.confirm(`ลบรายการที่นำเข้าล่าสุด ${lastImportIds.length} รายการ?`)){
+                      setAppointments(prev=>prev.filter(a=>!lastImportIds.includes(a.id)));
+                      setLastImportIds([]);
+                    }
+                  }}
+                    style={{ display:"flex",alignItems:"center",gap:6,padding:"7px 14px",fontSize:12,fontWeight:700,borderRadius:9,border:"1.5px solid #fca5a5",background:"#fef2f2",color:"#dc2626",cursor:"pointer",fontFamily:FONT }}>
+                    <i className="ti ti-trash" style={{fontSize:14}}></i>
+                    ลบที่นำเข้าล่าสุด ({lastImportIds.length})
+                  </button>
+                )}
+              </>)}
               <button onClick={prev} style={{ width:34,height:34,border:`1px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.muted,cursor:"pointer",fontSize:17,...R,justifyContent:"center" }}>‹</button>
               <button onClick={next} style={{ width:34,height:34,border:`1px solid ${T.line}`,borderRadius:9,background:T.surf,color:T.muted,cursor:"pointer",fontSize:17,...R,justifyContent:"center" }}>›</button>
             </div>
@@ -1002,6 +1036,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                       onStartMove={()=>setMovingAppt(a)}
                       onUpdate={updateFn}
                       onDelete={deleteFn}
+                      userPin={user?.pin||""}
                       onBookCpap={src=>{
                         const exists=appointments.some(x=>x.hn===src.hn&&x.apptType==="cpap_trial"&&x.status!=="cancelled");
                         if(exists){ alert(`ผู้ป่วย ${src.name} มีนัดทดลอง CPAP อยู่แล้วในระบบ`); return; }
@@ -2611,6 +2646,98 @@ function JourneyPanel({ appt, canEdit, onUpdate, isAdmin=false, isTech=false, sa
 // ── Appointment Card (edit + reschedule + cancel) ─────────────────────────────
 const CANCEL_REASONS = ["ผู้ป่วยติดธุระ","ผู้ป่วยไม่สบาย","ผู้ป่วยขอเลื่อน","รพ. ขอเลื่อน","อุปกรณ์ไม่พร้อม","อื่นๆ"];
 
+// ── DeletePinModal — ยืนยัน PIN ก่อนลบ ─────────────────────────────────────────
+function DeletePinModal({ name, userPin, onConfirm, onClose }) {
+  const [pin, setPin]       = useState("");
+  const [err, setErr]       = useState(false);
+  const [show, setShow]     = useState(false);
+  const needPin = userPin && userPin.length >= 4;
+
+  const confirm = () => {
+    if(needPin && pin !== userPin) { setErr(true); setPin(""); return; }
+    onConfirm();
+    onClose();
+  };
+
+  return (
+    <div onClick={e=>{if(e.target===e.currentTarget)onClose();}}
+      style={{position:"fixed",inset:0,zIndex:10000,background:"rgba(5,15,50,0.75)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:16,fontFamily:FONT}}>
+      <div style={{width:"100%",maxWidth:380,background:"white",borderRadius:18,overflow:"hidden",boxShadow:"0 30px 80px rgba(0,0,0,.45)"}}>
+        {/* Header */}
+        <div style={{padding:"16px 20px",background:"linear-gradient(135deg,#7f1d1d,#dc2626)",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div style={{width:36,height:36,borderRadius:10,background:"rgba(255,255,255,.2)",display:"flex",alignItems:"center",justifyContent:"center"}}>
+              <i className="ti ti-trash" style={{fontSize:18,color:"white"}}></i>
+            </div>
+            <div>
+              <div style={{fontSize:14,fontWeight:800,color:"white"}}>ลบนัดหมาย</div>
+              <div style={{fontSize:11,color:"rgba(255,255,255,.7)",marginTop:1}}>การดำเนินการนี้ไม่สามารถย้อนกลับได้</div>
+            </div>
+          </div>
+          <button onClick={onClose} style={{width:28,height:28,borderRadius:8,background:"rgba(255,255,255,.2)",border:"none",color:"white",cursor:"pointer",fontSize:16,display:"flex",alignItems:"center",justifyContent:"center"}}>×</button>
+        </div>
+
+        <div style={{padding:"18px 20px",display:"flex",flexDirection:"column",gap:14}}>
+          {/* ชื่อผู้ป่วย */}
+          <div style={{padding:"12px 14px",background:"#fef2f2",borderRadius:10,border:"1px solid #fecaca"}}>
+            <div style={{fontSize:11,color:"#991b1b",fontWeight:600,marginBottom:3}}>กำลังจะลบ</div>
+            <div style={{fontSize:14,fontWeight:700,color:"#7f1d1d"}}>{name}</div>
+          </div>
+
+          {/* PIN input */}
+          {needPin ? (<>
+            <div>
+              <div style={{fontSize:12,fontWeight:600,color:"#374151",marginBottom:6,display:"flex",alignItems:"center",gap:6}}>
+                <i className="ti ti-lock" style={{fontSize:13,color:"#7c3aed"}}></i>
+                กรอก PIN เพื่อยืนยัน
+              </div>
+              <div style={{position:"relative"}}>
+                <input
+                  type={show?"text":"password"}
+                  value={pin}
+                  onChange={e=>{setPin(e.target.value.slice(0,20)); setErr(false);}}
+                  onKeyDown={e=>{ if(e.key==="Enter") confirm(); }}
+                  placeholder="กรอก PIN"
+                  autoFocus
+                  style={{width:"100%",padding:"11px 42px 11px 14px",fontSize:16,letterSpacing:4,border:`2px solid ${err?"#fca5a5":pin.length>0?"#7c3aed":"#e2e8f0"}`,borderRadius:10,outline:"none",fontFamily:"monospace",boxSizing:"border-box",background:err?"#fef2f2":"white",textAlign:"center"}}
+                />
+                <button onClick={()=>setShow(v=>!v)}
+                  style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:"#94a3b8",fontSize:16}}>
+                  <i className={`ti ${show?"ti-eye-off":"ti-eye"}`}></i>
+                </button>
+              </div>
+              {err && (
+                <div style={{marginTop:6,fontSize:12,color:"#dc2626",display:"flex",alignItems:"center",gap:5,padding:"6px 10px",background:"#fef2f2",borderRadius:8}}>
+                  <i className="ti ti-alert-triangle" style={{fontSize:12}}></i>
+                  PIN ไม่ถูกต้อง
+                </div>
+              )}
+            </div>
+          </>) : (
+            <div style={{padding:"10px 14px",background:"#fef9c3",borderRadius:10,border:"0.5px solid #fde047",fontSize:12,color:"#854d0e"}}>
+              <i className="ti ti-alert-triangle" style={{marginRight:6}}></i>
+              ยืนยันว่าต้องการลบนัดหมายนี้ออกจากระบบ
+            </div>
+          )}
+
+          {/* ปุ่ม */}
+          <div style={{display:"flex",gap:8}}>
+            <button onClick={onClose}
+              style={{flex:1,padding:"11px",borderRadius:10,border:"1px solid #e2e8f0",background:"white",color:"#64748b",cursor:"pointer",fontSize:13,fontWeight:600,fontFamily:FONT}}>
+              ยกเลิก
+            </button>
+            <button onClick={confirm}
+              style={{flex:2,padding:"11px",borderRadius:10,border:"none",background:(!needPin||(pin.length>=4))?"#dc2626":"#fca5a5",color:"white",cursor:(!needPin||(pin.length>=4))?"pointer":"not-allowed",fontSize:13,fontWeight:700,fontFamily:FONT,display:"flex",alignItems:"center",justifyContent:"center",gap:7}}>
+              <i className="ti ti-trash" style={{fontSize:14}}></i>
+              ยืนยันลบ
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── HospActionModal — เลื่อนนัด / ยกเลิก สำหรับ รพ. ────────────────────────────
 function HospActionModal({ appt, onClose, onReschedule, onCancel }) {
   const [mode, setMode]       = useState(null);
@@ -2713,7 +2840,7 @@ function HospActionModal({ appt, onClose, onReschedule, onCancel }) {
   );
 }
 
-function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech=false, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[], isDuplicate=false, hasCpapBooked=false, allAppts=[] }) {
+function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech=false, movingAppt, isCancelled, onStartMove, onUpdate, onDelete, onBookCpap, salesList=[], isDuplicate=false, hasCpapBooked=false, allAppts=[], userPin="" }) {
   const [mode, setMode]               = useState(null);
   const [showReport, setShowReport]   = useState(false);
   const [form, setForm]               = useState({ name:a.name, phone:a.phone, hn:a.hn, hospId:a.hospId, note:a.note||"", paymentType:a.paymentType||"" });
@@ -2723,6 +2850,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
   const [cancelReason, setCancelReason] = useState("");
   const [customReason, setCustomReason] = useState("");
   const [hospAction, setHospAction]     = useState(false);
+  const [showDelete,  setShowDelete]    = useState(false);
 
   const openAction = (e) => { e.stopPropagation(); setMode(mode==="action"?null:"action"); setActionTab("reschedule"); setReschedDate(""); setReschedNote(""); setCancelReason(""); setCustomReason(""); };
   const saveEdit = () => { onUpdate({ ...form }); setMode(null); };
@@ -2758,6 +2886,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
   return (
     <>
     {hospAction && <HospActionModal appt={a} onClose={()=>setHospAction(false)} onReschedule={handleHospReschedule} onCancel={handleHospCancel} />}
+    {showDelete && <DeletePinModal name={a.name} userPin={userPin} onConfirm={onDelete} onClose={()=>setShowDelete(false)} />}
     {showReport && (
       <SleepReportModal
         appt={a} hosp={h} hospitals={hospitals}
@@ -2831,9 +2960,9 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
                           <i className="ti ti-refresh" style={{ fontSize:12 }}></i>คืนสถานะ
                         </button>
                       )}
-                      <button onClick={()=>{ if(window.confirm(`ลบ "${a.name}" ออกจากระบบ?`)) onDelete(); }}
+                      <button onClick={()=>setShowDelete(true)}
                         style={{ padding:"5px 10px",fontSize:11,fontWeight:600,borderRadius:8,border:"0.5px solid #fecaca",background:"#fef2f2",color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:4 }}>
-                        <i className="ti ti-trash" style={{ fontSize:12 }}></i>ลบ
+                        <i className="ti ti-trash" style={{ fontSize:12 }}></i>ลบถาวร
                       </button>
                     </div>
                   )
@@ -2923,7 +3052,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
           <div style={{ ...R,gap:7,marginTop:2 }}>
             <Btn variant="primary" small onClick={saveEdit}><i className="ti ti-check" style={{ fontSize:12 }}></i> บันทึก</Btn>
             <Btn variant="outline" small onClick={()=>setMode(null)}>ยกเลิก</Btn>
-            {isAdmin && <Btn variant="danger" small style={{ marginLeft:"auto" }} onClick={()=>{ if(window.confirm("ลบนัดหมายนี้?")) onDelete(); }}><i className="ti ti-trash" style={{ fontSize:12 }}></i> ลบ</Btn>}
+            {isAdmin && <Btn variant="danger" small style={{ marginLeft:"auto" }} onClick={()=>setShowDelete(true)}><i className="ti ti-trash" style={{ fontSize:12 }}></i> ลบ</Btn>}
           </div>
         </div>
       )}
