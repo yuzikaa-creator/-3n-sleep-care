@@ -722,8 +722,31 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
           });
         });
         if(newAppts.length > 0) {
+          // ตรวจ capacity ของแต่ละวัน
+          const overCap = [];
+          const dateGroups = {};
+          newAppts.forEach(a=>{ dateGroups[a.date] = (dateGroups[a.date]||0)+1; });
+          Object.entries(dateGroups).forEach(([date, count])=>{
+            const existCount = appointments.filter(a=>a.date===date && a.status!=="cancelled" && a.hospId===user.hospId).length;
+            const hosp = hospitals.find(h=>h.id===user.hospId);
+            const cap = hosp?.cap || 2;
+            if(existCount + count > cap) {
+              overCap.push({ date, existing:existCount, adding:count, cap });
+            }
+          });
+          if(overCap.length > 0) {
+            const msg = overCap.map(o=>{
+              const [yr,mo,d] = o.date.split("-");
+              return `• ${d}/${mo}/${parseInt(yr)+543}: มีแล้ว ${o.existing} ราย + นำเข้า ${o.adding} ราย = ${o.existing+o.adding} ราย (cap ${o.cap})`;
+            }).join("\n");
+            const proceed = window.confirm(
+              `⚠️ วันต่อไปนี้จะเกิน capacity:\n\n${msg}\n\nต้องการนำเข้าต่อหรือไม่?`
+            );
+            if(!proceed) return;
+          }
           setAppointments(prev=>[...prev,...newAppts]);
-          alert(`✅ นำเข้าสำเร็จ ${newAppts.length} รายการ`);
+          const overMsg = overCap.length > 0 ? `\n⚠️ ${overCap.length} วันเกิน capacity` : "";
+          alert(`✅ นำเข้าสำเร็จ ${newAppts.length} รายการ${overMsg}`);
           setShowExcelImport(false);
         } else {
           alert("❌ ไม่พบข้อมูลในไฟล์ กรุณาตรวจสอบ format");
@@ -914,7 +937,14 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
                             {activeAppts.length} / {cap} คน
                             {allAppts.length > activeAppts.length && <span style={{ color:"#ef4444",marginLeft:6,fontSize:11 }}>({allAppts.length-activeAppts.length} ยกเลิก)</span>}
                           </span>
-                          {full && <span style={{ fontSize:10,padding:"2px 7px",borderRadius:10,background:"#fef2f2",color:"#991b1b",fontWeight:500 }}>เต็ม</span>}
+                          {full && <span style={{ fontSize:10,padding:"2px 7px",borderRadius:10,background:"#fef2f2",color:"#991b1b",fontWeight:700,display:"flex",alignItems:"center",gap:3 }}>
+                            <i className="ti ti-alert-triangle" style={{fontSize:10}}></i>เต็ม {activeAppts.length}/{cap} คน
+                          </span>}
+                          {!full && activeAppts.length>0 && cap>0 && (
+                            <span style={{ fontSize:10,padding:"2px 7px",borderRadius:10,background:"#f0fdf4",color:"#166534",fontWeight:500 }}>
+                              {activeAppts.length}/{cap} คน
+                            </span>
+                          )}
                           {!full && activeAppts.length===0 && !isPast && <span style={{ fontSize:10,color:T.faint }}>ว่าง</span>}
                         </div>
                         <div style={{ height:5,borderRadius:10,background:"#e2e8f0",overflow:"hidden" }}>
@@ -1163,6 +1193,10 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
     if(!form.hn.trim())   { setErr("กรุณากรอก HN"); return; }
     if(!form.hospId)      { setErr("กรุณาเลือก รพ."); return; }
     if(isFull && !isAdmin) { setErr("ห้องเต็มแล้ว ไม่สามารถเพิ่มนัดได้ (เกิน capacity)"); return; }
+    if(isFull && isAdmin) {
+      const ok = window.confirm(`⚠️ วันนี้มีนัดเต็ม capacity แล้ว\nต้องการเพิ่มนัดเกิน capacity หรือไม่?`);
+      if(!ok) return;
+    }
     onAdd({ id:"m"+Date.now(), ...form, name:form.name.trim(), hn:form.hn.trim(), phone:form.phone.trim(), date:dateKey, status:"active", apptType:form.apptType||"sleep_test", sleepTestType:form.apptType==="sleep_test"?(form.sleepTestType||"full_night"):"", paymentType:form.paymentType||"", journeyStatus:"scheduled", sleepMed:form.sleepMed, cancelReason:"", cancelledAt:null });
     setForm({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test", sleepTestType:"full_night", paymentType:"" });
     setErr(""); setOpen(false);
