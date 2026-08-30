@@ -59,9 +59,9 @@ const INIT_TECHS = [
 ];
 
 const INIT_USERS = [
-  { id:"admin",  name:"3N Admin",           role:"admin",  hospId:null, pin:"330011"  },
-  { id:"tech",   name:"3N Sleep Technician",role:"tech",   hospId:null, pin:"330022"  },
-  { id:"sales",  name:"3N Sales / ฝ่ายขาย", role:"sales",  hospId:null, pin:"330033"  },
+  { id:"admin",  name:"3N Admin",           role:"admin",  hospId:null },
+  { id:"tech",   name:"3N Sleep Technician",role:"tech",   hospId:null },
+  { id:"sales",  name:"3N Sales / ฝ่ายขาย", role:"sales",  hospId:null },
   // รพ. Sleep Test + CPAP
   { id:"h1",     name:"รพ. บางปะกอก 8",         role:"hospital", hospId:"h1"  },
   { id:"h4",     name:"รพ. ราษฎร์บูรณะ",        role:"hospital", hospId:"h4"  },
@@ -241,7 +241,7 @@ const IllustrationCalendar = () => (
 );
 
 // ── Login ─────────────────────────────────────────────────────────────────────
-function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
+function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS, staffPins={admin:"330011",tech:"330022",sales:"330033"} }) {
   const [sel,       setSel]       = useState(null);
   const [tab,       setTab]       = useState("staff");
   const [q,         setQ]         = useState("");
@@ -385,8 +385,13 @@ function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
             const selUser = sel ? (INIT_USERS.find(x=>x.id===sel) || hospUsers.find(x=>x.id===sel)) : null;
             const selHosp = selUser?.role==="hospital" ? hospitals.find(h=>h.id===selUser.hospId) : null;
             // staff ใช้ pin จาก INIT_USERS, รพ. ใช้ pin จาก hospitals
-            const userPin = selUser?.role==="hospital" ? selHosp?.pin : selUser?.pin;
-            const needPin = userPin && userPin.length>=4;
+            const HOSP_DEFAULT_PIN = "3n2569";
+            const staffPinMap = { admin: staffPins.admin, tech: staffPins.tech, sales: staffPins.sales };
+            const rawPin  = selUser?.role==="hospital"
+              ? (selHosp?.pin || HOSP_DEFAULT_PIN)
+              : (staffPinMap[selUser?.role] || "");
+            const userPin = rawPin;
+            const needPin = selUser ? true : false;
             const pinOwnerName = selUser?.role==="hospital" ? selHosp?.name : selUser?.name;
             return needPin ? (
               <div style={{ marginTop:14, display:"flex", flexDirection:"column", gap:8 }}>
@@ -429,12 +434,12 @@ function LoginScreen({ onLogin, hospitals=INIT_HOSPITALS }) {
               if(!u) return;
               // ตรวจ PIN ถ้าเป็น รพ. ที่มี PIN
               // ตรวจ PIN — staff ใช้ u.pin, รพ. ใช้ hospitals pin
+              const HOSP_DEFAULT_PIN = "3n2569";
+              const staffPinMap2 = { admin: staffPins.admin, tech: staffPins.tech, sales: staffPins.sales };
               const uPin = u.role==="hospital"
-                ? (hospitals.find(x=>x.id===u.hospId)?.pin || "")
-                : (u.pin || "");
-              if(uPin && uPin.length>=4) {
-                if(pinInput!==uPin) { setPinError(true); setPinInput(""); return; }
-              }
+                ? (hospitals.find(x=>x.id===u.hospId)?.pin || HOSP_DEFAULT_PIN)
+                : (staffPinMap2[u.role] || "");
+              if(pinInput!==uPin) { setPinError(true); setPinInput(""); return; }
               onLogin(u);
             }}
             disabled={!sel}
@@ -3565,6 +3570,75 @@ function ManageSales({ salesList=[], setSalesList }) {
 }
 
 // ── Manage Techs ─────────────────────────────────────────────────────────────
+// ── StaffPinSettings — Admin ตั้ง PIN สำหรับเจ้าหน้าที่ ──────────────────────────
+function StaffPinSettings({ staffPins, setStaffPins }) {
+  const [form, setForm] = useState({ ...staffPins });
+  const [saved, setSaved] = useState(false);
+  const [show, setShow] = useState({ admin:false, tech:false, sales:false });
+
+  const staff = [
+    { id:"admin",  label:"3N Admin",           icon:"ti-shield-half",  color:"#1d4ed8", bg:"#dbeafe" },
+    { id:"tech",   label:"3N Sleep Technician", icon:"ti-stethoscope",  color:"#7c3aed", bg:"#ede9fe" },
+    { id:"sales",  label:"3N Sales / ฝ่ายขาย",  icon:"ti-chart-bar",    color:"#059669", bg:"#d1fae5" },
+  ];
+
+  const save = () => {
+    setStaffPins({ ...form });
+    setSaved(true);
+    setTimeout(()=>setSaved(false), 2000);
+  };
+
+  return (
+    <div style={{ padding:"20px 24px", fontFamily:FONT }}>
+      <div style={{ fontSize:16, fontWeight:800, color:T.navy, marginBottom:4, display:"flex", alignItems:"center", gap:8 }}>
+        <i className="ti ti-lock" style={{ fontSize:18, color:"#7c3aed" }}></i>
+        ตั้งค่า PIN เจ้าหน้าที่ 3N
+      </div>
+      <div style={{ fontSize:12, color:T.faint, marginBottom:20 }}>
+        PIN ใช้สำหรับ Login เข้าระบบ — เปลี่ยนได้ตลอดเวลา
+      </div>
+
+      <div style={{ display:"flex", flexDirection:"column", gap:14, maxWidth:480 }}>
+        {staff.map(s => (
+          <div key={s.id} style={{ padding:"16px 18px", background:"white", borderRadius:14, border:`1.5px solid ${T.line}` }}>
+            <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
+              <div style={{ width:36, height:36, borderRadius:10, background:s.bg, display:"flex", alignItems:"center", justifyContent:"center" }}>
+                <i className={`ti ${s.icon}`} style={{ fontSize:16, color:s.color }}></i>
+              </div>
+              <div style={{ fontSize:13, fontWeight:700, color:s.color }}>{s.label}</div>
+            </div>
+            <div style={{ fontSize:11, fontWeight:600, color:T.navy, marginBottom:6 }}>PIN (4-6 หลัก)</div>
+            <div style={{ position:"relative" }}>
+              <input
+                type={show[s.id] ? "text" : "password"}
+                value={form[s.id] || ""}
+                onChange={e => setForm(f=>({...f, [s.id]: e.target.value.slice(0,20)}))}
+                placeholder="กรอก PIN ใหม่"
+                style={{ width:"100%", padding:"10px 42px 10px 14px", fontSize:15, letterSpacing:4, border:`1.5px solid ${T.line}`, borderRadius:10, outline:"none", fontFamily:"monospace", boxSizing:"border-box", color:T.navy }}
+              />
+              <button onClick={()=>setShow(v=>({...v,[s.id]:!v[s.id]}))}
+                style={{ position:"absolute", right:10, top:"50%", transform:"translateY(-50%)", background:"none", border:"none", cursor:"pointer", color:T.muted, fontSize:15 }}>
+                <i className={`ti ${show[s.id]?"ti-eye-off":"ti-eye"}`}></i>
+              </button>
+            </div>
+          </div>
+        ))}
+
+        <button onClick={save}
+          style={{ padding:"13px", fontSize:14, fontWeight:700, borderRadius:12, border:"none", background: saved ? "#059669" : "#7c3aed", color:"white", cursor:"pointer", fontFamily:FONT, display:"flex", alignItems:"center", justifyContent:"center", gap:8, transition:"all .2s" }}>
+          <i className={`ti ${saved ? "ti-check" : "ti-device-floppy"}`} style={{ fontSize:16 }}></i>
+          {saved ? "บันทึกแล้ว ✓" : "บันทึก PIN"}
+        </button>
+
+        <div style={{ padding:"10px 14px", background:"#fef9c3", borderRadius:10, border:"0.5px solid #fde047", fontSize:11, color:"#854d0e" }}>
+          <i className="ti ti-alert-triangle" style={{ marginRight:6 }}></i>
+          หลังบันทึกแล้ว PIN ใหม่จะใช้งานได้ทันที — แจ้งเจ้าหน้าที่เพื่อ login ด้วย PIN ใหม่
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ManageTechs({ techs, setTechs, techRates, setTechRates, salesList=[], setSalesList }) {
   const [adding, setAdding] = useState(false);
   const [form, setForm]     = useState({ name:"", nick:"" });
@@ -6963,11 +7037,12 @@ export default function App() {
   const [companyHolidays,setCompanyHolidays] = useState(saved?.companyHolidays || []);
   const [techRates,setTechRates] = useState(saved?.techRates  || {});
   const [salesList,setSalesList] = useState(saved?.salesList  || INIT_SALES);
+  const [staffPins, setStaffPins] = useState(saved?.staffPins || { admin:"330011", tech:"330022", sales:"330033" });
   const [lastSaved, setLastSaved]= useState(saved ? new Date().toISOString() : null);
 
   // ── useRef เก็บค่าล่าสุดทุก state เพื่อแก้ stale closure ใน saveToLocal ──
   const stateRef = useRef({});
-  stateRef.current = { appts, hospitals, techs, assignments, checkins, dayBlocks, companyHolidays, techRates, salesList };
+  stateRef.current = { appts, hospitals, techs, assignments, checkins, dayBlocks, companyHolidays, techRates, salesList, staffPins };
 
   // ── Auto-save to localStorage on every state change ──
   const saveToLocal = (patch) => {
@@ -7032,10 +7107,11 @@ export default function App() {
     ...(isAdmin ? [
       { id:"hospitals", label:"โรงพยาบาล",    icon:"ti-building-hospital" },
       { id:"techs",     label:"Sleep Tech",    icon:"ti-stethoscope"       },
+      { id:"staffpins",  label:"ตั้งค่า PIN",    icon:"ti-lock-cog"          },
     ] : []),
   ];
 
-  if(!user) return <LoginScreen hospitals={hospitals} onLogin={u=>{ setUser(u); const h=hospitals.find(x=>x.id===u.hospId); setTab(u.role==="admin"?"dashboard":u.role==="tech"?"schedule":u.role==="sales"?"cpapsales":(h?.cpapOnly?"cpapsales":"summary")); }} />;
+  if(!user) return <LoginScreen hospitals={hospitals} staffPins={staffPins} onLogin={u=>{ setUser(u); const h=hospitals.find(x=>x.id===u.hospId); setTab(u.role==="admin"?"dashboard":u.role==="tech"?"schedule":u.role==="sales"?"cpapsales":(h?.cpapOnly?"cpapsales":"summary")); }} />;
 
   const totalVisible = appts.filter(a=>(user.role==="hospital" ? a.hospId===user.hospId : true) && a.status!=="cancelled").length;
   const today = new Date();
@@ -7137,7 +7213,7 @@ export default function App() {
         <div style={{ padding:"14px 24px", background:T.card, borderBottom:`1px solid ${T.line}`, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0 }}>
           <div>
             <div style={{ fontSize:20, fontWeight:800, color:T.navy, letterSpacing:"-0.02em" }}>
-              {tab==="dashboard"?"Dashboard — ภาพรวม 3N Sleep Care":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapinfo"?"เงื่อนไขการเบิกจ่าย CPAP — ประกันสังคม":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="techcal"?"ปฏิทิน Sleep Technician":tab==="hospitals"?"จัดการโรงพยาบาล":"จัดการ Sleep Technician"}
+              {tab==="dashboard"?"Dashboard — ภาพรวม 3N Sleep Care":tab==="summary"?"ตารางนัดหมายรายเดือน":tab==="search"?"ค้นหาผู้ป่วย":tab==="cpapinfo"?"เงื่อนไขการเบิกจ่าย CPAP — ประกันสังคม":tab==="cpapsales"?(isCpapOnly?"สถานะ CPAP ผู้ป่วย":"CPAP Sales — รายชื่อผู้ป่วย"):tab==="report"?"รายงานสรุป":tab==="sales"?"Sale Report 3N":tab==="schedule"?"ตารางเวร Sleep Tech":tab==="techcal"?"ปฏิทิน Sleep Technician":tab==="hospitals"?"จัดการโรงพยาบาล":tab==="staffpins"?"ตั้งค่า PIN เจ้าหน้าที่":"จัดการ Sleep Technician"}
             </div>
             <div style={{ fontSize:13, color:T.muted, marginTop:2 }}>
               {user.role==="admin"?"3N Admin — เข้าถึงทุก รพ.":user.role==="tech"?"Sleep Tech — ดูตารางและยืนยันเวร":`${hospitals.find(h=>h.id===user.hospId)?.name||""}`}
@@ -7167,6 +7243,7 @@ export default function App() {
           {tab==="techcal"   && <TechCalendarView  user={user} techs={techs} appointments={appts} hospitals={hospitals} assignments={assignments} />}
           {tab==="hospitals" && <ManageHospitals   hospitals={hospitals} setHospitals={setHospsSave} />}
           {tab==="techs"     && <ManageTechs       techs={techs} setTechs={setTechsSave} techRates={techRates} setTechRates={setRatesSave} salesList={salesList} setSalesList={setSalesSave} />}
+          {tab==="staffpins" && <StaffPinSettings staffPins={staffPins} setStaffPins={(p)=>{ setStaffPins(p); saveToLocal({staffPins:p}); }} />}
         </div>
       </div>
     </div>
