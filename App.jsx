@@ -75,22 +75,8 @@ const INIT_USERS = [
 
 
 // ข้อมูล assign Tech เดือนมิถุนายน (ทดสอบ)
-const SAMPLE_ASSIGNMENTS = {
-  "2026-06-03":  ["st1","st2"],
-  "2026-06-05":  ["st2","st3"],
-  "2026-06-10":  ["st1","st4"],
-  "2026-06-12":  ["st3","st5"],
-  "2026-06-17":  ["st1","st6"],
-  "2026-06-19":  ["st2","st4"],
-  "2026-06-24":  ["st5","st6"],
-};
-const SAMPLE_CHECKINS = {
-  "2026-06-03":  ["st1","st2"],
-  "2026-06-05":  ["st2"],
-  "2026-06-10":  ["st1","st4"],
-  "2026-06-12":  ["st3"],
-  "2026-06-17":  ["st1"],
-};
+const SAMPLE_ASSIGNMENTS = {};
+const SAMPLE_CHECKINS    = {};
 
 // assignments backward-compatible helpers
 // รองรับทั้ง old format ["techId"] และ new format [{id,hospId}]
@@ -589,22 +575,38 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
   // ── Excel download template ──
   const downloadTemplate = () => {
     const hosp = hospitals.find(h=>h.id===user.hospId);
-    const headers = ["HN","ชื่อ-นามสกุล","เบอร์โทร","วันนัดหมาย (DD/MM/YYYY)","ประเภทการตรวจ","สิทธิ์การรักษา","โรคประจำตัว"];
-    const note1   = ["","","","","full_night = ตรวจทั้งคืน","social_security = ประกันสังคม",""];
-    const note2   = ["","","","","split_night = แบ่งครึ่งคืน","self_pay = เงินสด",""];
-    const note3   = ["","","","","titration = ปรับแรงดัน CPAP","civil_servant = ข้าราชการ",""];
-    const note4   = ["","","","","","health_insurance = ประกันสุขภาพ",""];
-    const blank   = ["","","","","","",""];
-    const ex1 = ["HN 1000001","นายสมชาย ใจดี","0812345678","01/09/2569","full_night","social_security","DM, HT"];
-    const ex2 = ["HN 1000002","นางสมหญิง รักดี","0898765432","03/09/2569","full_night","self_pay",""];
-    const ex3 = ["HN 1000003","น.ส.มณีรัตน์ สวยงาม","0871234567","05/09/2569","split_night","civil_servant","Obesity"];
-    const ex4 = ["HN 1000004","นายประสิทธิ์ มั่นคง","0841234567","08/09/2569","titration","health_insurance","DM"];
-    const csvContent = [headers, note1, note2, note3, note4, blank, ex1, ex2, ex3, ex4].map(r=>r.join(",")).join("\n");
+    // Template ตรงกับระบบ 3N Sleep Care
+    const headers = [
+      "HN",
+      "ชื่อ-นามสกุล",
+      "เบอร์โทร (10 หลัก)",
+      "วันนัดหมาย (DD/MM/YYYY พ.ศ.)",
+      "ประเภทการตรวจ",
+      "สิทธิ์การรักษา",
+      "โรคประจำตัว",
+      "ยานอนหลับ"
+    ];
+    const guide = [
+      "--- คำอธิบาย ---",
+      "นำหน้าด้วยคำนำหน้า เช่น นาย/น.ส./นาง",
+      "ตัวเลขล้วน ไม่ต้องมีขีด",
+      "เช่น 01/09/2569",
+      "full_night | split_night | titration",
+      "ประกันสังคม | เงินสด | ข้าราชการ | ประกันสุขภาพ | รัฐวิสาหกิจ",
+      "ระบุโรค เช่น DM, HT (ถ้าไม่มีเว้นว่าง)",
+      "ใช่ หรือ ไม่ใช่"
+    ];
+    const blank = ["","","","","","","",""];
+    const ex1 = ["8-69-007793","น.ส. สิรินพร พานธงรักษ์","0832762592","31/08/2569","full_night","ประกันสังคม","DM, HT","ใช่"];
+    const ex2 = ["8-63-037244","น.ส. สุวิมล นุกูลวุฒิโอภาส","0826143526","22/08/2569","full_night","ประกันสังคม","","ไม่ใช่"];
+    const ex3 = ["8-67-013873","นาย วรัญชิต อริยพา","0824466842","05/09/2569","full_night","เงินสด","Obesity","ใช่"];
+    const ex4 = ["8-62-031312","นาย กิจธณพงษ์ โพธิ์งาม","0945069575","08/09/2569","full_night","ข้าราชการ","DM","ไม่ใช่"];
+    const csvContent = [headers, guide, blank, ex1, ex2, ex3, ex4].map(r=>r.join(",")).join("\n");
     const bom = "﻿"; // UTF-8 BOM สำหรับ Excel ภาษาไทย
     const blob = new Blob([bom+csvContent], {type:"text/csv;charset=utf-8"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    a.href = url; a.download = `template_นัดหมาย_${hosp?.short||"รพ"}.csv`;
+    a.href = url; a.download = `3N_template_นัดหมาย_${hosp?.short||"รพ"}_${new Date().toISOString().slice(0,10)}.csv`;
     a.click(); URL.revokeObjectURL(url);
   };
 
@@ -695,6 +697,11 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 
           const phoneClean = phone?.replace(/\D/g,"") || "";
           const validTypes = ["full_night","split_night","titration","home_sleep_test"];
+          // อ่าน sleepMed จาก cols — format รพ. col[7], template col[7]
+          const sleepMedRaw = String(cols[7]||"").trim();
+          const sleepMed = ["ใช่","yes","true","1","TRUE"].includes(sleepMedRaw.toLowerCase()||sleepMedRaw) ? true
+                         : ["ไม่ใช่","no","false","0","FALSE"].includes(sleepMedRaw.toLowerCase()||sleepMedRaw) ? false
+                         : null; // ไม่ระบุ
           newAppts.push({
             id: `xl_${Date.now()}_${i}_${Math.random().toString(36).slice(2,6)}`,
             hn: hn||"—",
@@ -708,6 +715,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             sleepTestType: validTypes.includes(testType) ? testType : "full_night",
             paymentType: payCode,
             journeyStatus: "scheduled",
+            sleepMed: sleepMed,
             note: diagnosis ? `โรคประจำตัว: ${diagnosis}` : "",
             diagnosis: diagnosis||"",
             cancelReason:"", cancelledAt:null,
@@ -780,9 +788,10 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
             <div style={{padding:"10px 14px",background:"#fef9c3",borderRadius:10,border:"0.5px solid #fde047",fontSize:11,color:"#854d0e",lineHeight:1.7}}>
               <i className="ti ti-info-circle" style={{marginRight:6}}></i>
               <strong>รองรับไฟล์:</strong> .xlsx, .xls (Excel) และ .csv<br/>
-              <strong>รูปแบบวันที่:</strong> DD/MM/YYYY (พ.ศ.) เช่น 25/08/2569<br/>
+              <strong>วันที่:</strong> DD/MM/YYYY (พ.ศ.) เช่น 31/08/2569<br/>
               <strong>ประเภทตรวจ:</strong> full_night / split_night / titration<br/>
-              <strong>สิทธิ์:</strong> social_security / self_pay / civil_servant / health_insurance
+              <strong>สิทธิ์:</strong> ประกันสังคม / เงินสด / ข้าราชการ / ประกันสุขภาพ / รัฐวิสาหกิจ<br/>
+              <strong>หมายเหตุ:</strong> รองรับทั้ง format นี้ และ format Excel ของ รพ. โดยตรง
             </div>
           </div>
         </div>
@@ -1146,7 +1155,7 @@ function MonthlySummary({ user, appointments, setAppointments, hospitals, techs,
 // ── Add Appointment Inline ────────────────────────────────────────────────────
 function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onAdd }) {
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test", sleepTestType:"full_night", paymentType:"" });
+  const [form, setForm] = useState({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test", sleepTestType:"full_night", paymentType:"", sleepMed:null });
   const [err,  setErr]  = useState("");
 
   const save = () => {
@@ -1154,7 +1163,7 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
     if(!form.hn.trim())   { setErr("กรุณากรอก HN"); return; }
     if(!form.hospId)      { setErr("กรุณาเลือก รพ."); return; }
     if(isFull && !isAdmin) { setErr("ห้องเต็มแล้ว ไม่สามารถเพิ่มนัดได้ (เกิน capacity)"); return; }
-    onAdd({ id:"m"+Date.now(), ...form, name:form.name.trim(), hn:form.hn.trim(), phone:form.phone.trim(), date:dateKey, status:"active", apptType:form.apptType||"sleep_test", sleepTestType:form.apptType==="sleep_test"?(form.sleepTestType||"full_night"):"", paymentType:form.paymentType||"", journeyStatus:"scheduled", cancelReason:"", cancelledAt:null });
+    onAdd({ id:"m"+Date.now(), ...form, name:form.name.trim(), hn:form.hn.trim(), phone:form.phone.trim(), date:dateKey, status:"active", apptType:form.apptType||"sleep_test", sleepTestType:form.apptType==="sleep_test"?(form.sleepTestType||"full_night"):"", paymentType:form.paymentType||"", journeyStatus:"scheduled", sleepMed:form.sleepMed, cancelReason:"", cancelledAt:null });
     setForm({ name:"", hn:"", phone:"", hospId:defaultHospId||"", note:"", apptType:"sleep_test", sleepTestType:"full_night", paymentType:"" });
     setErr(""); setOpen(false);
   };
@@ -1274,6 +1283,25 @@ function AddApptInline({ dateKey, hospitals, defaultHospId, isAdmin, isFull, onA
                     </div>
                   </div>
                 ))}
+              </div>
+              {/* ยานอนหลับ */}
+              <div style={{ marginTop:10 }}>
+                <div style={{ fontSize:11, fontWeight:600, color:T.navy, marginBottom:6, display:"flex", alignItems:"center", gap:5 }}>
+                  <i className="ti ti-pill" style={{ fontSize:12, color:"#854d0e" }}></i>
+                  ต้องการยานอนหลับ
+                </div>
+                <div style={{ display:"flex", gap:8 }}>
+                  {[["ใช่",true,"#fef9c3","#854d0e","#fde047"],["ไม่ใช่",false,"#f0fdf4","#166534","#86efac"],["ไม่ระบุ",null,"#f8fafc","#64748b","#e2e8f0"]].map(([lb,val,bg,col,border])=>(
+                    <div key={String(lb)} onClick={()=>setForm(f=>({...f,sleepMed:val}))}
+                      style={{ flex:1, padding:"9px 10px", borderRadius:9, cursor:"pointer", textAlign:"center",
+                        border:`1.5px solid ${form.sleepMed===val?border:"#e2e8f0"}`,
+                        background:form.sleepMed===val?bg:"white",
+                        color:form.sleepMed===val?col:T.muted,
+                        fontSize:12, fontWeight:form.sleepMed===val?700:400, transition:"all .12s" }}>
+                      {lb}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -2034,7 +2062,7 @@ function currentStep(apptType, journeyStatus) {
   return steps.find(s=>s.key===journeyStatus) || steps[0];
 }
 
-function JourneyBadge({ apptType, journeyStatus, sleepTestType, paymentType }) {
+function JourneyBadge({ apptType, journeyStatus, sleepTestType, paymentType, sleepMed }) {
   const step = currentStep(apptType||"sleep_test", journeyStatus||"scheduled");
   const tc2  = APPT_TYPE_COLOR[apptType||"sleep_test"];
   const pt   = PAYMENT_TYPES.find(p=>p.key===paymentType);
@@ -2047,6 +2075,18 @@ function JourneyBadge({ apptType, journeyStatus, sleepTestType, paymentType }) {
         <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:sleepTestType==="split_night"?"#ede9fe":"#dbeafe", color:sleepTestType==="split_night"?"#5b21b6":"#1e40af", fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:3 }}>
           <i className={`ti ${sleepTestType==="split_night"?"ti-moon-stars":"ti-moon"}`} style={{ fontSize:10 }}></i>
           {sleepTestType==="split_night"?"Split Night":"Full Night"}
+        </span>
+      )}
+      {sleepMed===true && (
+        <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:"#fef9c3", color:"#854d0e", fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:3 }}>
+          <i className="ti ti-pill" style={{ fontSize:10 }}></i>
+          ยานอนหลับ
+        </span>
+      )}
+      {sleepMed===false && (
+        <span style={{ fontSize:10, padding:"2px 8px", borderRadius:8, background:"#f0fdf4", color:"#166534", fontWeight:600, flexShrink:0, display:"flex", alignItems:"center", gap:3 }}>
+          <i className="ti ti-pill-off" style={{ fontSize:10 }}></i>
+          ไม่ใช้ยา
         </span>
       )}
       {pt && (
@@ -2708,7 +2748,7 @@ function ApptCard({ appt:a, hosp:h, color:c, hospitals, canEdit, isAdmin, isTech
           </div>
           <div style={{ fontSize:12, color:T.faint, marginBottom:5 }}>HN {a.hn} · {a.phone}</div>
           {/* Journey badge */}
-          {!isCancelled && <JourneyBadge apptType={apptType} journeyStatus={a.journeyStatus||"scheduled"} sleepTestType={a.sleepTestType} paymentType={a.paymentType} />}
+          {!isCancelled && <JourneyBadge apptType={apptType} journeyStatus={a.journeyStatus||"scheduled"} sleepTestType={a.sleepTestType} paymentType={a.paymentType} sleepMed={a.sleepMed} />}
           {/* Deadline warning */}
           {!isCancelled && (() => {
             const dl = calcDeadline(a);
